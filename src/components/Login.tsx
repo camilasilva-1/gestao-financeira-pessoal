@@ -46,7 +46,7 @@ export const Login: React.FC<LoginProps> = ({
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <h2 className="text-3xl font-extrabold text-red-600">Bradesco Finanças</h2>
+        <h2 className="text-3xl font-extrabold text-red-600">ByteBank Finance</h2>
         <p className="mt-2 text-sm text-slate-600">Acesse sua conta para gerenciar suas finanças</p>
       </div>
 
