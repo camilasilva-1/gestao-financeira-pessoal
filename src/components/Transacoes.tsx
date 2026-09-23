@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import type { Transacao, TipoTransacao } from '../types';
+import React, { useState, useEffect } from 'react';
+import type { Transacao } from '../types';
+import { ModalEditarTransacao } from './ModalEditarTransacao';
 
 interface TransacoesProps {
   transacoes: Transacao[];
@@ -8,171 +9,189 @@ interface TransacoesProps {
   adicionarCategoria: (novaCat: string) => void;
 }
 
-export const Transacoes: React.FC<TransacoesProps> = ({ 
-  transacoes, 
-  setTransacoes, 
+export const Transacoes: React.FC<TransacoesProps> = ({
+  transacoes,
+  setTransacoes,
   categorias,
   adicionarCategoria
 }) => {
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
-  const [data, setData] = useState(new Date().toISOString().split('T')[0]);
-  const [tipo, setTipo] = useState<TipoTransacao>('DESPESA');
-  const [categoria, setCategoria] = useState('Alimentação');
-  const [outraCategoriaInput, setOutraCategoriaInput] = useState('');
-  const [estabelecimento, setEstabelecimento] = useState('');
+  const [data, setData] = useState('');
+  const [tipo, setTipo] = useState<'RECEITA' | 'DESPESA'>('RECEITA');
+  const [categoria, setCategoria] = useState<string>(
+    categorias && categorias.length > 0 ? categorias[0] : 'Alimentação'
+  );
+  const [establishment, setEstablishment] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Filtros (#11)
+  const [busca, setBusca] = useState('');
+  const [filtroTipo, setFiltroTipo] = useState<'TODOS' | 'RECEITA' | 'DESPESA'>('TODOS');
+  const [filtroCategoria, setFiltroCategoria] = useState('TODAS');
+  const [filtroPeriodo, setFiltroPeriodo] = useState<'TODOS' | 'ESTE_MES' | 'MES_PASSADO' | 'ESTE_ANO'>('TODOS');
+
+  // Modal de Edição (#9)
+  const [transacaoParaEditar, setTransacaoParaEditar] = useState<Transacao | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (categorias && categorias.length > 0 && !categorias.includes(categoria)) {
+      setCategoria(categorias[0]);
+    }
+  }, [categorias, categoria]);
+
+  const handleNovaTransacao = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!descricao || !valor || !data) return;
 
-    const valorNumerico = parseFloat(valor);
-    if (isNaN(valorNumerico) || valorNumerico <= 0) {
-      alert('O valor da transação deve ser maior que zero.');
-      return;
-    }
-
-    if (!descricao.trim()) {
-      alert('A descrição é obrigatória.');
-      return;
-    }
-
-    // Se o usuário selecionou "Outros", usa o nome digitado no input
-    let categoriaFinal = categoria;
-    if (categoria === 'Outros') {
-      const nomeFormatado = outraCategoriaInput.trim();
-      if (!nomeFormatado) {
-        alert('Por favor, informe o nome da nova categoria.');
-        return;
-      }
-      categoriaFinal = nomeFormatado;
-      // Salva a nova categoria na lista global do sistema
-      adicionarCategoria(nomeFormatado);
-    }
-
-    const novaTransacao: Transacao = {
-      id: String(Date.now()),
-      descricao: descricao.trim(),
-      valor: valorNumerico,
+    const nova: Transacao = {
+      id: Date.now().toString(),
+      descricao,
+      valor: parseFloat(valor),
       data,
       tipo,
-      categoria: categoriaFinal,
-      estabelecimento: estabelecimento.trim() || undefined
+      categoria,
+      establishment: establishment.trim() ? establishment.trim() : undefined
     };
 
-    setTransacoes([novaTransacao, ...transacoes]);
-
-    // Reseta os campos do formulário
+    setTransacoes([nova, ...transacoes]);
     setDescricao('');
     setValor('');
-    setEstabelecimento('');
-    setOutraCategoriaInput('');
-    setCategoria('Alimentação');
+    setEstablishment('');
   };
 
-  const handleDelete = (id: string) => {
-    setTransacoes(transacoes.filter(item => item.id !== id));
+  const handleExcluir = (id: string) => {
+    setTransacoes(transacoes.filter(t => t.id !== id));
   };
+
+  const handleAbrirEditar = (t: Transacao) => {
+    setTransacaoParaEditar(t);
+    setIsModalOpen(true);
+  };
+
+  const handleSalvarEdicao = (transacaoAtualizada: Transacao) => {
+    setTransacoes(transacoes.map(t => t.id === transacaoAtualizada.id ? transacaoAtualizada : t));
+  };
+
+  // Função para validar o filtro de período (#11)
+  const ehNoPeriodo = (dataString: string) => {
+    if (filtroPeriodo === 'TODOS') return true;
+
+    const dataTransacao = new Date(dataString + 'T00:00:00');
+    const hoje = new Date();
+    const anoAtual = hoje.getFullYear();
+    const mesAtual = hoje.getMonth();
+
+    if (filtroPeriodo === 'ESTE_MES') {
+      return dataTransacao.getFullYear() === anoAtual && dataTransacao.getMonth() === mesAtual;
+    }
+
+    if (filtroPeriodo === 'MES_PASSADO') {
+      const mesAnterior = mesAtual === 0 ? 11 : mesAtual - 1;
+      const anoDoMesAnterior = mesAtual === 0 ? anoAtual - 1 : anoAtual;
+      return dataTransacao.getFullYear() === anoDoMesAnterior && dataTransacao.getMonth() === mesAnterior;
+    }
+
+    if (filtroPeriodo === 'ESTE_ANO') {
+      return dataTransacao.getFullYear() === anoAtual;
+    }
+
+    return true;
+  };
+
+  // Aplicação dos Filtros em Tempo Real
+  const transacoesFiltradas = transacoes.filter(t => {
+    const bateTexto = t.descricao.toLowerCase().includes(busca.toLowerCase()) ||
+      (t.establishment && t.establishment.toLowerCase().includes(busca.toLowerCase()));
+    const bateTipo = filtroTipo === 'TODOS' || t.tipo === filtroTipo;
+    const bateCat = filtroCategoria === 'TODAS' || t.categoria === filtroCategoria;
+    const batePeriodo = ehNoPeriodo(t.data);
+
+    return bateTexto && bateTipo && bateCat && batePeriodo;
+  });
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-        <h2 className="text-lg font-bold text-slate-800 mb-4">Nova Transação</h2>
-
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Descrição *</label>
-            <input
-              type="text"
-              placeholder="Ex: Ração do cachorro, Almoço"
-              value={descricao}
-              onChange={e => setDescricao(e.target.value)}
-              className="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:outline-none focus:border-red-600"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Valor (R$) *</label>
-            <input
-              type="number"
-              step="0.01"
-              placeholder="0,00"
-              value={valor}
-              onChange={e => setValor(e.target.value)}
-              className="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:outline-none focus:border-red-600"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Data *</label>
-            <input
-              type="date"
-              value={data}
-              onChange={e => setData(e.target.value)}
-              className="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:outline-none focus:border-red-600"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Tipo *</label>
-            <select
-              value={tipo}
-              onChange={e => setTipo(e.target.value as TipoTransacao)}
-              className="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white focus:outline-none focus:border-red-600"
-            >
-              <option value="DESPESA">Despesa</option>
-              <option value="RECEITA">Receita</option>
-            </select>
-          </div>
-
-          {/* Select de Categorias */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Categoria</label>
-            <select
-              value={categoria}
-              onChange={e => setCategoria(e.target.value)}
-              className="w-full border border-slate-300 rounded-lg p-2.5 text-sm bg-white focus:outline-none focus:border-red-600"
-            >
-              {categorias.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Estabelecimento</label>
-            <input
-              type="text"
-              placeholder="Ex: Petz, McDonald's"
-              value={estabelecimento}
-              onChange={e => setEstabelecimento(e.target.value)}
-              className="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:outline-none focus:border-red-600"
-            />
-          </div>
-
-          {/* Campo extra que aparece quando o usuário escolhe 'Outros' */}
-          {categoria === 'Outros' && (
-            <div className="md:col-span-3 bg-red-50/50 p-3 rounded-lg border border-red-200">
-              <label className="block text-xs font-semibold text-red-700 mb-1">
-                Qual o nome da nova categoria? *
-              </label>
+      {/* Formulário de Nova Transação */}
+      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <h2 className="text-lg font-bold text-slate-800">Nova Transação</h2>
+        <form onSubmit={handleNovaTransacao} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Descrição *</label>
               <input
                 type="text"
-                placeholder="Ex: Pets, Skincare, Doações"
-                value={outraCategoriaInput}
-                onChange={e => setOutraCategoriaInput(e.target.value)}
-                className="w-full border border-red-300 rounded-lg p-2 text-sm bg-white focus:outline-none focus:border-red-600"
+                placeholder="Ex: Ração do cachorro, Almoço"
+                value={descricao}
+                onChange={(e) => setDescricao(e.target.value)}
+                className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                 required
               />
             </div>
-          )}
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Valor (R$) *</label>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="0,00"
+                value={valor}
+                onChange={(e) => setValor(e.target.value)}
+                className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Data *</label>
+              <input
+                type="date"
+                value={data}
+                onChange={(e) => setData(e.target.value)}
+                className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                required
+              />
+            </div>
+          </div>
 
-          <div className="md:col-span-3 flex justify-end">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Tipo *</label>
+              <select
+                value={tipo}
+                onChange={(e) => setTipo(e.target.value as 'RECEITA' | 'DESPESA')}
+                className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                <option value="RECEITA">Receita</option>
+                <option value="DESPESA">Despesa</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Categoria</label>
+              <select
+                value={categoria}
+                onChange={(e) => setCategoria(e.target.value)}
+                className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                {categorias.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Estabelecimento</label>
+              <input
+                type="text"
+                placeholder="Ex: Petz, McDonald's"
+                value={establishment}
+                onChange={(e) => setEstablishment(e.target.value)}
+                className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end">
             <button
               type="submit"
-              className="bg-red-600 hover:bg-red-700 text-white font-medium px-5 py-2.5 rounded-lg text-sm transition-colors cursor-pointer"
+              className="w-full bg-gradient-to-r from-[#c4003d] to-[#e60039] text-white font-bold py-3 rounded-xl shadow-md hover:opacity-95 transition-all duration-200 cursor-pointer text-sm"
             >
               Salvar Transação
             </button>
@@ -180,53 +199,105 @@ export const Transacoes: React.FC<TransacoesProps> = ({
         </form>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-200">
+      {/* Histórico com Barra de Filtros Completa (#11) */}
+      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b pb-4">
           <h2 className="text-lg font-bold text-slate-800">Histórico de Transações</h2>
+          
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Busca por texto */}
+            <input
+              type="text"
+              placeholder="Buscar por descrição..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+
+            {/* Filtro por Período (#11) */}
+            <select
+              value={filtroPeriodo}
+              onChange={(e) => setFiltroPeriodo(e.target.value as any)}
+              className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
+            >
+              <option value="TODOS">Todos os Períodos</option>
+              <option value="ESTE_MES">Este Mês</option>
+              <option value="MES_PASSADO">Mês Passado</option>
+              <option value="ESTE_ANO">Este Ano</option>
+            </select>
+
+            {/* Filtro por Tipo */}
+            <select
+              value={filtroTipo}
+              onChange={(e) => setFiltroTipo(e.target.value as 'TODOS' | 'RECEITA' | 'DESPESA')}
+              className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
+            >
+              <option value="TODOS">Todos os Tipos</option>
+              <option value="RECEITA">Receitas</option>
+              <option value="DESPESA">Despesas</option>
+            </select>
+
+            {/* Filtro por Categoria (#11) */}
+            <select
+              value={filtroCategoria}
+              onChange={(e) => setFiltroCategoria(e.target.value)}
+              className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
+            >
+              <option value="TODAS">Todas as Categorias</option>
+              {categorias.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
+        {/* Tabela de Resultados */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
-              <tr>
-                <th className="py-3 px-4">Descrição</th>
-                <th className="py-3 px-4">Categoria</th>
-                <th className="py-3 px-4">Data</th>
-                <th className="py-3 px-4 text-right">Valor</th>
-                <th className="py-3 px-4 text-center">Ações</th>
+            <thead>
+              <tr className="text-slate-500 border-b text-xs uppercase tracking-wider">
+                <th className="pb-3 font-semibold">Descrição</th>
+                <th className="pb-3 font-semibold">Categoria</th>
+                <th className="pb-3 font-semibold">Data</th>
+                <th className="pb-3 font-semibold text-right">Valor</th>
+                <th className="pb-3 font-semibold text-center">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {transacoes.length === 0 ? (
+              {transacoesFiltradas.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-6 text-slate-400">
-                    Nenhuma transação cadastrada ainda.
+                  <td colSpan={5} className="py-6 text-center text-slate-400 text-xs">
+                    Nenhuma transação encontrada para os filtros selecionados.
                   </td>
                 </tr>
               ) : (
-                transacoes.map(item => (
-                  <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3 px-4">
-                      <p className="font-medium text-slate-800">{item.descricao}</p>
-                      {item.estabelecimento && (
-                        <p className="text-xs text-slate-400">{item.estabelecimento}</p>
+                transacoesFiltradas.map((t) => (
+                  <tr key={t.id} className="hover:bg-slate-50/80 transition">
+                    <td className="py-3 font-medium text-slate-800">
+                      {t.descricao}
+                      {t.establishment && (
+                        <span className="block text-xs text-slate-400 font-normal">{t.establishment}</span>
                       )}
                     </td>
-                    <td className="py-3 px-4">
-                      <span className="inline-block bg-slate-100 text-slate-600 text-xs px-2.5 py-1 rounded-md">
-                        {item.categoria}
+                    <td className="py-3">
+                      <span className="px-2.5 py-1 text-xs rounded-full bg-slate-100 text-slate-600">
+                        {t.categoria}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-slate-500">{item.data}</td>
-                    <td className={`py-3 px-4 text-right font-semibold ${
-                      item.tipo === 'RECEITA' ? 'text-emerald-600' : 'text-red-600'
-                    }`}>
-                      {item.tipo === 'RECEITA' ? '+' : '-'} R$ {item.valor.toFixed(2)}
+                    <td className="py-3 text-slate-500 text-xs">{t.data}</td>
+                    <td className={`py-3 text-right font-bold ${t.tipo === 'RECEITA' ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {t.tipo === 'RECEITA' ? '+' : '-'} R$ {t.valor.toFixed(2)}
                     </td>
-                    <td className="py-3 px-4 text-center">
+                    <td className="py-3 text-center space-x-2">
                       <button
-                        onClick={() => handleDelete(item.id)}
-                        className="text-xs font-semibold text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
+                        onClick={() => handleAbrirEditar(t)}
+                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleExcluir(t.id)}
+                        className="text-xs text-slate-400 hover:text-red-600 font-medium"
                       >
                         Excluir
                       </button>
@@ -238,6 +309,14 @@ export const Transacoes: React.FC<TransacoesProps> = ({
           </table>
         </div>
       </div>
+
+      <ModalEditarTransacao
+        transacao={transacaoParaEditar}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSalvarEdicao}
+        categorias={categorias}
+      />
     </div>
   );
 };

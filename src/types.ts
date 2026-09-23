@@ -5,9 +5,9 @@ export interface Transacao {
   descricao: string;
   valor: number;
   data: string;
-  tipo: TipoTransacao;
+  tipo: 'RECEITA' | 'DESPESA';
   categoria?: string;
-  estabelecimento?: string;
+  establishment?: string;
   recorrente?: boolean;
 }
 
