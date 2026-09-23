@@ -1,5 +1,6 @@
 package gestaofinanceira.project.model;
 
+import gestaofinanceira.project.enums.Categoria;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import java.time.LocalDate;
@@ -11,5 +12,5 @@ public class Transacao {
     private double valor;
     private LocalDate data;
     private String tipo; // Receita ou Despesa
-    private String categoria;
+    private Categoria categoria; 
 }

@@ -1,5 +1,6 @@
 package gestaofinanceira.project.controller;
 
+import gestaofinanceira.project.enums.Categoria;
 import gestaofinanceira.project.model.Transacao;
 import gestaofinanceira.project.service.TransacaoService;
 import org.springframework.web.bind.annotation.*;
@@ -45,5 +46,11 @@ public class TransacaoController {
     public String remover(@PathVariable int id) {
         service.remover(id);
         return "Transação removida com sucesso!";
+    }
+
+    // Atualizar categoria de uma transação (3.2 Classificação de Gastos)
+    @PutMapping("/{id}/categoria")
+    public Transacao atualizarCategoria(@PathVariable int id, @RequestParam Categoria categoria) {
+        return service.atualizarCategoria(id, categoria);
     }
 }

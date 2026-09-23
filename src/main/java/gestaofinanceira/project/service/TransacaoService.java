@@ -1,5 +1,6 @@
 package gestaofinanceira.project.service;
 
+import gestaofinanceira.project.enums.Categoria;
 import gestaofinanceira.project.model.Transacao;
 import org.springframework.stereotype.Service;
 
@@ -51,5 +52,12 @@ public class TransacaoService {
             throw new IllegalArgumentException("Transação não encontrada");
         }
         transacoes.remove(id);
+    }
+
+    // NOVO: Atualizar categoria
+    public Transacao atualizarCategoria(int id, Categoria categoria) {
+        Transacao t = buscar(id);
+        t.setCategoria(categoria);
+        return t;
     }
 }

@@ -1,2 +1,5 @@
 gestaofinanceira\project\controller\TestController.class
 gestaofinanceira\project\ProjectApplication.class
+gestaofinanceira\project\service\TransacaoService.class
+gestaofinanceira\project\model\Transacao.class
+gestaofinanceira\project\controller\TransacaoController.class
