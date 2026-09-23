@@ -66,7 +66,7 @@ function App() {
       <div className="max-w-5xl mx-auto space-y-6">
         <header className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <div>
-            <h1 className="text-xl font-bold text-red-600">Bradesco Finanças</h1>
+            <h1 className="text-xl font-bold text-red-600">Organizando suas Finanças</h1>
             <p className="text-xs text-slate-500">Sistema de Gestão Financeira Pessoal</p>
           </div>
           
@@ -77,11 +77,7 @@ function App() {
             >
               Sair
             </button>
-            <img 
-              src="/bradesco-logo.png" 
-              alt="Logo Bradesco" 
-              className="h-10 w-auto object-contain"
-            />
+            
           </div>
         </header>
 
