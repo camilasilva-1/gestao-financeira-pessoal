@@ -1,319 +1,382 @@
 import React, { useState } from 'react';
-import type { Orcamento, Meta, Transacao } from '../types';
+import type { Transacao, Orcamento } from '../types';
 
-interface OrcamentosEMetasProps {
-  transacoes: Transacao[];
-  orcamentos: Orcamento[];
-  setOrcamentos: React.Dispatch<React.SetStateAction<Orcamento[]>>;
-  categorias: string[];
+export interface Meta {
+  id: string;
+  nome: string;
+  valorAlvo: number;
+  valorAtual: number;
+  dataLimite: string;
 }
 
-export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({ 
-  transacoes, 
-  orcamentos, 
-  setOrcamentos,
-  categorias
+interface OrcamentosEMetasProps {
+  transacoes: Transacao[];
+  orcamentos: Orcamento[];
+  setOrcamentos: React.Dispatch<React.SetStateAction<Orcamento[]>>;
+  categorias: string[];
+}
+
+export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
+  transacoes,
+  orcamentos,
+  setOrcamentos,
+  categorias,
 }) => {
-  const [metas, setMetas] = useState<Meta[]>([
-    { id: '1', titulo: 'Reserva de Emergência', valorAlvo: 10000, valorAtual: 4500, dataLimite: '2027-12-31' },
-    { id: '2', titulo: 'Viagem de Férias', valorAlvo: 3000, valorAtual: 2100, dataLimite: '2026-12-15' }
-  ]);
+  // Estados para Metas
+  const [metas, setMetas] = useState<Meta[]>([
+    { id: '1', nome: 'Reserva de Emergência', valorAlvo: 10000, valorAtual: 4500, dataLimite: '2027-12-31' },
+    { id: '2', nome: 'Viagem de Férias', valorAlvo: 3000, valorAtual: 2100, dataLimite: '2026-12-15' },
+  ]);
 
-  // Estados dos formulários
-  const [categoriaSel, setCategoriaSel] = useState('Alimentação');
-  const [limiteInput, setLimiteInput] = useState('');
+  const [nomeMeta, setNomeMeta] = useState('');
+  const [valorAlvoMeta, setValorAlvoMeta] = useState('');
+  const [valorAtualMeta, setValorAtualMeta] = useState('');
+  const [dataLimiteMeta, setDataLimiteMeta] = useState('');
 
-  const [tituloMeta, setTituloMeta] = useState('');
-  const [valorAlvoMeta, setValorAlvoMeta] = useState('');
-  const [valorAtualMeta, setValorAtualMeta] = useState('');
-  const [dataLimiteMeta, setDataLimiteMeta] = useState('');
+  // Estados para Orçamentos
+  const [categoriaSel, setCategoriaSel] = useState('');
+  const [limiteOrcamento, setLimiteOrcamento] = useState('');
 
-  // Orçamentos
-  const handleAddOrcamento = (e: React.FormEvent) => {
-    e.preventDefault();
-    const val = parseFloat(limiteInput);
-    if (isNaN(val) || val <= 0) return;
+  // Estado para o Modal Personalizado (Substitui o prompt nativo)
+  const [modalAberto, setModalAberto] = useState(false);
+  const [metaSelecionada, setMetaSelecionada] = useState<Meta | null>(null);
+  const [tipoAcaoModal, setTipoAcaoModal] = useState<'guardar' | 'resgatar'>('guardar');
+  const [valorModal, setValorModal] = useState('');
 
-    setOrcamentos([
-      ...orcamentos,
-      { id: String(Date.now()), categoria: categoriaSel, limite: val, gasto: 0 }
-    ]);
-    setLimiteInput('');
-  };
+  // Adicionar Nova Meta
+  const handleAdicionarMeta = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nomeMeta || !valorAlvoMeta || !dataLimiteMeta) return;
 
-  const handleDeleteOrcamento = (id: string) => {
-    setOrcamentos(orcamentos.filter(o => o.id !== id));
-  };
+    const novaMeta: Meta = {
+      id: Date.now().toString(),
+      nome: nomeMeta,
+      valorAlvo: parseFloat(valorAlvoMeta),
+      valorAtual: valorAtualMeta ? parseFloat(valorAtualMeta) : 0,
+      dataLimite: dataLimiteMeta,
+    };
 
-  // Metas
-  const handleAddMeta = (e: React.FormEvent) => {
-    e.preventDefault();
-    const alvo = parseFloat(valorAlvoMeta);
-    const atual = parseFloat(valorAtualMeta) || 0;
+    setMetas([...metas, novaMeta]);
+    setNomeMeta('');
+    setValorAlvoMeta('');
+    setValorAtualMeta('');
+    setDataLimiteMeta('');
+  };
 
-    if (!tituloMeta.trim() || isNaN(alvo) || alvo <= 0 || !dataLimiteMeta) {
-      alert('Preencha os campos obrigatórios da meta.');
-      return;
-    }
+  // Remover Meta
+  const handleRemoverMeta = (id: string) => {
+    setMetas(metas.filter((m) => m.id !== id));
+  };
 
-    setMetas([...metas, {
-      id: String(Date.now()),
-      titulo: tituloMeta.trim(),
-      valorAlvo: alvo,
-      valorAtual: atual,
-      dataLimite: dataLimiteMeta
-    }]);
+  // Abrir o Modal Personalizado
+  const abrirModal = (meta: Meta, tipo: 'guardar' | 'resgatar') => {
+    setMetaSelecionada(meta);
+    setTipoAcaoModal(tipo);
+    setValorModal('');
+    setModalAberto(true);
+  };
 
-    setTituloMeta('');
-    setValorAlvoMeta('');
-    setValorAtualMeta('');
-    setDataLimiteMeta('');
-  };
+  // Confirmar ação do Modal
+  const handleConfirmarModal = (e: React.FormEvent) => {
+    e.preventDefault();
+    const val = parseFloat(valorModal);
 
-  const handleDeleteMeta = (id: string) => {
-    setMetas(metas.filter(m => m.id !== id));
-  };
+    if (isNaN(val) || val <= 0 || !metaSelecionada) return;
 
-  // Função para Adicionar ou Retirar dinheiro da Meta
-  const handleMovimentarMeta = (id: string, tipo: 'ADICIONAR' | 'RETIRAR') => {
-    const quantiaStr = prompt(
-      tipo === 'ADICIONAR' 
-        ? 'Quanto deseja guardar nesta meta? (R$)' 
-        : 'Quanto deseja resgatar desta meta? (R$)'
-    );
+    setMetas(
+      metas.map((meta) => {
+        if (meta.id === metaSelecionada.id) {
+          const novoValor =
+            tipoAcaoModal === 'guardar'
+              ? meta.valorAtual + val
+              : Math.max(0, meta.valorAtual - val);
+          return { ...meta, valorAtual: novoValor };
+        }
+        return meta;
+      })
+    );
 
-    if (!quantiaStr) return;
-    const quantia = parseFloat(quantiaStr.replace(',', '.'));
+    setModalAberto(false);
+    setMetaSelecionada(null);
+  };
 
-    if (isNaN(quantia) || quantia <= 0) {
-      alert('Informe um valor válido maior que zero.');
-      return;
-    }
+  // Definir ou atualizar Limite de Orçamento
+  const handleDefinirOrcamento = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!categoriaSel || !limiteOrcamento) return;
 
-    setMetas(metas.map(meta => {
-      if (meta.id === id) {
-        let novoValor = tipo === 'ADICIONAR' 
-          ? meta.valorAtual + quantia 
-          : meta.valorAtual - quantia;
+    const limiteNum = parseFloat(limiteOrcamento);
+    const orcamentoExistente = orcamentos.find((o) => o.categoria === categoriaSel);
 
-        if (novoValor < 0) {
-          alert('Você não pode resgatar mais do que o valor guardado.');
-          return meta;
-        }
+    if (orcamentoExistente) {
+      setOrcamentos(
+        orcamentos.map((o) =>
+          o.categoria === categoriaSel ? { ...o, limite: limiteNum } : o
+        )
+      );
+    } else {
+      setOrcamentos([
+        ...orcamentos,
+        { id: Date.now().toString(), categoria: categoriaSel, limite: limiteNum, gasto: 0 },
+      ]);
+    }
 
-        return { ...meta, valorAtual: novoValor };
-      }
-      return meta;
-    }));
-  };
+    setLimiteOrcamento('');
+  };
 
-  const calcularGastoReal = (categoria: string) => {
-    return transacoes
-      .filter(t => t.tipo === 'DESPESA' && t.categoria?.toLowerCase() === categoria.toLowerCase())
-      .reduce((soma, t) => soma + t.valor, 0);
-  };
+  const handleRemoverOrcamento = (id: string) => {
+    setOrcamentos(orcamentos.filter((o) => o.id !== id));
+  };
 
-  const calcularStatus = (gasto: number, limite: number) => {
-    const perc = Math.round((gasto / limite) * 100);
-    const restante = limite - gasto;
+  // Calcular gastos por categoria
+  const calcularGasto = (categoria: string) => {
+    return transacoes
+      .filter((t) => t.tipo === 'DESPESA' && t.categoria === categoria)
+      .reduce((acc, t) => acc + t.valor, 0);
+  };
 
-    if (perc <= 70) {
-      return { status: 'Normal', tagClass: 'bg-emerald-100 text-emerald-700 border-emerald-300', barClass: 'bg-emerald-500', perc, restante };
-    } else if (perc <= 89) {
-      return { status: 'Atenção', tagClass: 'bg-amber-100 text-amber-800 border-amber-300', barClass: 'bg-amber-500', perc, restante };
-    } else if (perc <= 100) {
-      return { status: 'Risco', tagClass: 'bg-orange-100 text-orange-800 border-orange-300', barClass: 'bg-orange-500', perc, restante };
-    } else {
-      return { status: 'Estourado', tagClass: 'bg-red-100 text-red-800 border-red-300', barClass: 'bg-red-600', perc, restante };
-    }
-  };
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* SEÇÃO 1: ORÇAMENTOS POR CATEGORIA */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <h2 className="text-lg font-bold text-slate-800">Orçamentos por Categoria</h2>
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      
-      {/* SEÇÃO DE ORÇAMENTOS */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-slate-800">Orçamentos por Categoria </h2>
-        
-        <form onSubmit={handleAddOrcamento} className="flex gap-2">
-          <select
-            value={categoriaSel}
-            onChange={e => setCategoriaSel(e.target.value)}
-            className="flex-1 border border-slate-300 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-red-600"
-          >
-            {categorias.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+        <form onSubmit={handleDefinirOrcamento} className="flex gap-2">
+          <select
+            value={categoriaSel}
+            onChange={(e) => setCategoriaSel(e.target.value)}
+            className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
+          >
+            <option value="">Selecione uma categoria...</option>
+            {categorias.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+          <input
+            type="number"
+            step="0.01"
+            placeholder="Limite R$"
+            value={limiteOrcamento}
+            onChange={(e) => setLimiteOrcamento(e.target.value)}
+            className="w-28 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
+          />
+          <button
+            type="submit"
+            className="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 transition cursor-pointer"
+          >
+            Definir
+          </button>
+        </form>
 
-          <input
-            type="number"
-            step="0.01"
-            placeholder="Limite R$"
-            value={limiteInput}
-            onChange={e => setLimiteInput(e.target.value)}
-            className="w-28 border border-slate-300 rounded-lg p-2 text-xs focus:outline-none focus:border-red-600"
-            required
-          />
+        <div className="space-y-3 pt-2">
+          {orcamentos.map((orc) => {
+            const gastoAtual = calcularGasto(orc.categoria);
+            const porc = Math.min(100, Math.round((gastoAtual / orc.limite) * 100));
+            const resta = orc.limite - gastoAtual;
 
-          <button type="submit" className="bg-slate-800 text-white px-3 py-2 rounded-lg text-xs font-semibold hover:bg-slate-900 cursor-pointer transition-colors">
-            Definir
-          </button>
-        </form>
+            let statusColor = 'bg-emerald-100 text-emerald-700';
+            let barColor = 'bg-emerald-500';
+            let statusText = 'Normal';
 
-        <div className="space-y-3 pt-2">
-          {orcamentos.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-4">Nenhum limite orçamentário definido.</p>
-          ) : (
-            orcamentos.map(orc => {
-              const gastoTotal = calcularGastoReal(orc.categoria);
-              const { status, tagClass, barClass, perc, restante } = calcularStatus(gastoTotal, orc.limite);
+            if (porc >= 80 && porc < 100) {
+              statusColor = 'bg-amber-100 text-amber-700';
+              barColor = 'bg-amber-500';
+              statusText = 'Atenção';
+            } else if (porc >= 100) {
+              statusColor = 'bg-red-100 text-red-700';
+              barColor = 'bg-red-600';
+              statusText = 'Excedido';
+            }
 
-              return (
-                <div key={orc.id} className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-semibold text-slate-700">{orc.categoria}</span>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs px-2 py-0.5 rounded-full border font-bold ${tagClass}`}>
-                        {status} ({perc}%)
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteOrcamento(orc.id)}
-                        className="text-slate-400 hover:text-red-600 text-xs font-bold px-1 transition-colors cursor-pointer"
-                        title="Excluir orçamento"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
+            return (
+              <div key={orc.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-sm text-slate-800">{orc.categoria}</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${statusColor}`}>
+                      {statusText} ({porc}%)
+                    </span>
+                    <button
+                      onClick={() => handleRemoverOrcamento(orc.id)}
+                      className="text-slate-400 hover:text-red-600 text-xs font-bold"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
 
-                  <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden my-2">
-                    <div className={`h-full ${barClass}`} style={{ width: `${Math.min(perc, 100)}%` }} />
-                  </div>
+                <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                  <div className={`${barColor} h-2 rounded-full transition-all`} style={{ width: `${porc}%` }} />
+                </div>
 
-                  <div className="flex justify-between text-xs text-slate-500">
-                    <span>Gasto: R$ {gastoTotal.toFixed(2)} / R$ {orc.limite.toFixed(2)}</span>
-                    <span className={restante < 0 ? 'text-red-600 font-bold' : ''}>
-                      {restante >= 0 ? `Resta: R$ ${restante.toFixed(2)}` : `Excedido: R$ ${Math.abs(restante).toFixed(2)}`}
-                    </span>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
+                <div className="flex justify-between text-xs text-slate-500">
+                  <span>Gasto: R$ {gastoAtual.toFixed(2)} / R$ {orc.limite.toFixed(2)}</span>
+                  <span>Resta: R$ {resta > 0 ? resta.toFixed(2) : '0.00'}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
-      {/* SEÇÃO DE METAS */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-slate-800">Metas Financeiras </h2>
-        
-        <form onSubmit={handleAddMeta} className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
-          <input
-            type="text"
-            placeholder="Nome da Meta (Ex: Carro) *"
-            value={tituloMeta}
-            onChange={e => setTituloMeta(e.target.value)}
-            className="col-span-2 border border-slate-300 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-red-600"
-            required
-          />
-          <input
-            type="number"
-            step="0.01"
-            placeholder="Valor Alvo (R$) *"
-            value={valorAlvoMeta}
-            onChange={e => setValorAlvoMeta(e.target.value)}
-            className="border border-slate-300 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-red-600"
-            required
-          />
-          <input
-            type="number"
-            step="0.01"
-            placeholder="Valor Atual (R$)"
-            value={valorAtualMeta}
-            onChange={e => setValorAtualMeta(e.target.value)}
-            className="border border-slate-300 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-red-600"
-          />
-          <input
-            type="date"
-            value={dataLimiteMeta}
-            onChange={e => setDataLimiteMeta(e.target.value)}
-            className="border border-slate-300 rounded-lg p-2 text-xs bg-white focus:outline-none focus:border-red-600"
-            required
-          />
-          <button
-            type="submit"
-              className="w-full bg-gradient-to-r from-[#c4003d] to-[#e60039] text-white font-bold py-3 rounded-xl shadow-md hover:opacity-95 transition-all duration-200 cursor-pointer text-sm"
-          >
-            Adicionar Meta
-          </button>
-        </form>
+      {/* SEÇÃO 2: METAS FINANCEIRAS */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <h2 className="text-lg font-bold text-slate-800">Metas Financeiras</h2>
 
-        <div className="space-y-3 pt-2">
-          {metas.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-4">Nenhuma meta cadastrada.</p>
-          ) : (
-            metas.map(meta => {
-              const progresso = Math.min(Math.round((meta.valorAtual / meta.valorAlvo) * 100), 100);
-              return (
-                <div key={meta.id} className="p-4 border border-slate-200 rounded-lg bg-slate-50 text-sm space-y-2">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-semibold text-slate-800">{meta.titulo}</h3>
-                      <p className="text-xs text-slate-400">Data limite: {meta.dataLimite}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
-                        {progresso}% atingido
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteMeta(meta.id)}
-                        className="text-slate-400 hover:text-red-600 text-xs font-bold px-1 transition-colors cursor-pointer"
-                        title="Excluir meta"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
+        <form onSubmit={handleAdicionarMeta} className="space-y-2">
+          <input
+            type="text"
+            placeholder="Nome da Meta (Ex: Carro Novo) *"
+            value={nomeMeta}
+            onChange={(e) => setNomeMeta(e.target.value)}
+            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Valor Alvo (R$) *"
+              value={valorAlvoMeta}
+              onChange={(e) => setValorAlvoMeta(e.target.value)}
+              className="rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
+            />
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Valor Atual (R$)"
+              value={valorAtualMeta}
+              onChange={(e) => setValorAtualMeta(e.target.value)}
+              className="rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
+            />
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="date"
+              value={dataLimiteMeta}
+              onChange={(e) => setDataLimiteMeta(e.target.value)}
+              className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
+            />
+            <button
+              type="submit"
+              className="bg-[#c4003d] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#a00032] transition cursor-pointer"
+            >
+              Adicionar Meta
+            </button>
+          </div>
+        </form>
 
-                  <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
-                    <div className="h-full bg-red-600 transition-all duration-300" style={{ width: `${progresso}%` }} />
-                  </div>
+        <div className="space-y-3 pt-2">
+          {metas.map((meta) => {
+            const porcMeta = Math.min(100, Math.round((meta.valorAtual / meta.valorAlvo) * 100));
 
-                  <div className="flex justify-between items-center text-xs text-slate-500 pt-1">
-                    <div>
-                      <span>Guardado: <strong>R$ {meta.valorAtual.toFixed(2)}</strong></span>
-                      <span className="mx-1">/</span>
-                      <span>Alvo: R$ {meta.valorAlvo.toFixed(2)}</span>
-                    </div>
+            return (
+              <div key={meta.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-semibold text-sm text-slate-800">{meta.nome}</h3>
+                    <p className="text-[10px] text-slate-400">Data limite: {meta.dataLimite}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-red-100 text-[#c4003d]">
+                      {porcMeta}% atingido
+                    </span>
+                    <button
+                      onClick={() => handleRemoverMeta(meta.id)}
+                      className="text-slate-400 hover:text-red-600 text-xs font-bold"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
 
-                    {/* Botões de Movimentação */}
-                    <div className="flex gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => handleMovimentarMeta(meta.id, 'ADICIONAR')}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded text-xs font-semibold cursor-pointer transition-colors"
-                        title="Depositar valor na meta"
-                      >
-                        + Guardar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleMovimentarMeta(meta.id, 'RETIRAR')}
-                        className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-2.5 py-1 rounded text-xs font-semibold cursor-pointer transition-colors"
-                        title="Retirar valor da meta"
-                      >
-                        - Resgatar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
+                <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-[#c4003d] h-2 rounded-full transition-all"
+                    style={{ width: `${porcMeta}%` }}
+                  />
+                </div>
 
-    </div>
-  );
+                <div className="flex justify-between items-center text-xs pt-1">
+                  <span className="text-slate-500">
+                    Guardado: <strong>R$ {meta.valorAtual.toFixed(2)}</strong> / Alvo: R${' '}
+                    {meta.valorAlvo.toFixed(2)}
+                  </span>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => abrirModal(meta, 'guardar')}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg transition cursor-pointer"
+                    >
+                      + Guardar
+                    </button>
+                    <button
+                      onClick={() => abrirModal(meta, 'resgatar')}
+                      className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-[11px] font-semibold px-2.5 py-1 rounded-lg transition cursor-pointer"
+                    >
+                      - Resgatar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* MODAL PERSONALIZADO DENTRO DA APLICAÇÃO */}
+      {modalAberto && metaSelecionada && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in duration-150">
+            <div className="border-b border-slate-100 pb-2">
+              <h3 className="text-base font-bold text-slate-800">
+                {tipoAcaoModal === 'guardar' ? 'Guardar Dinheiro' : 'Resgatar Dinheiro'}
+              </h3>
+              <p className="text-xs text-slate-500">
+                Meta: <strong>{metaSelecionada.nome}</strong>
+              </p>
+            </div>
+
+            <form onSubmit={handleConfirmarModal} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Quanto deseja {tipoAcaoModal}? (R$)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  autoFocus
+                  required
+                  placeholder="0,00"
+                  value={valorModal}
+                  onChange={(e) => setValorModal(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setModalAberto(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className={`px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md transition cursor-pointer ${
+                    tipoAcaoModal === 'guardar'
+                      ? 'bg-emerald-600 hover:bg-emerald-700'
+                      : 'bg-[#c4003d] hover:bg-[#a00032]'
+                  }`}
+                >
+                  Confirmar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };

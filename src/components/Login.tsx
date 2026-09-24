@@ -66,7 +66,7 @@ export const Login: React.FC<LoginProps> = ({
           </div>
 
           <h1 className="text-3xl font-extrabold text-white tracking-tight drop-shadow-sm">
-            ByteBank <span className="font-light text-xl">finance</span>
+            Bradesco <span className="font-light text-xl">Finanças</span>
           </h1>
           <p className="text-xs sm:text-sm text-white/80 font-medium">
             Gestão financeira simples, moderna e segura.
@@ -117,7 +117,7 @@ export const Login: React.FC<LoginProps> = ({
               <button
                 type="button"
                 onClick={onNavigateToEsqueciSenha}
-                className="text-xs font-semibold text-[#c4003d] hover:underline"
+                className="text-xs font-semibold text-[#c4003d] hover:underline cursor-pointer"
               >
                 Esqueceu sua senha?
               </button>
@@ -137,7 +137,7 @@ export const Login: React.FC<LoginProps> = ({
               <button
                 type="button"
                 onClick={onNavigateToCadastro}
-                className="font-bold text-[#c4003d] hover:underline"
+                className="font-bold text-[#c4003d] hover:underline cursor-pointer"
               >
                 Cadastre-se
               </button>

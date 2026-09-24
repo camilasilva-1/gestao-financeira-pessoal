@@ -8,6 +8,7 @@ import { OrcamentosEMetas } from './components/OrcamentosEMetas';
 import { Header } from './components/Header';
 import type { Transacao, Orcamento } from './types';
 import { CATEGORIAS_PADRAO } from './types';
+import { Relatorios } from './components/Relatorios';
 
 function App() {
   // Estado para controlar a navegação das telas
@@ -67,9 +68,10 @@ function App() {
   }
 
   // Renderização do sistema principal quando autenticado ('app')
+  // Renderização do sistema principal quando autenticado ('app')
   return (
     <div className="min-h-screen bg-slate-50 pb-12">
-      {/* Header estilo App Bradesco com degradê */}
+      {/* Header em degradê */}
       <Header 
         saldoTotal={saldoTotal} 
         onLogout={() => setTelaAtual('login')} 
@@ -77,8 +79,13 @@ function App() {
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 -mt-6">
         <main className="space-y-6">
+          {/* 1. Cards de Indicadores */}
           <Dashboard transacoes={transacoes} />
 
+          {/* 2. Evolução Mensal e Ranking */}
+          <Relatorios transacoes={transacoes} />
+
+          {/* 3. Nova Transação e Histórico */}
           <Transacoes 
             transacoes={transacoes} 
             setTransacoes={setTransacoes} 
@@ -86,6 +93,7 @@ function App() {
             adicionarCategoria={adicionarCategoria}
           />
           
+          {/* 4. Orçamentos e Metas */}
           <OrcamentosEMetas 
             transacoes={transacoes} 
             orcamentos={orcamentos} 
