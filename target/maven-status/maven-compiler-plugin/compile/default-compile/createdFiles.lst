@@ -1,5 +1,15 @@
+gestaofinanceira\project\repository\OrcamentoRepository.class
 gestaofinanceira\project\controller\TestController.class
-gestaofinanceira\project\ProjectApplication.class
-gestaofinanceira\project\service\TransacaoService.class
 gestaofinanceira\project\model\Transacao.class
+gestaofinanceira\project\repository\CategoriaRepository.class
+gestaofinanceira\project\repository\TransacaoRepository.class
+gestaofinanceira\project\ProjectApplication.class
+gestaofinanceira\project\controller\UsuarioController.class
+gestaofinanceira\project\enums\Tipo.class
+gestaofinanceira\project\service\TransacaoService.class
+gestaofinanceira\project\model\Orcamento.class
+gestaofinanceira\project\enums\Categoria.class
+gestaofinanceira\project\model\Categoria.class
+gestaofinanceira\project\model\Usuario.class
+gestaofinanceira\project\repository\UsuarioRepository.class
 gestaofinanceira\project\controller\TransacaoController.class

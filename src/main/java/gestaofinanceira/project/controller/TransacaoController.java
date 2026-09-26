@@ -1,10 +1,10 @@
 package gestaofinanceira.project.controller;
 
-import gestaofinanceira.project.enums.Categoria;
+
 import gestaofinanceira.project.model.Transacao;
+import gestaofinanceira.project.model.Categoria;
 import gestaofinanceira.project.service.TransacaoService;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -23,7 +23,7 @@ public class TransacaoController {
         return service.listar();
     }
 
-    // Buscar transação por índice (simulação de ID)
+    // Buscar transação por ID
     @GetMapping("/{id}")
     public Transacao buscar(@PathVariable int id) {
         return service.buscar(id);
@@ -48,9 +48,9 @@ public class TransacaoController {
         return "Transação removida com sucesso!";
     }
 
-    // Atualizar categoria de uma transação (3.2 Classificação de Gastos)
-    @PutMapping("/{id}/categoria")
-    public Transacao atualizarCategoria(@PathVariable int id, @RequestParam Categoria categoria) {
-        return service.atualizarCategoria(id, categoria);
+    // Atualizar categoria de uma transação
+    @PutMapping("/{id}/categoria/{idCategoria}")
+    public Transacao atualizarCategoria(@PathVariable int id, @PathVariable int idCategoria) {
+        return service.atualizarCategoria(id, idCategoria);
     }
 }

@@ -1,5 +1,15 @@
 C:\Users\nasci\OneDrive\Área de Trabalho\project\src\main\java\gestaofinanceira\project\controller\TestController.java
 C:\Users\nasci\OneDrive\Área de Trabalho\project\src\main\java\gestaofinanceira\project\controller\TransacaoController.java
+C:\Users\nasci\OneDrive\Área de Trabalho\project\src\main\java\gestaofinanceira\project\controller\UsuarioController.java
+C:\Users\nasci\OneDrive\Área de Trabalho\project\src\main\java\gestaofinanceira\project\enums\Categoria.java
+C:\Users\nasci\OneDrive\Área de Trabalho\project\src\main\java\gestaofinanceira\project\enums\Tipo.java
+C:\Users\nasci\OneDrive\Área de Trabalho\project\src\main\java\gestaofinanceira\project\model\Categoria.java
+C:\Users\nasci\OneDrive\Área de Trabalho\project\src\main\java\gestaofinanceira\project\model\Orcamento.java
 C:\Users\nasci\OneDrive\Área de Trabalho\project\src\main\java\gestaofinanceira\project\model\Transacao.java
+C:\Users\nasci\OneDrive\Área de Trabalho\project\src\main\java\gestaofinanceira\project\model\Usuario.java
 C:\Users\nasci\OneDrive\Área de Trabalho\project\src\main\java\gestaofinanceira\project\ProjectApplication.java
+C:\Users\nasci\OneDrive\Área de Trabalho\project\src\main\java\gestaofinanceira\project\repository\CategoriaRepository.java
+C:\Users\nasci\OneDrive\Área de Trabalho\project\src\main\java\gestaofinanceira\project\repository\OrcamentoRepository.java
+C:\Users\nasci\OneDrive\Área de Trabalho\project\src\main\java\gestaofinanceira\project\repository\TransacaoRepository.java
+C:\Users\nasci\OneDrive\Área de Trabalho\project\src\main\java\gestaofinanceira\project\repository\UsuarioRepository.java
 C:\Users\nasci\OneDrive\Área de Trabalho\project\src\main\java\gestaofinanceira\project\service\TransacaoService.java

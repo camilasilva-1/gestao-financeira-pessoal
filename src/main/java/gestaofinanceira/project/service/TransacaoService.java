@@ -1,63 +1,83 @@
 package gestaofinanceira.project.service;
 
-import gestaofinanceira.project.enums.Categoria;
 import gestaofinanceira.project.model.Transacao;
+import gestaofinanceira.project.model.Categoria;
+import gestaofinanceira.project.repository.TransacaoRepository;
+import gestaofinanceira.project.repository.CategoriaRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
 public class TransacaoService {
 
-    private final List<Transacao> transacoes = new ArrayList<>();
+    private final TransacaoRepository transacaoRepository;
+    private final CategoriaRepository categoriaRepository;
 
-    // Listar todas
+    public TransacaoService(TransacaoRepository transacaoRepository, CategoriaRepository categoriaRepository) {
+        this.transacaoRepository = transacaoRepository;
+        this.categoriaRepository = categoriaRepository;
+    }
+
+    // Listar todas as transações
     public List<Transacao> listar() {
-        return transacoes;
+        return transacaoRepository.findAll();
     }
 
-    // Buscar por índice (simulação de ID)
+    // Buscar transação por ID
     public Transacao buscar(int id) {
-        if (id < 0 || id >= transacoes.size()) {
-            throw new IllegalArgumentException("Transação não encontrada");
-        }
-        return transacoes.get(id);
+        return transacaoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transação não encontrada"));
     }
 
-    // Adicionar nova
+    // Adicionar nova transação
     public Transacao adicionar(Transacao t) {
-        if (t.getValor() <= 0) {
-            throw new IllegalArgumentException("Valor deve ser maior que zero");
-        }
-        transacoes.add(t);
-        return t;
+        validarTransacao(t);
+        return transacaoRepository.save(t);
     }
 
-    // Editar existente
+    // Editar transação existente
     public Transacao editar(int id, Transacao nova) {
-        if (id < 0 || id >= transacoes.size()) {
-            throw new IllegalArgumentException("Transação não encontrada");
-        }
-        if (nova.getValor() <= 0) {
-            throw new IllegalArgumentException("Valor deve ser maior que zero");
-        }
-        transacoes.set(id, nova);
-        return nova;
+        Transacao existente = buscar(id);
+        validarTransacao(nova);
+
+        // Atualiza os campos
+        existente.setDescricao(nova.getDescricao());
+        existente.setValor(nova.getValor());
+        existente.setDataTransacao(nova.getDataTransacao());
+        existente.setTipo(nova.getTipo());
+        existente.setEstabelecimento(nova.getEstabelecimento());
+        existente.setRecorrencia(nova.getRecorrencia());
+        existente.setUsuario(nova.getUsuario());
+        existente.setCategoria(nova.getCategoria());
+
+        return transacaoRepository.save(existente);
     }
 
-    // Remover
+    // Remover transação
     public void remover(int id) {
-        if (id < 0 || id >= transacoes.size()) {
-            throw new IllegalArgumentException("Transação não encontrada");
-        }
-        transacoes.remove(id);
+        Transacao existente = buscar(id);
+        transacaoRepository.delete(existente);
     }
 
-    // NOVO: Atualizar categoria
-    public Transacao atualizarCategoria(int id, Categoria categoria) {
-        Transacao t = buscar(id);
-        t.setCategoria(categoria);
-        return t;
+    // Atualizar categoria de uma transação
+    public Transacao atualizarCategoria(int idTransacao, int idCategoria) {
+        Transacao transacao = buscar(idTransacao);
+        Categoria categoria = categoriaRepository.findById(idCategoria)
+                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+
+        transacao.setCategoria(categoria);
+        return transacaoRepository.save(transacao);
+    }
+
+    // Método auxiliar para validação
+    private void validarTransacao(Transacao t) {
+        if (t.getValor() == null || t.getValor().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Valor da transação deve ser maior que zero");
+        }
+        if (t.getUsuario() == null) {
+            throw new RuntimeException("Usuário é obrigatório");
+        }
     }
 }
