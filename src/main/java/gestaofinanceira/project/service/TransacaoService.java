@@ -3,6 +3,7 @@ package gestaofinanceira.project.service;
 import gestaofinanceira.project.enums.Categoria;
 import gestaofinanceira.project.model.Transacao;
 import org.springframework.stereotype.Service;
+import gestaofinanceira.project.exception.TransacaoNotFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,12 +20,12 @@ public class TransacaoService {
 
     // Buscar por índice (simulação de ID)
     public Transacao buscar(int id) {
-        if (id < 0 || id >= transacoes.size()) {
-            throw new IllegalArgumentException("Transação não encontrada");
-        }
-        return transacoes.get(id);
+    if (id < 0 || id >= transacoes.size()) {
+        throw new TransacaoNotFoundException("Transação não encontrada");
     }
 
+    return transacoes.get(id);
+}
     // Adicionar nova
     public Transacao adicionar(Transacao t) {
         if (t.getValor() <= 0) {
