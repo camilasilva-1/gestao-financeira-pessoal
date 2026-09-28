@@ -1,5 +1,6 @@
 package gestaofinanceira.project.controller;
 
+import jakarta.validation.Valid;
 import gestaofinanceira.project.enums.Categoria;
 import gestaofinanceira.project.model.Transacao;
 import gestaofinanceira.project.service.TransacaoService;
@@ -31,7 +32,7 @@ public class TransacaoController {
 
     // Adicionar nova transação
     @PostMapping
-    public Transacao adicionar(@RequestBody Transacao t) {
+    public Transacao adicionar(@RequestBody @Valid Transacao t) {
         return service.adicionar(t);
     }
 
