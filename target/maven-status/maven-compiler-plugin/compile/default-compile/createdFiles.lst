@@ -3,8 +3,10 @@ gestaofinanceira\project\controller\TestController.class
 gestaofinanceira\project\model\Transacao.class
 gestaofinanceira\project\repository\CategoriaRepository.class
 gestaofinanceira\project\repository\TransacaoRepository.class
+gestaofinanceira\project\controller\CategoriaController.class
 gestaofinanceira\project\ProjectApplication.class
 gestaofinanceira\project\controller\UsuarioController.class
+gestaofinanceira\project\service\CategoriaService.class
 gestaofinanceira\project\enums\Tipo.class
 gestaofinanceira\project\service\TransacaoService.class
 gestaofinanceira\project\model\Orcamento.class
