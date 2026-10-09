@@ -5,6 +5,7 @@ import gestaofinanceira.project.model.Categoria;
 import gestaofinanceira.project.repository.TransacaoRepository;
 import gestaofinanceira.project.repository.CategoriaRepository;
 import org.springframework.stereotype.Service;
+import gestaofinanceira.project.exception.TransacaoNotFoundException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -27,8 +28,8 @@ public class TransacaoService {
 
     // Buscar transação por ID
     public Transacao buscar(int id) {
-        return transacaoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Transação não encontrada"));
+    return transacaoRepository.findById(id)
+            .orElseThrow(() -> new TransacaoNotFoundException("Transação não encontrada"));
     }
 
     // Adicionar nova transação
