@@ -1,8 +1,7 @@
 package gestaofinanceira.project.controller;
 
 import gestaofinanceira.project.model.Usuario;
-import gestaofinanceira.project.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import gestaofinanceira.project.service.UsuarioService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,32 +10,35 @@ import java.util.List;
 @RequestMapping("/usuarios")
 public class UsuarioController {
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioService usuarioService;
+
+    public UsuarioController(UsuarioService usuarioService) {
+        this.usuarioService = usuarioService;
+    }
 
     @PostMapping
     public Usuario criar(@RequestBody Usuario usuario) {
-        return usuarioRepository.save(usuario);
+        return usuarioService.criar(usuario);
     }
 
     @GetMapping
     public List<Usuario> listar() {
-        return usuarioRepository.findAll();
+        return usuarioService.listar();
     }
 
     @GetMapping("/{id}")
     public Usuario buscarPorId(@PathVariable Integer id) {
-        return usuarioRepository.findById(id).orElse(null);
+        return usuarioService.buscarPorId(id);
     }
 
     @PutMapping("/{id}")
     public Usuario atualizar(@PathVariable Integer id, @RequestBody Usuario usuario) {
-        usuario.setIdUsuario(id);
-        return usuarioRepository.save(usuario);
+        return usuarioService.atualizar(id, usuario);
     }
 
     @DeleteMapping("/{id}")
-    public void deletar(@PathVariable Integer id) {
-        usuarioRepository.deleteById(id);
+    public String deletar(@PathVariable Integer id) {
+        usuarioService.deletar(id);
+        return "Usuário removido com sucesso!";
     }
 }
