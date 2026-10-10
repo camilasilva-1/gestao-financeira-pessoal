@@ -1,9 +1,12 @@
 package gestaofinanceira.project.service;
 
-import gestaofinanceira.project.model.Transacao;
+import gestaofinanceira.project.exception.TransacaoNotFoundException;
 import gestaofinanceira.project.model.Categoria;
-import gestaofinanceira.project.repository.TransacaoRepository;
+import gestaofinanceira.project.model.Transacao;
+import gestaofinanceira.project.model.Usuario;
 import gestaofinanceira.project.repository.CategoriaRepository;
+import gestaofinanceira.project.repository.TransacaoRepository;
+import gestaofinanceira.project.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -14,35 +17,38 @@ public class TransacaoService {
 
     private final TransacaoRepository transacaoRepository;
     private final CategoriaRepository categoriaRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    public TransacaoService(TransacaoRepository transacaoRepository, CategoriaRepository categoriaRepository) {
+    public TransacaoService(
+            TransacaoRepository transacaoRepository,
+            CategoriaRepository categoriaRepository,
+            UsuarioRepository usuarioRepository
+    ) {
         this.transacaoRepository = transacaoRepository;
         this.categoriaRepository = categoriaRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
-    // Listar todas as transações
     public List<Transacao> listar() {
         return transacaoRepository.findAll();
     }
 
-    // Buscar transação por ID
     public Transacao buscar(int id) {
         return transacaoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Transação não encontrada"));
+                .orElseThrow(() -> new TransacaoNotFoundException("Transação não encontrada"));
     }
 
-    // Adicionar nova transação
     public Transacao adicionar(Transacao t) {
         validarTransacao(t);
+        carregarRelacionamentos(t);
         return transacaoRepository.save(t);
     }
 
-    // Editar transação existente
     public Transacao editar(int id, Transacao nova) {
         Transacao existente = buscar(id);
         validarTransacao(nova);
+        carregarRelacionamentos(nova);
 
-        // Atualiza os campos
         existente.setDescricao(nova.getDescricao());
         existente.setValor(nova.getValor());
         existente.setDataTransacao(nova.getDataTransacao());
@@ -55,13 +61,11 @@ public class TransacaoService {
         return transacaoRepository.save(existente);
     }
 
-    // Remover transação
     public void remover(int id) {
         Transacao existente = buscar(id);
         transacaoRepository.delete(existente);
     }
 
-    // Atualizar categoria de uma transação
     public Transacao atualizarCategoria(int idTransacao, int idCategoria) {
         Transacao transacao = buscar(idTransacao);
         Categoria categoria = categoriaRepository.findById(idCategoria)
@@ -71,13 +75,26 @@ public class TransacaoService {
         return transacaoRepository.save(transacao);
     }
 
-    // Método auxiliar para validação
+    private void carregarRelacionamentos(Transacao t) {
+        Usuario usuario = usuarioRepository.findById(t.getUsuario().getIdUsuario())
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        Categoria categoria = categoriaRepository.findById(t.getCategoria().getIdCategoria())
+                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+
+        t.setUsuario(usuario);
+        t.setCategoria(categoria);
+    }
+
     private void validarTransacao(Transacao t) {
         if (t.getValor() == null || t.getValor().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Valor da transação deve ser maior que zero");
+            throw new IllegalArgumentException("Valor da transação deve ser maior que zero");
         }
         if (t.getUsuario() == null) {
-            throw new RuntimeException("Usuário é obrigatório");
+            throw new IllegalArgumentException("Usuário é obrigatório");
+        }
+        if (t.getCategoria() == null) {
+            throw new IllegalArgumentException("Categoria é obrigatória");
         }
     }
 }
