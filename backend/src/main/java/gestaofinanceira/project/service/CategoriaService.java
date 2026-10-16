@@ -12,6 +12,7 @@ public class CategoriaService {
 
     private final CategoriaRepository categoriaRepository;
 
+    // Lista fixa de categorias padrão
     private static final List<String> CATEGORIAS_PADRAO = List.of(
             "Alimentação",
             "Moradia",
@@ -27,6 +28,7 @@ public class CategoriaService {
             "Outros"
     );
 
+    // Sugestões automáticas de categoria com base no estabelecimento
     private static final Map<String, String> sugestoes = Map.of(
             "McDonald's", "Alimentação",
             "Netflix", "Assinaturas",
@@ -38,10 +40,12 @@ public class CategoriaService {
         this.categoriaRepository = categoriaRepository;
     }
 
+    // Listar todas as categorias
     public List<Categoria> listarTodas() {
         return categoriaRepository.findAll();
     }
 
+    // Salvar nova categoria (apenas se for uma das 12 padrão)
     public Categoria salvar(Categoria categoria) {
         if (!CATEGORIAS_PADRAO.contains(categoria.getNome())) {
             throw new IllegalArgumentException("Só são permitidas as 12 categorias padrão");
@@ -58,6 +62,7 @@ public class CategoriaService {
         return categoriaRepository.save(categoria);
     }
 
+    // Atualizar categoria (não permite alterar categorias padrão)
     public Categoria atualizar(Integer id, Categoria categoria) {
         Categoria existente = buscarPorId(id);
 
@@ -69,6 +74,7 @@ public class CategoriaService {
         return categoriaRepository.save(existente);
     }
 
+    // Deletar categoria (não permite excluir categorias padrão)
     public void deletar(Integer id) {
         Categoria categoria = buscarPorId(id);
 
@@ -79,11 +85,13 @@ public class CategoriaService {
         categoriaRepository.deleteById(id);
     }
 
+    // Buscar categoria por ID
     public Categoria buscarPorId(Integer id) {
         return categoriaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
     }
 
+    // Sugere categoria com base no nome do estabelecimento
     public String sugerirCategoria(String estabelecimento) {
         return sugestoes.entrySet().stream()
                 .filter(entry -> estabelecimento.toLowerCase().contains(entry.getKey().toLowerCase()))

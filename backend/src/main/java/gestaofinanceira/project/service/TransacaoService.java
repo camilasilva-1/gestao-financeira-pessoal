@@ -10,6 +10,7 @@ import gestaofinanceira.project.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -28,6 +29,10 @@ public class TransacaoService {
         this.categoriaRepository = categoriaRepository;
         this.usuarioRepository = usuarioRepository;
     }
+
+    // ============================
+    // CRUD BÁSICO
+    // ============================
 
     public List<Transacao> listar() {
         return transacaoRepository.findAll();
@@ -74,6 +79,43 @@ public class TransacaoService {
         transacao.setCategoria(categoria);
         return transacaoRepository.save(transacao);
     }
+
+    // ============================
+    // MÉTODOS AUXILIARES PARA INSIGHTS
+    // ============================
+
+    // Calcular gasto por categoria em determinado mês
+    public BigDecimal calcularGastoPorCategoria(Integer usuarioId, String nomeCategoria, int mes) {
+        LocalDate inicio = LocalDate.of(LocalDate.now().getYear(), mes, 1);
+        LocalDate fim = inicio.withDayOfMonth(inicio.lengthOfMonth());
+
+        List<Object[]> gastos = transacaoRepository.gastosPorCategoria(usuarioId.longValue(), inicio, fim);
+
+        return gastos.stream()
+                .filter(obj -> obj[0].equals(nomeCategoria))
+                .map(obj -> (BigDecimal) obj[1])
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    // Calcular receita total do mês
+    public BigDecimal calcularReceitaMensal(Integer usuarioId, int mes) {
+        LocalDate inicio = LocalDate.of(LocalDate.now().getYear(), mes, 1);
+        LocalDate fim = inicio.withDayOfMonth(inicio.lengthOfMonth());
+
+        return transacaoRepository.somaReceitasPorPeriodo(usuarioId.longValue(), inicio, fim);
+    }
+
+    // Calcular despesa total do mês
+    public BigDecimal calcularDespesaMensal(Integer usuarioId, int mes) {
+        LocalDate inicio = LocalDate.of(LocalDate.now().getYear(), mes, 1);
+        LocalDate fim = inicio.withDayOfMonth(inicio.lengthOfMonth());
+
+        return transacaoRepository.somaDespesasPorPeriodo(usuarioId.longValue(), inicio, fim);
+    }
+
+    // ============================
+    // MÉTODOS INTERNOS DE VALIDAÇÃO E CARREGAMENTO
+    // ============================
 
     private void carregarRelacionamentos(Transacao t) {
         Usuario usuario = usuarioRepository.findById(t.getUsuario().getIdUsuario())
