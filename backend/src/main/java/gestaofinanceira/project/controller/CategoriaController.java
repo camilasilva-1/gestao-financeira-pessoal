@@ -2,19 +2,23 @@ package gestaofinanceira.project.controller;
 
 import gestaofinanceira.project.model.Categoria;
 import gestaofinanceira.project.service.CategoriaService;
+import gestaofinanceira.project.service.TransacaoService;
+import gestaofinanceira.project.dto.RankingCategoriaDTO;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/categorias")
-@CrossOrigin(origins = "http://localhost:3000") 
+@CrossOrigin(origins = "http://localhost:3000")
 public class CategoriaController {
 
     private final CategoriaService categoriaService;
+    private final TransacaoService transacaoService;
 
-    public CategoriaController(CategoriaService categoriaService) {
+    public CategoriaController(CategoriaService categoriaService, TransacaoService transacaoService) {
         this.categoriaService = categoriaService;
+        this.transacaoService = transacaoService;
     }
 
     @GetMapping
@@ -45,5 +49,15 @@ public class CategoriaController {
     @GetMapping("/sugerir")
     public String sugerirCategoria(@RequestParam String estabelecimento) {
         return categoriaService.sugerirCategoria(estabelecimento);
+    }
+
+    // ============================
+    // RANKING DE CATEGORIAS
+    // ============================
+    @GetMapping("/ranking/{usuarioId}")
+    public List<RankingCategoriaDTO> rankingCategorias(
+            @PathVariable Integer usuarioId,
+            @RequestParam int mes) {
+        return transacaoService.gerarRankingCategorias(usuarioId, mes);
     }
 }

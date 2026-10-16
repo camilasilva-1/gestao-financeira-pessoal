@@ -7,11 +7,14 @@ import gestaofinanceira.project.model.Usuario;
 import gestaofinanceira.project.repository.CategoriaRepository;
 import gestaofinanceira.project.repository.TransacaoRepository;
 import gestaofinanceira.project.repository.UsuarioRepository;
+import gestaofinanceira.project.dto.RankingCategoriaDTO;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TransacaoService {
@@ -84,7 +87,6 @@ public class TransacaoService {
     // MÉTODOS AUXILIARES PARA INSIGHTS
     // ============================
 
-    // Calcular gasto por categoria em determinado mês
     public BigDecimal calcularGastoPorCategoria(Integer usuarioId, String nomeCategoria, int mes) {
         LocalDate inicio = LocalDate.of(LocalDate.now().getYear(), mes, 1);
         LocalDate fim = inicio.withDayOfMonth(inicio.lengthOfMonth());
@@ -97,7 +99,6 @@ public class TransacaoService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    // Calcular receita total do mês
     public BigDecimal calcularReceitaMensal(Integer usuarioId, int mes) {
         LocalDate inicio = LocalDate.of(LocalDate.now().getYear(), mes, 1);
         LocalDate fim = inicio.withDayOfMonth(inicio.lengthOfMonth());
@@ -105,12 +106,72 @@ public class TransacaoService {
         return transacaoRepository.somaReceitasPorPeriodo(usuarioId.longValue(), inicio, fim);
     }
 
-    // Calcular despesa total do mês
     public BigDecimal calcularDespesaMensal(Integer usuarioId, int mes) {
         LocalDate inicio = LocalDate.of(LocalDate.now().getYear(), mes, 1);
         LocalDate fim = inicio.withDayOfMonth(inicio.lengthOfMonth());
 
         return transacaoRepository.somaDespesasPorPeriodo(usuarioId.longValue(), inicio, fim);
+    }
+
+    // ============================
+    // RANKING DE CATEGORIAS
+    // ============================
+    public List<RankingCategoriaDTO> gerarRankingCategorias(Integer usuarioId, int mes) {
+        LocalDate inicio = LocalDate.of(LocalDate.now().getYear(), mes, 1);
+        LocalDate fim = inicio.withDayOfMonth(inicio.lengthOfMonth());
+
+        List<Object[]> gastos = transacaoRepository.gastosPorCategoria(usuarioId.longValue(), inicio, fim);
+
+        // Se não houver transações, retorna todas as categorias padrão com valor 0
+        if (gastos == null || gastos.isEmpty()) {
+            List<String> categoriasPadrao = List.of(
+                    "Alimentação", "Moradia", "Transporte", "Saúde", "Educação",
+                    "Lazer", "Compras", "Investimentos", "Assinaturas",
+                    "Impostos", "Contas e Serviços", "Outros"
+            );
+
+            return categoriasPadrao.stream()
+                    .map(nome -> new RankingCategoriaDTO(nome, BigDecimal.ZERO, 0.0))
+                    .collect(Collectors.toList());
+        }
+
+        // Soma total de gastos do mês
+        BigDecimal total = gastos.stream()
+                .map(obj -> (BigDecimal) obj[1])
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Converte os gastos existentes
+        List<RankingCategoriaDTO> ranking = gastos.stream()
+                .map(obj -> {
+                    String categoria = (String) obj[0];
+                    BigDecimal valor = (BigDecimal) obj[1];
+                    double percentual = total.compareTo(BigDecimal.ZERO) > 0
+                            ? valor.divide(total, 4, RoundingMode.HALF_UP)
+                                   .multiply(BigDecimal.valueOf(100))
+                                   .doubleValue()
+                            : 0.0;
+                    return new RankingCategoriaDTO(categoria, valor, percentual);
+                })
+                .collect(Collectors.toList());
+
+        // Adiciona categorias padrão que não apareceram (com valor 0)
+        List<String> categoriasPadrao = List.of(
+                "Alimentação", "Moradia", "Transporte", "Saúde", "Educação",
+                "Lazer", "Compras", "Investimentos", "Assinaturas",
+                "Impostos", "Contas e Serviços", "Outros"
+        );
+
+        categoriasPadrao.forEach(nome -> {
+            boolean existe = ranking.stream().anyMatch(r -> r.getCategoria().equals(nome));
+            if (!existe) {
+                ranking.add(new RankingCategoriaDTO(nome, BigDecimal.ZERO, 0.0));
+            }
+        });
+
+        // Ordena
+        ranking.sort((a, b) -> b.getValor().compareTo(a.getValor()));
+
+        return ranking;
     }
 
     // ============================
