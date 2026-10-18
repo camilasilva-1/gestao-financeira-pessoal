@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.time.LocalDate;
 
 @Service
 public class OrcamentoService {
@@ -62,17 +63,23 @@ public class OrcamentoService {
         orcamentoRepository.delete(existente);
     }
 
-    // Calcula o total gasto da categoria vinculada ao orçamento
+    // Calcula o total gasto da categoria vinculada ao orçamento no mês atual
     public BigDecimal calcularGasto(Integer idOrcamento) {
         Orcamento orcamento = buscar(idOrcamento);
 
+        LocalDate hoje = LocalDate.now();
+        LocalDate inicioMes = hoje.withDayOfMonth(1);
+        LocalDate fimMes = hoje.withDayOfMonth(hoje.lengthOfMonth());
+
         List<Transacao> despesas =
-                transacaoRepository.findByCategoriaAndTipo(
+                transacaoRepository.findByCategoriaAndTipoAndDataTransacaoBetween(
                         orcamento.getCategoria(),
-                        Tipo.DESPESA
-                );
+                        Tipo.DESPESA,
+                        inicioMes,
+                        fimMes);
 
         BigDecimal totalGasto = BigDecimal.ZERO;
+
         for (Transacao transacao : despesas) {
             totalGasto = totalGasto.add(transacao.getValor());
         }
