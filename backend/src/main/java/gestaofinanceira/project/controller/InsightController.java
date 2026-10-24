@@ -1,6 +1,7 @@
 package gestaofinanceira.project.controller;
 
 import gestaofinanceira.project.dto.InsightDTO;
+import gestaofinanceira.project.dto.ScoreFinanceiroDTO;
 import gestaofinanceira.project.service.InsightService;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,5 +27,11 @@ public class InsightController {
     @GetMapping("/{usuarioId}/alertas")
     public List<InsightDTO> listarAlertas(@PathVariable Integer usuarioId) {
         return service.gerarAlertas(usuarioId);
+    }
+
+    // Retorna o score financeiro do usuário
+    @GetMapping("/{usuarioId}/score")
+    public ScoreFinanceiroDTO obterScore(@PathVariable Integer usuarioId) {
+        return service.calcularScore(usuarioId);
     }
 }
