@@ -1,5 +1,8 @@
 package gestaofinanceira.project.service;
 
+import gestaofinanceira.project.dto.RankingCategoriaDTO;
+import gestaofinanceira.project.dto.TransacaoDTO;
+import gestaofinanceira.project.enums.Tipo;
 import gestaofinanceira.project.exception.TransacaoNotFoundException;
 import gestaofinanceira.project.model.Categoria;
 import gestaofinanceira.project.model.Transacao;
@@ -7,7 +10,6 @@ import gestaofinanceira.project.model.Usuario;
 import gestaofinanceira.project.repository.CategoriaRepository;
 import gestaofinanceira.project.repository.TransacaoRepository;
 import gestaofinanceira.project.repository.UsuarioRepository;
-import gestaofinanceira.project.dto.RankingCategoriaDTO;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -34,11 +36,15 @@ public class TransacaoService {
     }
 
     // ============================
-    // CRUD BÁSICO
+    // CRUD BÁSICO E SUPORTE AO FRONT
     // ============================
 
     public List<Transacao> listar() {
         return transacaoRepository.findAll();
+    }
+
+    public List<Transacao> listarPorUsuario(int usuarioId) {
+        return transacaoRepository.findByUsuarioIdUsuario(usuarioId);
     }
 
     public Transacao buscar(int id) {
@@ -49,6 +55,34 @@ public class TransacaoService {
     public Transacao adicionar(Transacao t) {
         validarTransacao(t);
         carregarRelacionamentos(t);
+        return transacaoRepository.save(t);
+    }
+
+    // Método para salvar o DTO enviado pelo React
+    public Transacao adicionarDTO(TransacaoDTO dto) {
+        Transacao t = new Transacao();
+        t.setDescricao(dto.getDescricao());
+
+        if (dto.getValor() != null) {
+            t.setValor(BigDecimal.valueOf(dto.getValor()));
+        }
+
+        if (dto.getTipo() != null) {
+            t.setTipo(Tipo.valueOf(dto.getTipo().toUpperCase()));
+        }
+
+        t.setDataTransacao(dto.getDataTransacao() != null ? dto.getDataTransacao() : LocalDate.now());
+
+        Usuario u = usuarioRepository.findById(dto.getUsuarioId())
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com ID: " + dto.getUsuarioId()));
+
+        Categoria c = categoriaRepository.findById(dto.getCategoriaId())
+                .orElseThrow(() -> new RuntimeException("Categoria não encontrada com ID: " + dto.getCategoriaId()));
+
+        t.setUsuario(u);
+        t.setCategoria(c);
+
+        validarTransacao(t);
         return transacaoRepository.save(t);
     }
 
@@ -116,13 +150,13 @@ public class TransacaoService {
     // ============================
     // RANKING DE CATEGORIAS
     // ============================
+
     public List<RankingCategoriaDTO> gerarRankingCategorias(Integer usuarioId, int mes) {
         LocalDate inicio = LocalDate.of(LocalDate.now().getYear(), mes, 1);
         LocalDate fim = inicio.withDayOfMonth(inicio.lengthOfMonth());
 
         List<Object[]> gastos = transacaoRepository.gastosPorCategoria(usuarioId.longValue(), inicio, fim);
 
-        // Se não houver transações, retorna todas as categorias padrão com valor 0
         if (gastos == null || gastos.isEmpty()) {
             List<String> categoriasPadrao = List.of(
                     "Alimentação", "Moradia", "Transporte", "Saúde", "Educação",
@@ -135,12 +169,10 @@ public class TransacaoService {
                     .collect(Collectors.toList());
         }
 
-        // Soma total de gastos do mês
         BigDecimal total = gastos.stream()
                 .map(obj -> (BigDecimal) obj[1])
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Converte os gastos existentes
         List<RankingCategoriaDTO> ranking = gastos.stream()
                 .map(obj -> {
                     String categoria = (String) obj[0];
@@ -154,7 +186,6 @@ public class TransacaoService {
                 })
                 .collect(Collectors.toList());
 
-        // Adiciona categorias padrão que não apareceram (com valor 0)
         List<String> categoriasPadrao = List.of(
                 "Alimentação", "Moradia", "Transporte", "Saúde", "Educação",
                 "Lazer", "Compras", "Investimentos", "Assinaturas",
@@ -168,14 +199,13 @@ public class TransacaoService {
             }
         });
 
-        // Ordena
         ranking.sort((a, b) -> b.getValor().compareTo(a.getValor()));
 
         return ranking;
     }
 
     // ============================
-    // MÉTODOS INTERNOS DE VALIDAÇÃO E CARREGAMENTO
+    // MÉTODOS INTERNOS DE VALIDAÇÃO
     // ============================
 
     private void carregarRelacionamentos(Transacao t) {

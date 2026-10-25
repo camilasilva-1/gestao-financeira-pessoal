@@ -1,37 +1,41 @@
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\controller\CategoriaController.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\controller\InsightController.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\controller\MetaFinanceiraController.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\controller\OrcamentoController.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\controller\RelatorioController.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\controller\TestController.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\controller\TransacaoController.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\controller\UsuarioController.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\dto\DistribuicaoGastosDTO.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\dto\EvolucaoMensalDTO.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\dto\InsightDTO.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\dto\MetaFinanceiraDTO.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\dto\RankingCategoriaDTO.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\dto\RelatorioMensalDTO.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\enums\Categoria.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\enums\Tipo.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\exception\ErrorResponse.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\exception\GlobalExceptionHandler.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\exception\TransacaoNotFoundException.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\model\Categoria.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\model\MetaFinanceira.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\model\Orcamento.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\model\Transacao.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\model\Usuario.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\ProjectApplication.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\repository\CategoriaRepository.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\repository\MetaFinanceiraRepository.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\repository\OrcamentoRepository.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\repository\TransacaoRepository.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\repository\UsuarioRepository.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\service\CategoriaService.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\service\InsightService.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\service\MetaFinanceiraService.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\service\OrcamentoService.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\service\RelatorioService.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\service\TransacaoService.java
-C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\service\UsuarioService.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\controller\CategoriaController.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\controller\InsightController.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\controller\MetaFinanceiraController.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\controller\OrcamentoController.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\controller\Regra503020Controller.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\controller\RelatorioController.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\controller\TestController.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\controller\TransacaoController.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\controller\UsuarioController.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\dto\DistribuicaoGastosDTO.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\dto\EvolucaoMensalDTO.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\dto\InsightDTO.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\dto\MetaFinanceiraDTO.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\dto\RankingCategoriaDTO.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\dto\Regra503020DTO.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\dto\RelatorioMensalDTO.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\dto\TransacaoDTO.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\enums\Categoria.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\enums\Tipo.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\exception\ErrorResponse.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\exception\GlobalExceptionHandler.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\exception\TransacaoNotFoundException.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\model\Categoria.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\model\MetaFinanceira.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\model\Orcamento.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\model\Transacao.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\model\Usuario.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\ProjectApplication.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\repository\CategoriaRepository.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\repository\MetaFinanceiraRepository.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\repository\OrcamentoRepository.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\repository\TransacaoRepository.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\repository\UsuarioRepository.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\service\CategoriaService.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\service\InsightService.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\service\MetaFinanceiraService.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\service\OrcamentoService.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\service\Regra503020Service.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\service\RelatorioService.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\service\TransacaoService.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\service\UsuarioService.java

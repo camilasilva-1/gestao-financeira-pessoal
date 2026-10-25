@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Transacao } from '../types';
 import { ModalEditarTransacao } from './ModalEditarTransacao';
+import { cadastrarTransacao, listarTransacoes } from '../Services/api';
 
 interface TransacoesProps {
   transacoes: Transacao[];
@@ -23,16 +24,42 @@ export const Transacoes: React.FC<TransacoesProps> = ({
     categorias && categorias.length > 0 ? categorias[0] : 'Alimentação'
   );
   const [establishment, setEstablishment] = useState('');
+  const [carregando, setCarregando] = useState(false);
 
-  // Filtros (#11)
+  // Filtros
   const [busca, setBusca] = useState('');
   const [filtroTipo, setFiltroTipo] = useState<'TODOS' | 'RECEITA' | 'DESPESA'>('TODOS');
   const [filtroCategoria, setFiltroCategoria] = useState('TODAS');
   const [filtroPeriodo, setFiltroPeriodo] = useState<'TODOS' | 'ESTE_MES' | 'MES_PASSADO' | 'ESTE_ANO'>('TODOS');
 
-  // Modal de Edição (#9)
+  // Modal de Edição
   const [transacaoParaEditar, setTransacaoParaEditar] = useState<Transacao | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 1. Busca as transações reais cadastradas no MySQL via Spring Boot
+  useEffect(() => {
+    const usuarioIdSalvo = localStorage.getItem('usuarioId');
+    if (usuarioIdSalvo) {
+      const idNum = parseInt(usuarioIdSalvo, 10);
+      listarTransacoes(idNum)
+        .then((dados) => {
+          if (Array.isArray(dados)) {
+            // Mapeia o retorno da API para a estrutura do Front-end
+            const formatadas: Transacao[] = dados.map((t: any) => ({
+              id: String(t.idTransacao || t.id),
+              descricao: t.descricao,
+              valor: typeof t.valor === 'number' ? t.valor : parseFloat(t.valor),
+              data: t.dataTransacao || t.data,
+              tipo: t.tipo,
+              categoria: typeof t.categoria === 'object' ? t.categoria.nome : t.categoria,
+              establishment: t.estabelecimento
+            }));
+            setTransacoes(formatadas);
+          }
+        })
+        .catch((err) => console.error('Erro ao carregar transações:', err));
+    }
+  }, [setTransacoes]);
 
   useEffect(() => {
     if (categorias && categorias.length > 0 && !categorias.includes(categoria)) {
@@ -40,28 +67,65 @@ export const Transacoes: React.FC<TransacoesProps> = ({
     }
   }, [categorias, categoria]);
 
-  const handleNovaTransacao = (e: React.FormEvent) => {
+  // 2. Salva a nova transação chamando o Spring Boot (POST)
+  const handleNovaTransacao = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!descricao || !valor || !data) return;
 
-    const nova: Transacao = {
-      id: Date.now().toString(),
-      descricao,
-      valor: parseFloat(valor),
-      data,
-      tipo,
-      categoria,
-      establishment: establishment.trim() ? establishment.trim() : undefined
-    };
+    const usuarioIdSalvo = localStorage.getItem('usuarioId');
+    const usuarioIdNum = usuarioIdSalvo ? parseInt(usuarioIdSalvo, 10) : 1;
 
-    setTransacoes([nova, ...transacoes]);
-    setDescricao('');
-    setValor('');
-    setEstablishment('');
+    setCarregando(true);
+
+    try {
+      const payload = {
+        descricao,
+        valor: parseFloat(valor),
+        tipo,
+        categoriaId: 1, // ID da categoria padrão no banco
+        usuarioId: usuarioIdNum,
+        dataTransacao: data,
+        estabelecimento: establishment.trim() ? establishment.trim() : undefined
+      };
+
+      const res = await cadastrarTransacao(payload);
+
+      // Adiciona na lista do estado
+      const nova: Transacao = {
+        id: String(res.idTransacao || Date.now()),
+        descricao,
+        valor: parseFloat(valor),
+        data,
+        tipo,
+        categoria,
+        establishment: establishment.trim() ? establishment.trim() : undefined
+      };
+
+      setTransacoes([nova, ...transacoes]);
+
+      // Limpa os campos do formulário
+      setDescricao('');
+      setValor('');
+      setEstablishment('');
+      setData('');
+    } catch (err) {
+      console.error('Erro ao cadastrar transação:', err);
+      alert('Não foi possível salvar a transação. Verifique se o servidor Back-end está rodando.');
+    } finally {
+      setCarregando(false);
+    }
   };
 
-  const handleExcluir = (id: string) => {
-    setTransacoes(transacoes.filter(t => t.id !== id));
+  // 3. Exclui transação
+  const handleExcluir = async (id: string) => {
+    if (confirm('Deseja realmente excluir esta transação?')) {
+      try {
+        await fetch(`http://localhost:8080/api/transacoes/${id}`, { method: 'DELETE' });
+        setTransacoes(transacoes.filter(t => t.id !== id));
+      } catch (err) {
+        console.error('Erro ao excluir transação:', err);
+      }
+    }
   };
 
   const handleAbrirEditar = (t: Transacao) => {
@@ -73,7 +137,6 @@ export const Transacoes: React.FC<TransacoesProps> = ({
     setTransacoes(transacoes.map(t => t.id === transacaoAtualizada.id ? transacaoAtualizada : t));
   };
 
-  // Função para validar o filtro de período (#11)
   const ehNoPeriodo = (dataString: string) => {
     if (filtroPeriodo === 'TODOS') return true;
 
@@ -99,7 +162,6 @@ export const Transacoes: React.FC<TransacoesProps> = ({
     return true;
   };
 
-  // Aplicação dos Filtros em Tempo Real
   const transacoesFiltradas = transacoes.filter(t => {
     const bateTexto = t.descricao.toLowerCase().includes(busca.toLowerCase()) ||
       (t.establishment && t.establishment.toLowerCase().includes(busca.toLowerCase()));
@@ -191,21 +253,21 @@ export const Transacoes: React.FC<TransacoesProps> = ({
           <div className="flex justify-end">
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-[#c4003d] to-[#e60039] text-white font-bold py-3 rounded-xl shadow-md hover:opacity-95 transition-all duration-200 cursor-pointer text-sm"
+              disabled={carregando}
+              className="w-full bg-gradient-to-r from-[#c4003d] to-[#e60039] text-white font-bold py-3 rounded-xl shadow-md hover:opacity-95 transition-all duration-200 cursor-pointer text-sm disabled:opacity-50"
             >
-              Salvar Transação
+              {carregando ? 'Salvando...' : 'Salvar Transação'}
             </button>
           </div>
         </form>
       </div>
 
-      {/* Histórico com Barra de Filtros Completa (#11) */}
+      {/* Histórico com Barra de Filtros */}
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b pb-4">
           <h2 className="text-lg font-bold text-slate-800">Histórico de Transações</h2>
           
           <div className="flex flex-wrap items-center gap-2">
-            {/* Busca por texto */}
             <input
               type="text"
               placeholder="Buscar por descrição..."
@@ -214,7 +276,6 @@ export const Transacoes: React.FC<TransacoesProps> = ({
               className="border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
             />
 
-            {/* Filtro por Período (#11) */}
             <select
               value={filtroPeriodo}
               onChange={(e) => setFiltroPeriodo(e.target.value as any)}
@@ -226,7 +287,6 @@ export const Transacoes: React.FC<TransacoesProps> = ({
               <option value="ESTE_ANO">Este Ano</option>
             </select>
 
-            {/* Filtro por Tipo */}
             <select
               value={filtroTipo}
               onChange={(e) => setFiltroTipo(e.target.value as 'TODOS' | 'RECEITA' | 'DESPESA')}
@@ -237,7 +297,6 @@ export const Transacoes: React.FC<TransacoesProps> = ({
               <option value="DESPESA">Despesas</option>
             </select>
 
-            {/* Filtro por Categoria (#11) */}
             <select
               value={filtroCategoria}
               onChange={(e) => setFiltroCategoria(e.target.value)}

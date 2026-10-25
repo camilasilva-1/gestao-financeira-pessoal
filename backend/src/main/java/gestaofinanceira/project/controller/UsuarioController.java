@@ -7,13 +7,19 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/usuarios")
+@RequestMapping("/api/usuarios")
+@CrossOrigin(origins = "*") // Libera as chamadas do React (localhost:5173)
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
     public UsuarioController(UsuarioService usuarioService) {
         this.usuarioService = usuarioService;
+    }
+    
+@PostMapping("/login")
+    public Usuario login(@RequestBody Usuario credentials) {
+        return usuarioService.login(credentials.getEmail(), credentials.getSenha());
     }
 
     @PostMapping

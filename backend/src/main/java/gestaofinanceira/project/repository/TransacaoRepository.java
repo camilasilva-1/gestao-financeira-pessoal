@@ -13,6 +13,8 @@ import java.util.List;
 
 public interface TransacaoRepository extends JpaRepository<Transacao, Integer> {
 
+       List<Transacao> findByUsuarioIdUsuario(Integer idUsuario);
+       
     // Buscar transações por categoria e tipo (usado no OrcamentoService)
     List<Transacao> findByCategoriaAndTipo(Categoria categoria, Tipo tipo);
 
