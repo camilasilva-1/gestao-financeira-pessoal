@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { loginUsuario } from '../Services/api';
 
 interface LoginProps {
   onLoginSuccess: () => void;
@@ -17,7 +18,7 @@ export const Login: React.FC<LoginProps> = ({
   const [lembrarMe, setLembrarMe] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [shake, setShake] = useState(false);
-  const [erros, setErros] = useState<{ email?: string; senha?: string }>({});
+  const [erros, setErros] = useState<{ email?: string; senha?: string; geral?: string }>({});
 
   const triggerShake = () => {
     setShake(true);
@@ -44,15 +45,29 @@ export const Login: React.FC<LoginProps> = ({
     return Object.keys(novosErros).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validar()) {
       setCarregando(true);
-      // Simulação de tempo de resposta da API
-      setTimeout(() => {
+      setErros({});
+
+      try {
+        // 1. Chamada real à API do Spring Boot
+        const usuario = await loginUsuario({ email, senha });
+
+        // 2. Guarda o id do utilizador no navegador para usar nas requisições do Dashboard/Transações
+        localStorage.setItem('usuarioId', usuario.idUsuario || usuario.id);
+        if (usuario.nome) {
+          localStorage.setItem('usuarioNome', usuario.nome);
+        }
+
         setCarregando(false);
         onLoginSuccess();
-      }, 1000);
+      } catch (err: any) {
+        setCarregando(false);
+        triggerShake();
+        setErros({ geral: err.message || 'Falha ao autenticar. Verifique o e-mail e a senha.' });
+      }
     } else {
       triggerShake();
     }
@@ -99,6 +114,12 @@ export const Login: React.FC<LoginProps> = ({
             <h2 className="text-lg font-bold text-slate-800">Acesse sua conta</h2>
             <p className="text-xs text-slate-500">Informe suas credenciais para continuar</p>
           </div>
+
+          {erros.geral && (
+            <div className="bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-xl text-xs font-medium text-center">
+              {erros.geral}
+            </div>
+          )}
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
@@ -157,7 +178,7 @@ export const Login: React.FC<LoginProps> = ({
                 <input
                   type="checkbox"
                   checked={lembrarMe}
-                  onChange={(e) => setLembrarMe(e.target.checked)}
+                  onChange={(e) => setLembrarMe(e.target.value ? e.target.checked : false)}
                   className="w-4 h-4 rounded text-[#c4003d] focus:ring-[#c4003d] border-slate-300 transition"
                 />
                 <span>Lembrar-me</span>
@@ -207,7 +228,7 @@ export const Login: React.FC<LoginProps> = ({
 
         {/* Rodapé */}
         <p className="text-center text-xs text-white/60">
-          © 2026 Bradesco Finanças. Todos os direitos reservados.
+          © 2026 Gestão Financeira. Todos os direitos reservados.
         </p>
       </div>
     </div>

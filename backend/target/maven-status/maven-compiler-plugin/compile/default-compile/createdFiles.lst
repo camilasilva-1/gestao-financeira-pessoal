@@ -7,7 +7,9 @@ gestaofinanceira\project\ProjectApplication.class
 gestaofinanceira\project\service\CategoriaService.class
 gestaofinanceira\project\controller\InsightController.class
 gestaofinanceira\project\dto\EvolucaoMensalDTO.class
+gestaofinanceira\project\service\Regra503020Service.class
 gestaofinanceira\project\model\Orcamento.class
+gestaofinanceira\project\controller\Regra503020Controller.class
 gestaofinanceira\project\enums\Categoria.class
 gestaofinanceira\project\service\MetaFinanceiraService.class
 gestaofinanceira\project\model\Categoria.class
@@ -20,6 +22,7 @@ gestaofinanceira\project\dto\MetaFinanceiraDTO.class
 gestaofinanceira\project\repository\CategoriaRepository.class
 gestaofinanceira\project\service\UsuarioService.class
 gestaofinanceira\project\controller\UsuarioController.class
+gestaofinanceira\project\dto\Regra503020DTO.class
 gestaofinanceira\project\enums\Tipo.class
 gestaofinanceira\project\model\MetaFinanceira.class
 gestaofinanceira\project\exception\ErrorResponse.class

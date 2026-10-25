@@ -15,6 +15,18 @@ public class UsuarioService {
         this.usuarioRepository = usuarioRepository;
     }
 
+    // Método de Login necessário para o endpoint de autenticação
+    public Usuario login(String email, String senha) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("E-mail ou senha incorretos"));
+
+        if (usuario.getSenha() == null || !usuario.getSenha().equals(senha)) {
+            throw new RuntimeException("E-mail ou senha incorretos");
+        }
+
+        return usuario;
+    }
+
     public Usuario criar(Usuario usuario) {
         validarEmailDuplicado(usuario.getEmail(), null);
         return usuarioRepository.save(usuario);
@@ -35,6 +47,7 @@ public class UsuarioService {
 
         existente.setNome(usuario.getNome());
         existente.setEmail(usuario.getEmail());
+        existente.setSenha(usuario.getSenha());
         existente.setSalarioLiquido(usuario.getSalarioLiquido());
 
         return usuarioRepository.save(existente);
@@ -46,11 +59,10 @@ public class UsuarioService {
     }
 
     private void validarEmailDuplicado(String email, Integer idAtual) {
-        Usuario usuarioComMesmoEmail = usuarioRepository.findByEmail(email);
-
-        if (usuarioComMesmoEmail != null &&
-                (idAtual == null || !usuarioComMesmoEmail.getIdUsuario().equals(idAtual))) {
-            throw new IllegalArgumentException("E-mail já cadastrado");
-        }
+        usuarioRepository.findByEmail(email).ifPresent(u -> {
+            if (idAtual == null || !u.getIdUsuario().equals(idAtual)) {
+                throw new IllegalArgumentException("E-mail já cadastrado");
+            }
+        });
     }
 }
