@@ -11,8 +11,11 @@ import { CATEGORIAS_PADRAO } from './types';
 import { Relatorios } from './components/Relatorios';
 
 function App() {
-  // Estado para controlar a navegação das telas
-  const [telaAtual, setTelaAtual] = useState<'login' | 'cadastro' | 'esqueci-senha' | 'app'>('login');
+  // Inicialização inteligente: se houver 'usuarioId' no localStorage, inicia direto em 'app'
+  const [telaAtual, setTelaAtual] = useState<'login' | 'cadastro' | 'esqueci-senha' | 'app'>(() => {
+    const usuarioSalvo = localStorage.getItem('usuarioId');
+    return usuarioSalvo ? 'app' : 'login';
+  });
 
   const [transacoes, setTransacoes] = useState<Transacao[]>([
     { id: '1', descricao: 'Salário Mensal', valor: 5000, data: '2026-09-05', tipo: 'RECEITA', categoria: 'Outros' },
@@ -32,6 +35,13 @@ function App() {
     if (!categorias.includes(novaCat)) {
       setCategorias([...categorias, novaCat]);
     }
+  };
+
+  // Função para fazer logout e limpar a sessão salva no navegador
+  const handleLogout = () => {
+    localStorage.removeItem('usuarioId');
+    localStorage.removeItem('usuarioNome');
+    setTelaAtual('login');
   };
 
   // Cálculo dinâmico do saldo para o Header em degradê
@@ -68,13 +78,12 @@ function App() {
   }
 
   // Renderização do sistema principal quando autenticado ('app')
-  // Renderização do sistema principal quando autenticado ('app')
   return (
     <div className="min-h-screen bg-slate-50 pb-12">
-      {/* Header em degradê */}
+      {/* Header em degradê com Logout que limpa a sessão */}
       <Header 
         saldoTotal={saldoTotal} 
-        onLogout={() => setTelaAtual('login')} 
+        onLogout={handleLogout} 
       />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 -mt-6">
