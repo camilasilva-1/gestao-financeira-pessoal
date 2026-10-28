@@ -1,5 +1,6 @@
 package gestaofinanceira.project.service;
 
+import gestaofinanceira.project.enums.Tipo;
 import gestaofinanceira.project.exception.TransacaoNotFoundException;
 import gestaofinanceira.project.model.Categoria;
 import gestaofinanceira.project.model.Transacao;
@@ -33,12 +34,22 @@ public class TransacaoService {
         this.usuarioRepository = usuarioRepository;
     }
 
-    // ============================
-    // CRUD BÁSICO
-    // ============================
-
     public List<Transacao> listar() {
         return transacaoRepository.findAll();
+    }
+
+// filtros de consulta
+
+    public List<Transacao> filtrarPorTipo(Tipo tipo) {
+        return transacaoRepository.findByTipo(tipo);
+    }
+
+    public List<Transacao> filtrarPorPeriodo(LocalDate inicio, LocalDate fim) {
+        return transacaoRepository.findByDataTransacaoBetween(inicio, fim);
+    }
+
+    public List<Transacao> filtrarPorCategoria(Integer idCategoria) {
+        return transacaoRepository.findByCategoria_IdCategoria(idCategoria);
     }
 
     public Transacao buscar(int id) {
@@ -83,9 +94,7 @@ public class TransacaoService {
         return transacaoRepository.save(transacao);
     }
 
-    // ============================
     // MÉTODOS AUXILIARES PARA INSIGHTS
-    // ============================
 
     public BigDecimal calcularGastoPorCategoria(Integer usuarioId, String nomeCategoria, int mes) {
         LocalDate inicio = LocalDate.of(LocalDate.now().getYear(), mes, 1);

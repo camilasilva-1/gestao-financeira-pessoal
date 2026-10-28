@@ -13,12 +13,21 @@ import java.util.List;
 
 public interface TransacaoRepository extends JpaRepository<Transacao, Integer> {
 
-    // Buscar transações por categoria e tipo (usado no OrcamentoService)
     List<Transacao> findByCategoriaAndTipo(Categoria categoria, Tipo tipo);
 
-    // ============================
+
+// Filtros de consulta
+
+    List<Transacao> findByTipo(Tipo tipo);
+
+    List<Transacao> findByDataTransacaoBetween(
+            LocalDate inicio,
+            LocalDate fim
+    );
+
+    List<Transacao> findByCategoria_IdCategoria(Integer idCategoria);
+
     // MÉTODOS COM INTERVALO DE DATAS
-    // ============================
 
     @Query("SELECT COALESCE(SUM(t.valor), 0) FROM Transacao t " +
            "WHERE t.tipo = 'RECEITA' AND t.usuario.idUsuario = :usuarioId " +
@@ -49,9 +58,7 @@ public interface TransacaoRepository extends JpaRepository<Transacao, Integer> {
            "ORDER BY FUNCTION('MONTH', t.dataTransacao)")
     List<Object[]> evolucaoMensal(@Param("usuarioId") Long usuarioId);
 
-    // ============================
     // MÉTODOS SEM INTERVALO (GERAL)
-    // ============================
 
     @Query("SELECT COALESCE(SUM(t.valor), 0) FROM Transacao t " +
            "WHERE t.tipo = 'RECEITA' AND t.usuario.idUsuario = :usuarioId")
