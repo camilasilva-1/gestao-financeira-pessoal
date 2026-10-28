@@ -2,10 +2,12 @@ package gestaofinanceira.project.controller;
 
 
 import gestaofinanceira.project.model.Transacao;
-import gestaofinanceira.project.model.Categoria;
 import gestaofinanceira.project.service.TransacaoService;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import gestaofinanceira.project.enums.Tipo;
+import org.springframework.format.annotation.DateTimeFormat;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/transacoes")
@@ -21,6 +23,27 @@ public class TransacaoController {
     @GetMapping
     public List<Transacao> listar() {
         return service.listar();
+    }
+
+    // Filtrar transações por tipo: RECEITA ou DESPESA
+    @GetMapping("/filtro/tipo")
+    public List<Transacao> filtrarPorTipo(@RequestParam Tipo tipo) {
+        return service.filtrarPorTipo(tipo);
+    }
+
+    // Filtrar transações por período de datas
+    @GetMapping("/filtro/periodo")
+    public List<Transacao> filtrarPorPeriodo(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim) {
+
+        return service.filtrarPorPeriodo(inicio, fim);
+    }
+
+    // Filtrar transações por categoria
+    @GetMapping("/filtro/categoria/{idCategoria}")
+    public List<Transacao> filtrarPorCategoria(@PathVariable Integer idCategoria) {
+        return service.filtrarPorCategoria(idCategoria);
     }
 
     // Buscar transação por ID
