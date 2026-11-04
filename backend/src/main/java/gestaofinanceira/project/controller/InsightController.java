@@ -17,21 +17,38 @@ public class InsightController {
         this.service = service;
     }
 
-    // Retorna todos os insights do usuário
     @GetMapping("/{usuarioId}")
-    public List<InsightDTO> listarInsights(@PathVariable Integer usuarioId) {
+    public List<InsightDTO> listarInsights(
+            @PathVariable Integer usuarioId) {
+
         return service.gerarInsights(usuarioId);
     }
 
-    // Retorna alertas ativos do usuário
     @GetMapping("/{usuarioId}/alertas")
-    public List<InsightDTO> listarAlertas(@PathVariable Integer usuarioId) {
+    public List<InsightDTO> listarAlertas(
+            @PathVariable Integer usuarioId) {
+
         return service.gerarAlertas(usuarioId);
     }
 
-    // Retorna o score financeiro do usuário
     @GetMapping("/{usuarioId}/score")
-    public ScoreFinanceiroDTO obterScore(@PathVariable Integer usuarioId) {
+    public ScoreFinanceiroDTO obterScore(
+            @PathVariable Integer usuarioId) {
+
         return service.calcularScore(usuarioId);
+    }
+
+    @GetMapping("/{usuarioId}/recomendacao-investimento")
+    public InsightDTO recomendacaoInvestimento(
+            @PathVariable Integer usuarioId) {
+
+        return service.gerarRecomendacaoInvestimento(usuarioId);
+    }
+
+    @GetMapping("/{usuarioId}/metas-sugeridas")
+    public List<InsightDTO> metasSugeridas(
+            @PathVariable Integer usuarioId) {
+
+        return service.gerarMetasSugeridas(usuarioId);
     }
 }

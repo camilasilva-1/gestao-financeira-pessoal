@@ -2,6 +2,7 @@ C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pess
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\controller\InsightController.java
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\controller\MetaFinanceiraController.java
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\controller\OrcamentoController.java
+C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\controller\Regra503020Controller.java
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\controller\RelatorioController.java
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\controller\TestController.java
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\controller\TransacaoController.java
@@ -11,7 +12,9 @@ C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pess
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\dto\InsightDTO.java
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\dto\MetaFinanceiraDTO.java
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\dto\RankingCategoriaDTO.java
+C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\dto\Regra503020DTO.java
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\dto\RelatorioMensalDTO.java
+C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\dto\ScoreFinanceiroDTO.java
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\enums\Categoria.java
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\enums\Tipo.java
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\exception\ErrorResponse.java
@@ -32,6 +35,7 @@ C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pess
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\service\InsightService.java
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\service\MetaFinanceiraService.java
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\service\OrcamentoService.java
+C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\service\Regra503020Service.java
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\service\RelatorioService.java
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\service\TransacaoService.java
 C:\Users\nasci\OneDrive\Área de Trabalho\bradescoprojeto\gestao-financeira-pessoal\backend\src\main\java\gestaofinanceira\project\service\UsuarioService.java
