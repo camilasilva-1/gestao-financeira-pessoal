@@ -51,4 +51,14 @@ public class InsightController {
 
         return service.gerarMetasSugeridas(usuarioId);
     }
+
+    @GetMapping("/{usuarioId}/reserva-insuficiente")
+    public InsightDTO alertaReservaInsuficiente(
+        @PathVariable Integer usuarioId) {
+
+    return service.gerarAlertaReservaInsuficiente(usuarioId);
+}
+
+ 
+
 }

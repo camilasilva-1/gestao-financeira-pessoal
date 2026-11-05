@@ -393,4 +393,51 @@ public class InsightService {
 
         return metas;
     }
+
+
+    // ============================
+// ALERTA DE RESERVA INSUFICIENTE
+// ============================
+public InsightDTO gerarAlertaReservaInsuficiente(Integer usuarioId) {
+
+        int mesAtual = LocalDate.now().getMonthValue();
+    
+        BigDecimal despesa =
+                transacaoService.calcularDespesaMensal(usuarioId, mesAtual);
+    
+        if (despesa == null) {
+            despesa = BigDecimal.ZERO;
+        }
+    
+        BigDecimal reservaIdeal =
+                despesa.multiply(BigDecimal.valueOf(6));
+    
+        BigDecimal valorGuardado =
+                transacaoService.calcularGastoPorCategoria(
+                        usuarioId,
+                        "Investimentos",
+                        mesAtual);
+    
+        if (valorGuardado == null) {
+            valorGuardado = BigDecimal.ZERO;
+        }
+    
+        if (valorGuardado.compareTo(reservaIdeal) < 0) {
+            return new InsightDTO(
+                    "Reserva insuficiente",
+                    "Sua reserva está abaixo do recomendado. O ideal é possuir pelo menos R$ "
+                            + reservaIdeal.setScale(2, RoundingMode.HALF_UP),
+                    LocalDate.now(),
+                    "Atenção"
+            );
+        }
+    
+        return new InsightDTO(
+                "Reserva adequada",
+                "Sua reserva de emergência está dentro do valor recomendado.",
+                LocalDate.now(),
+                "Informativo"
+        );
+    }
+    
 }
