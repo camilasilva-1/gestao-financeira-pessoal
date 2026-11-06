@@ -12,6 +12,12 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface TransacaoRepository extends JpaRepository<Transacao, Integer> {
+    boolean existsByUsuario_IdUsuarioAndIdExternoSimulado(Integer usuarioId, String idExternoSimulado);
+    @Query("select t from Transacao t where t.usuario.idUsuario = :usuarioId " +
+        "and (t.dataTransacao <= :fim or t.dataTransacao is null) order by t.dataTransacao")
+    List<Transacao> findByUsuario_IdUsuarioAndDataTransacaoLessThanEqualOrderByDataTransacaoAsc(
+        @Param("usuarioId") Integer usuarioId, @Param("fim") LocalDate fim);
+
 
     List<Transacao> findByCategoriaAndTipo(Categoria categoria, Tipo tipo);
 

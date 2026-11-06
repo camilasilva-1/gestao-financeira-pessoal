@@ -67,6 +67,10 @@ public class TransacaoService {
         Transacao existente = buscar(id);
         validarTransacao(nova);
         carregarRelacionamentos(nova);
+        if (existente.getIdExternoSimulado() != null &&
+                !existente.getUsuario().getIdUsuario().equals(nova.getUsuario().getIdUsuario())) {
+            throw new IllegalArgumentException("Uma movimentação importada não pode mudar de usuário");
+        }
 
         existente.setDescricao(nova.getDescricao());
         existente.setValor(nova.getValor());

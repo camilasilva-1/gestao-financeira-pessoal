@@ -47,8 +47,10 @@ public class CategoriaController {
     }
 
     @GetMapping("/sugerir")
-    public String sugerirCategoria(@RequestParam String estabelecimento) {
-        return categoriaService.sugerirCategoria(estabelecimento);
+    public String sugerirCategoria(
+            @RequestParam(defaultValue = "") String estabelecimento,
+            @RequestParam(defaultValue = "") String descricao) {
+        return categoriaService.sugerirCategoria(estabelecimento, descricao);
     }
 
     // ============================
