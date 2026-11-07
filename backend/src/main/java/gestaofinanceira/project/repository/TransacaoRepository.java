@@ -13,6 +13,8 @@ import java.util.List;
 
 public interface TransacaoRepository extends JpaRepository<Transacao, Integer> {
 
+       List<Transacao> findByUsuarioIdUsuario(Integer idUsuario);
+
     // Buscar transações por categoria e tipo (usado no OrcamentoService)
     List<Transacao> findByCategoriaAndTipo(Categoria categoria, Tipo tipo);
 
@@ -80,7 +82,7 @@ public interface TransacaoRepository extends JpaRepository<Transacao, Integer> {
            "WHERE t.tipo = gestaofinanceira.project.enums.Tipo.DESPESA " +
            "AND t.usuario.idUsuario = :usuarioId " +
            "AND t.categoria.nome IN :categorias")
-    BigDecimal somaDespesasPorCategorias(@Param("usuarioId") Integer usuarioId, 
+    BigDecimal somaDespesasPorCategorias(@Param("usuarioId") Integer usuarioId,
                                         @Param("categorias") List<String> categorias);
 
 }

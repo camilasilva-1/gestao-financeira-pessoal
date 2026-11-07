@@ -11,12 +11,15 @@ import { CATEGORIAS_PADRAO } from './types';
 import { Relatorios } from './components/Relatorios';
 
 function App() {
-  // Estado para controlar a navegação das telas
-  const [telaAtual, setTelaAtual] = useState<'login' | 'cadastro' | 'esqueci-senha' | 'app'>('login');
+  // Inicialização inteligente: se houver 'usuarioId' no localStorage, inicia direto em 'app'
+  const [telaAtual, setTelaAtual] = useState<'login' | 'cadastro' | 'esqueci-senha' | 'app'>(() => {
+    const usuarioSalvo = localStorage.getItem('usuarioId');
+    return usuarioSalvo ? 'app' : 'login';
+  });
 
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
   const [carregandoTransacoes, setCarregandoTransacoes] = useState(true);
-  
+
   useEffect(() => {
   const buscarTransacoes = async () => {
     try {
@@ -64,7 +67,7 @@ useEffect(() => {
 
       const dados: OrcamentoAPI[] = await resposta.json();
 
-      
+
 const orcamentosFormatados: Orcamento[] = await Promise.all(
   dados.map(async (orcamento) => {
     const respostaGasto = await fetch(
@@ -125,6 +128,13 @@ const orcamentosFormatados: Orcamento[] = await Promise.all(
     }
   };
 
+  // Função para fazer logout e limpar a sessão salva no navegador
+  const handleLogout = () => {
+    localStorage.removeItem('usuarioId');
+    localStorage.removeItem('usuarioNome');
+    setTelaAtual('login');
+  };
+
   // Cálculo dinâmico do saldo para o Header em degradê
   const saldoTotal = transacoes.reduce((acc, t) => {
     return t.tipo === 'RECEITA' ? acc + t.valor : acc - t.valor;
@@ -159,13 +169,12 @@ const orcamentosFormatados: Orcamento[] = await Promise.all(
   }
 
   // Renderização do sistema principal quando autenticado ('app')
-  // Renderização do sistema principal quando autenticado ('app')
   return (
     <div className="min-h-screen bg-slate-50 pb-12">
-      {/* Header em degradê */}
-      <Header 
-        saldoTotal={saldoTotal} 
-        onLogout={() => setTelaAtual('login')} 
+      {/* Header em degradê com Logout que limpa a sessão */}
+      <Header
+        saldoTotal={saldoTotal}
+        onLogout={handleLogout}
       />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 -mt-6">
@@ -189,7 +198,7 @@ const orcamentosFormatados: Orcamento[] = await Promise.all(
             adicionarCategoria={adicionarCategoria}
           />
           )}
-          
+
           {/* 4. Orçamentos e Metas */}
           {carregandoOrcamentos ? (
           <p className="text-center text-slate-500 py-4">
