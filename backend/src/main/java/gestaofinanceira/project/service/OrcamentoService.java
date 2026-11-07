@@ -3,8 +3,12 @@ package gestaofinanceira.project.service;
 import gestaofinanceira.project.enums.Tipo;
 import gestaofinanceira.project.model.Orcamento;
 import gestaofinanceira.project.model.Transacao;
+import gestaofinanceira.project.model.Categoria;
+import gestaofinanceira.project.model.Usuario;
 import gestaofinanceira.project.repository.OrcamentoRepository;
 import gestaofinanceira.project.repository.TransacaoRepository;
+import gestaofinanceira.project.repository.CategoriaRepository;
+import gestaofinanceira.project.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -17,10 +21,14 @@ public class OrcamentoService {
 
     private final OrcamentoRepository orcamentoRepository;
     private final TransacaoRepository transacaoRepository;
+    private final CategoriaRepository categoriaRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    public OrcamentoService(OrcamentoRepository orcamentoRepository, TransacaoRepository transacaoRepository) {
+    public OrcamentoService(OrcamentoRepository orcamentoRepository, TransacaoRepository transacaoRepository, UsuarioRepository usuarioRepository, CategoriaRepository categoriaRepository) {
         this.orcamentoRepository = orcamentoRepository;
         this.transacaoRepository = transacaoRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.categoriaRepository = categoriaRepository;
     }
 
     // Listar todos os orçamentos
@@ -39,23 +47,53 @@ public class OrcamentoService {
                 .orElseThrow(() -> new RuntimeException("Orçamento não encontrado"));
     }
 
-    // Adicionar um novo orçamento
-    public Orcamento adicionar(Orcamento orcamento) {
-        validarOrcamento(orcamento);
-        return orcamentoRepository.save(orcamento);
-    }
+    
+ // Adicionar um novo orçamento
+public Orcamento adicionar(Orcamento orcamento) {
+    validarOrcamento(orcamento);
 
-    // Editar um orçamento existente
-    public Orcamento editar(int id, Orcamento novo) {
-        Orcamento existente = buscar(id);
-        validarOrcamento(novo);
+    Categoria categoria = categoriaRepository.findById(
+        orcamento.getCategoria().getIdCategoria()
+    ).orElseThrow(() ->
+        new RuntimeException("Categoria não encontrada")
+    );
 
-        existente.setLimiteValor(novo.getLimiteValor());
-        existente.setUsuario(novo.getUsuario());
-        existente.setCategoria(novo.getCategoria());
+    Usuario usuario = usuarioRepository.findById(
+        orcamento.getUsuario().getIdUsuario()
+    ).orElseThrow(() ->
+        new RuntimeException("Usuário não encontrado")
+    );
 
-        return orcamentoRepository.save(existente);
-    }
+    orcamento.setCategoria(categoria);
+    orcamento.setUsuario(usuario);
+
+    return orcamentoRepository.save(orcamento);
+}
+    
+ // Editar um orçamento existente
+public Orcamento editar(int id, Orcamento novo) {
+    Orcamento existente = buscar(id);
+    validarOrcamento(novo);
+
+    Categoria categoria = categoriaRepository.findById(
+        novo.getCategoria().getIdCategoria()
+    ).orElseThrow(() ->
+        new RuntimeException("Categoria não encontrada")
+    );
+
+    Usuario usuario = usuarioRepository.findById(
+        novo.getUsuario().getIdUsuario()
+    ).orElseThrow(() ->
+        new RuntimeException("Usuário não encontrado")
+    );
+
+    existente.setLimiteValor(novo.getLimiteValor());
+    existente.setCategoria(categoria);
+    existente.setUsuario(usuario);
+
+    return orcamentoRepository.save(existente);
+}
+
 
     // Remover orçamento
     public void remover(int id) {

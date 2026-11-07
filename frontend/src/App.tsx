@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Login } from './components/Login';
 import { Cadastro } from './components/Cadastro';
 import { EsqueciSenha } from './components/EsqueciSenha';
@@ -6,7 +6,7 @@ import { Dashboard } from './components/Dashboard';
 import { Transacoes } from './components/Transacoes';
 import { OrcamentosEMetas } from './components/OrcamentosEMetas';
 import { Header } from './components/Header';
-import type { Transacao, Orcamento } from './types';
+import type { Transacao, Orcamento, TransacaoAPI, OrcamentoAPI, CategoriaAPI} from './types';
 import { CATEGORIAS_PADRAO } from './types';
 import { Relatorios } from './components/Relatorios';
 
@@ -14,19 +14,110 @@ function App() {
   // Estado para controlar a navegação das telas
   const [telaAtual, setTelaAtual] = useState<'login' | 'cadastro' | 'esqueci-senha' | 'app'>('login');
 
-  const [transacoes, setTransacoes] = useState<Transacao[]>([
-    { id: '1', descricao: 'Salário Mensal', valor: 5000, data: '2026-09-05', tipo: 'RECEITA', categoria: 'Outros' },
-    { id: '2', descricao: 'Supermercado', valor: 450, data: '2026-09-08', tipo: 'DESPESA', categoria: 'Alimentação', establishment: 'Carrefour' },
-    { id: '3', descricao: 'Cinema e Pipoca', valor: 120, data: '2026-09-10', tipo: 'DESPESA', categoria: 'Lazer' }
-  ]);
+  const [transacoes, setTransacoes] = useState<Transacao[]>([]);
+  const [carregandoTransacoes, setCarregandoTransacoes] = useState(true);
+  
+  useEffect(() => {
+  const buscarTransacoes = async () => {
+    try {
+      const resposta = await fetch('http://localhost:8080/transacoes');
 
-  const [orcamentos, setOrcamentos] = useState<Orcamento[]>([
-    { id: '1', categoria: 'Alimentação', limite: 1000, gasto: 0 },
-    { id: '2', categoria: 'Lazer', limite: 500, gasto: 0 },
-    { id: '3', categoria: 'Transporte', limite: 600, gasto: 0 }
-  ]);
+      if (!resposta.ok) {
+        throw new Error('Erro ao buscar transações');
+      }
+
+      const dados: TransacaoAPI[] = await resposta.json();
+
+      const transacoesFormatadas: Transacao[] = dados.map((t) => ({
+        id: String(t.idTransacao),
+        descricao: t.descricao,
+        valor: Number(t.valor),
+        data: t.dataTransacao,
+        tipo: t.tipo,
+        categoria: t.categoria.nome,
+        establishment: t.estabelecimento,
+        recorrente: t.recorrencia,
+      }));
+
+      setTransacoes(transacoesFormatadas);
+    } catch (erro) {
+      console.error('Erro ao carregar transações:', erro);
+    } finally {
+      setCarregandoTransacoes(false);
+    }
+  };
+
+  buscarTransacoes();
+}, []);
+
+  const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
+const [carregandoOrcamentos, setCarregandoOrcamentos] = useState(true);
+
+useEffect(() => {
+  const buscarOrcamentos = async () => {
+    try {
+      const resposta = await fetch('http://localhost:8080/orcamentos');
+
+      if (!resposta.ok) {
+        throw new Error('Erro ao buscar orçamentos');
+      }
+
+      const dados: OrcamentoAPI[] = await resposta.json();
+
+      
+const orcamentosFormatados: Orcamento[] = await Promise.all(
+  dados.map(async (orcamento) => {
+    const respostaGasto = await fetch(
+      `http://localhost:8080/orcamentos/${orcamento.idOrcamento}/gasto`
+    );
+
+    if (!respostaGasto.ok) {
+      throw new Error('Erro ao buscar gasto do orçamento');
+    }
+
+    const gasto = await respostaGasto.json();
+
+    return {
+      id: String(orcamento.idOrcamento),
+      categoria: orcamento.categoria.nome,
+      limite: Number(orcamento.limiteValor),
+      gasto: Number(gasto),
+    };
+  })
+);
+
+      setOrcamentos(orcamentosFormatados);
+    } catch (erro) {
+      console.error('Erro ao carregar orçamentos:', erro);
+    } finally {
+      setCarregandoOrcamentos(false);
+    }
+  };
+
+  buscarOrcamentos();
+}, []);
 
   const [categorias, setCategorias] = useState<string[]>(CATEGORIAS_PADRAO);
+  const [categoriasAPI, setCategoriasAPI] = useState<CategoriaAPI[]>([]);
+
+  useEffect(() => {
+  const buscarCategorias = async () => {
+    try {
+      const resposta = await fetch('http://localhost:8080/categorias');
+
+      if (!resposta.ok) {
+        throw new Error('Erro ao buscar categorias');
+      }
+
+      const dados: CategoriaAPI[] = await resposta.json();
+      setCategoriasAPI(dados);
+    } catch (erro) {
+      console.error('Erro ao carregar categorias:', erro);
+    }
+  };
+
+  buscarCategorias();
+}, []);
 
   const adicionarCategoria = (novaCat: string) => {
     if (!categorias.includes(novaCat)) {
@@ -86,20 +177,33 @@ function App() {
           <Relatorios transacoes={transacoes} />
 
           {/* 3. Nova Transação e Histórico */}
-          <Transacoes 
-            transacoes={transacoes} 
-            setTransacoes={setTransacoes} 
+          {carregandoTransacoes ? (
+          <p className="text-center text-slate-500 py-4">
+          Carregando transações...
+          </p>
+          ) : (
+          <Transacoes
+            transacoes={transacoes}
+            setTransacoes={setTransacoes}
             categorias={categorias}
             adicionarCategoria={adicionarCategoria}
           />
+          )}
           
           {/* 4. Orçamentos e Metas */}
-          <OrcamentosEMetas 
-            transacoes={transacoes} 
-            orcamentos={orcamentos} 
-            setOrcamentos={setOrcamentos} 
-            categorias={categorias}
+          {carregandoOrcamentos ? (
+          <p className="text-center text-slate-500 py-4">
+          Carregando orçamentos...
+          </p>
+          ) : (
+          <OrcamentosEMetas
+              transacoes={transacoes}
+              orcamentos={orcamentos}
+              setOrcamentos={setOrcamentos}
+              categorias={categorias}
+              categoriasAPI={categoriasAPI}
           />
+          )}
         </main>
       </div>
     </div>

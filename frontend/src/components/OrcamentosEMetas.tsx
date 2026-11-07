@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import type { Transacao, Orcamento } from '../types';
+import { useState } from 'react';
+import type { Transacao, Orcamento, CategoriaAPI } from '../types';
 
 export interface Meta {
   id: string;
@@ -14,6 +14,7 @@ interface OrcamentosEMetasProps {
   orcamentos: Orcamento[];
   setOrcamentos: React.Dispatch<React.SetStateAction<Orcamento[]>>;
   categorias: string[];
+  categoriasAPI: CategoriaAPI[];
 }
 
 export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
@@ -21,6 +22,7 @@ export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
   orcamentos,
   setOrcamentos,
   categorias,
+  categoriasAPI,
 }) => {
   // Estados para Metas
   const [metas, setMetas] = useState<Meta[]>([
@@ -101,32 +103,135 @@ export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
   };
 
   // Definir ou atualizar Limite de Orçamento
-  const handleDefinirOrcamento = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!categoriaSel || !limiteOrcamento) return;
+  
+const handleDefinirOrcamento = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
 
-    const limiteNum = parseFloat(limiteOrcamento);
-    const orcamentoExistente = orcamentos.find((o) => o.categoria === categoriaSel);
+  if (!categoriaSel || !limiteOrcamento) return;
 
+  const limiteNum = Number(limiteOrcamento);
+
+  if (!Number.isFinite(limiteNum) || limiteNum <= 0) {
+    alert('Informe um limite válido maior que zero.');
+    return;
+  }
+
+  // Encontrar a categoria e seu ID no backend
+  const categoriaAPI = categoriasAPI.find(
+    (cat) => cat.nome === categoriaSel
+  );
+
+  if (!categoriaAPI) {
+    alert('Categoria não encontrada na API.');
+    return;
+  }
+
+  // Verificar se já existe orçamento para essa categoria
+  const orcamentoExistente = orcamentos.find(
+    (o) => o.categoria === categoriaSel
+  );
+
+  // Dados enviados ao Spring Boot
+  const dadosOrcamento = {
+    limiteValor: limiteNum,
+    usuario: {
+      idUsuario: 2, // ID temporário para o teste local
+    },
+    categoria: {
+      idCategoria: categoriaAPI.idCategoria,
+    },
+  };
+
+  try {
+    const resposta = await fetch(
+      orcamentoExistente
+        ? `http://localhost:8080/orcamentos/${orcamentoExistente.id}`
+        : 'http://localhost:8080/orcamentos',
+      {
+        method: orcamentoExistente ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dadosOrcamento),
+      }
+    );
+
+    if (!resposta.ok) {
+      const detalhe = await resposta.text();
+      throw new Error(detalhe || 'Erro ao salvar orçamento');
+    }
+
+    const salvo = await resposta.json();
+
+    // Buscar o gasto atualizado no backend
+    const respostaGasto = await fetch(
+      `http://localhost:8080/orcamentos/${salvo.idOrcamento}/gasto`
+    );
+
+    const gasto = respostaGasto.ok
+      ? Number(await respostaGasto.json())
+      : 0;
+
+    const orcamentoFormatado: Orcamento = {
+      id: String(salvo.idOrcamento),
+      categoria: salvo.categoria.nome,
+      limite: Number(salvo.limiteValor),
+      gasto,
+    };
+
+    // Atualizar a tela com o resultado salvo no banco
     if (orcamentoExistente) {
-      setOrcamentos(
-        orcamentos.map((o) =>
-          o.categoria === categoriaSel ? { ...o, limite: limiteNum } : o
+      setOrcamentos((atuais) =>
+        atuais.map((o) =>
+          o.id === orcamentoFormatado.id
+            ? orcamentoFormatado
+            : o
         )
       );
     } else {
-      setOrcamentos([
-        ...orcamentos,
-        { id: Date.now().toString(), categoria: categoriaSel, limite: limiteNum, gasto: 0 },
+      setOrcamentos((atuais) => [
+        ...atuais,
+        orcamentoFormatado,
       ]);
     }
 
     setLimiteOrcamento('');
-  };
+    alert('Orçamento salvo com sucesso!');
+  } catch (erro) {
+    console.error('Erro ao salvar orçamento:', erro);
+    alert('Não foi possível salvar o orçamento. Confira o console e o backend.');
+  }
+};
+  
+const handleRemoverOrcamento = async (id: string) => {
+  const confirmar = window.confirm(
+    'Deseja realmente remover este orçamento?'
+  );
 
-  const handleRemoverOrcamento = (id: string) => {
-    setOrcamentos(orcamentos.filter((o) => o.id !== id));
-  };
+  if (!confirmar) return;
+
+  try {
+    const resposta = await fetch(
+      `http://localhost:8080/orcamentos/${id}`,
+      {
+        method: 'DELETE',
+      }
+    );
+
+    if (!resposta.ok) {
+      throw new Error('Erro ao remover orçamento');
+    }
+
+    setOrcamentos((atuais) =>
+      atuais.filter((orcamento) => orcamento.id !== id)
+    );
+  } catch (erro) {
+    console.error('Erro ao remover orçamento:', erro);
+    alert('Não foi possível remover o orçamento.');
+  }
+};
+
 
   // Calcular gastos por categoria
   const calcularGasto = (categoria: string) => {
@@ -172,7 +277,7 @@ export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
 
         <div className="space-y-3 pt-2">
           {orcamentos.map((orc) => {
-            const gastoAtual = calcularGasto(orc.categoria);
+            const gastoAtual = orc.gasto;
             const porc = Math.min(100, Math.round((gastoAtual / orc.limite) * 100));
             const resta = orc.limite - gastoAtual;
 

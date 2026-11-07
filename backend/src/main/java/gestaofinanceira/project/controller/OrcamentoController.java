@@ -8,6 +8,7 @@ import java.util.List;
 
 @RestController 
 @RequestMapping ("/orcamentos")
+@CrossOrigin(origins = "http://localhost:5173")
 
 public class OrcamentoController {
 
