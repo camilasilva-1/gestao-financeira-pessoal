@@ -35,6 +35,11 @@ public class UsuarioService {
     }
 
     public Usuario criar(Usuario usuario) {
+        if (usuario.getNome() == null || usuario.getNome().isBlank()
+                || usuario.getEmail() == null || usuario.getEmail().isBlank()
+                || usuario.getSenha() == null || usuario.getSenha().length() < 8) {
+            throw new IllegalArgumentException("Informe nome, e-mail e senha de pelo menos 8 caracteres");
+        }
         validarEmailDuplicado(usuario.getEmail(), null);
 
         usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));

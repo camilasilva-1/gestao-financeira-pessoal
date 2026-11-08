@@ -89,6 +89,10 @@ public class TransacaoService {
                         ? dto.getDataTransacao()
                         : LocalDate.now());
 
+        if (dto.getUsuarioId() == null || dto.getCategoriaId() == null) {
+            throw new IllegalArgumentException("Usuário e categoria são obrigatórios");
+        }
+
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
@@ -165,7 +169,15 @@ public class TransacaoService {
     // Métodos auxiliares para insights
 
     public BigDecimal calcularGastoPorCategoria(Integer usuarioId, String nomeCategoria, int mes) {
-        LocalDate inicio = LocalDate.of(LocalDate.now().getYear(), mes, 1);
+        if (mes < 1 || mes > 12) {
+            throw new IllegalArgumentException("Mês inválido");
+        }
+        return calcularGastoPorCategoria(usuarioId, nomeCategoria,
+                LocalDate.of(LocalDate.now().getYear(), mes, 1));
+    }
+
+    public BigDecimal calcularGastoPorCategoria(Integer usuarioId, String nomeCategoria, LocalDate referencia) {
+        LocalDate inicio = referencia.withDayOfMonth(1);
         LocalDate fim = inicio.withDayOfMonth(inicio.lengthOfMonth());
 
         List<Object[]> gastos = transacaoRepository.gastosPorCategoria(
@@ -264,11 +276,18 @@ public class TransacaoService {
             throw new IllegalArgumentException("Valor da transação deve ser maior que zero");
         }
 
-        if (t.getUsuario() == null) {
+        if (t.getDescricao() == null || t.getDescricao().isBlank()) {
+            throw new IllegalArgumentException("Descrição é obrigatória");
+        }
+        if (t.getDataTransacao() == null || t.getTipo() == null) {
+            throw new IllegalArgumentException("Data e tipo são obrigatórios");
+        }
+
+        if (t.getUsuario() == null || t.getUsuario().getIdUsuario() == null) {
             throw new IllegalArgumentException("Usuário é obrigatório");
         }
 
-        if (t.getCategoria() == null) {
+        if (t.getCategoria() == null || t.getCategoria().getIdCategoria() == null) {
             throw new IllegalArgumentException("Categoria é obrigatória");
         }
     }

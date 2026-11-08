@@ -36,8 +36,8 @@ public class InsightService {
 
         List<InsightDTO> insights = new ArrayList<>();
 
-        int mesAtual = LocalDate.now().getMonthValue();
-        int mesAnterior = LocalDate.now().minusMonths(1).getMonthValue();
+        LocalDate mesAtual = LocalDate.now();
+        LocalDate mesAnterior = mesAtual.minusMonths(1);
 
         List<Categoria> categorias = categoriaService.listarTodas();
         boolean gerouInsight = false;
@@ -61,14 +61,10 @@ public class InsightService {
                 BigDecimal variacao = gastoAtual
                         .subtract(gastoAnterior)
                         .divide(
-                                gastoAtual.add(gastoAnterior),
+                                gastoAnterior,
                                 2,
                                 RoundingMode.HALF_UP)
                         .multiply(BigDecimal.valueOf(100));
-
-                if (variacao.compareTo(BigDecimal.valueOf(100)) > 0) {
-                    variacao = BigDecimal.valueOf(100);
-                }
 
                 if (variacao.compareTo(BigDecimal.valueOf(30)) > 0) {
 
@@ -249,8 +245,8 @@ public class InsightService {
 
         long riscos = alertas.stream()
                 .filter(a ->
-                        a.getTipo().equalsIgnoreCase("Risco")
-                                || a.getTipo().equalsIgnoreCase("Estourado"))
+                        a.getNivelAlerta().equalsIgnoreCase("Risco")
+                                || a.getNivelAlerta().equalsIgnoreCase("Estourado"))
                 .count();
 
         if (riscos == 0) {

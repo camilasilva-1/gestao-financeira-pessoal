@@ -31,7 +31,7 @@ public interface TransacaoRepository extends JpaRepository<Transacao, Integer> {
        // Métodos com intervalo de datas
 
        @Query("SELECT COALESCE(SUM(t.valor), 0) FROM Transacao t " +
-                     "WHERE t.tipo = 'RECEITA' AND t.usuario.idUsuario = :usuarioId " +
+                     "WHERE t.tipo = gestaofinanceira.project.enums.Tipo.RECEITA AND t.usuario.idUsuario = :usuarioId " +
                      "AND t.dataTransacao BETWEEN :inicio AND :fim")
        BigDecimal somaReceitasPorPeriodo(
                      @Param("usuarioId") Long usuarioId,
@@ -39,7 +39,7 @@ public interface TransacaoRepository extends JpaRepository<Transacao, Integer> {
                      @Param("fim") LocalDate fim);
 
        @Query("SELECT COALESCE(SUM(t.valor), 0) FROM Transacao t " +
-                     "WHERE t.tipo = 'DESPESA' AND t.usuario.idUsuario = :usuarioId " +
+                     "WHERE t.tipo = gestaofinanceira.project.enums.Tipo.DESPESA AND t.usuario.idUsuario = :usuarioId " +
                      "AND t.dataTransacao BETWEEN :inicio AND :fim")
        BigDecimal somaDespesasPorPeriodo(
                      @Param("usuarioId") Long usuarioId,
@@ -47,7 +47,7 @@ public interface TransacaoRepository extends JpaRepository<Transacao, Integer> {
                      @Param("fim") LocalDate fim);
 
        @Query("SELECT t.categoria.nome, SUM(t.valor) FROM Transacao t " +
-                     "WHERE t.tipo = 'DESPESA' AND t.usuario.idUsuario = :usuarioId " +
+                     "WHERE t.tipo = gestaofinanceira.project.enums.Tipo.DESPESA AND t.usuario.idUsuario = :usuarioId " +
                      "AND t.dataTransacao BETWEEN :inicio AND :fim GROUP BY t.categoria.nome")
        List<Object[]> gastosPorCategoria(
                      @Param("usuarioId") Long usuarioId,
@@ -55,8 +55,8 @@ public interface TransacaoRepository extends JpaRepository<Transacao, Integer> {
                      @Param("fim") LocalDate fim);
 
        @Query("SELECT FUNCTION('MONTH', t.dataTransacao), " +
-                     "SUM(CASE WHEN t.tipo = 'RECEITA' THEN t.valor ELSE 0 END), " +
-                     "SUM(CASE WHEN t.tipo = 'DESPESA' THEN t.valor ELSE 0 END) " +
+                     "SUM(CASE WHEN t.tipo = gestaofinanceira.project.enums.Tipo.RECEITA THEN t.valor ELSE 0 END), " +
+                     "SUM(CASE WHEN t.tipo = gestaofinanceira.project.enums.Tipo.DESPESA THEN t.valor ELSE 0 END) " +
                      "FROM Transacao t WHERE t.usuario.idUsuario = :usuarioId " +
                      "GROUP BY FUNCTION('MONTH', t.dataTransacao) " +
                      "ORDER BY FUNCTION('MONTH', t.dataTransacao)")
@@ -65,15 +65,15 @@ public interface TransacaoRepository extends JpaRepository<Transacao, Integer> {
        // Métodos sem intervalo (geral)
 
        @Query("SELECT COALESCE(SUM(t.valor), 0) FROM Transacao t " +
-                     "WHERE t.tipo = 'RECEITA' AND t.usuario.idUsuario = :usuarioId")
+                     "WHERE t.tipo = gestaofinanceira.project.enums.Tipo.RECEITA AND t.usuario.idUsuario = :usuarioId")
        BigDecimal somaReceitas(@Param("usuarioId") Long usuarioId);
 
        @Query("SELECT COALESCE(SUM(t.valor), 0) FROM Transacao t " +
-                     "WHERE t.tipo = 'DESPESA' AND t.usuario.idUsuario = :usuarioId")
+                     "WHERE t.tipo = gestaofinanceira.project.enums.Tipo.DESPESA AND t.usuario.idUsuario = :usuarioId")
        BigDecimal somaDespesas(@Param("usuarioId") Long usuarioId);
 
        @Query("SELECT t.categoria.nome, SUM(t.valor) FROM Transacao t " +
-                     "WHERE t.tipo = 'DESPESA' AND t.usuario.idUsuario = :usuarioId " +
+                     "WHERE t.tipo = gestaofinanceira.project.enums.Tipo.DESPESA AND t.usuario.idUsuario = :usuarioId " +
                      "GROUP BY t.categoria.nome")
        List<Object[]> gastosPorCategoriaGeral(@Param("usuarioId") Long usuarioId);
 
@@ -102,6 +102,17 @@ public interface TransacaoRepository extends JpaRepository<Transacao, Integer> {
        BigDecimal somaDespesasPorCategorias(
                      @Param("usuarioId") Integer usuarioId,
                      @Param("categorias") List<String> categorias);
+
+       @Query("SELECT COALESCE(SUM(t.valor), 0) FROM Transacao t " +
+                     "WHERE t.tipo = gestaofinanceira.project.enums.Tipo.DESPESA " +
+                     "AND t.usuario.idUsuario = :usuarioId " +
+                     "AND t.categoria.nome IN :categorias " +
+                     "AND t.dataTransacao BETWEEN :inicio AND :fim")
+       BigDecimal somaDespesasPorCategoriasNoPeriodo(
+                     @Param("usuarioId") Integer usuarioId,
+                     @Param("categorias") List<String> categorias,
+                     @Param("inicio") LocalDate inicio,
+                     @Param("fim") LocalDate fim);
 
        Optional<Transacao> findByIdTransacaoAndUsuarioIdUsuario(
                      Integer idTransacao,
