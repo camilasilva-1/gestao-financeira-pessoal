@@ -14,8 +14,10 @@ export const loginUsuario = async (
 ): Promise<UsuarioLogin> => {
   const response = await fetch(`${API_BASE_URL}/usuarios/login`, {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
     },
     body: JSON.stringify(credentials),
   });
@@ -31,8 +33,10 @@ export const loginUsuario = async (
 export const cadastrarUsuario = async (usuarioData: { nome: string; email: string; senha: string; salarioLiquido: number }) => {
   const response = await fetch(`${API_BASE_URL}/usuarios`, {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
     },
     body: JSON.stringify(usuarioData),
   });
@@ -55,8 +59,10 @@ export const cadastrarTransacao = async (transacaoData: {
 }) => {
   const response = await fetch(`${API_BASE_URL}/transacoes`, {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
     },
     body: JSON.stringify(transacaoData),
   });
@@ -70,7 +76,7 @@ export const cadastrarTransacao = async (transacaoData: {
 
 // 4. Listar todas as Transações do Utilizador
 export const listarTransacoes = async (usuarioId: number) => {
-  const response = await fetch(`${API_BASE_URL}/transacoes/usuario/${usuarioId}`);
+  const response = await fetch(`${API_BASE_URL}/transacoes/usuario/${usuarioId}`, { credentials: 'include' });
 
   if (!response.ok) {
     throw new Error('Erro ao procurar as transações.');
@@ -97,8 +103,10 @@ export const atualizarTransacao = async (
     `${API_BASE_URL}/transacoes/${id}/usuario/${usuarioId}`,
     {
       method: 'PUT',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
       },
       body: JSON.stringify(transacaoData),
     }
