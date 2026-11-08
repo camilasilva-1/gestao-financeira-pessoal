@@ -6,10 +6,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import gestaofinanceira.project.config.SessionOwnershipFilter;
 
 @RestController
 @RequestMapping("/orcamentos")
-@CrossOrigin(origins = "http://localhost:5173")
+
 
 public class OrcamentoController {
 
@@ -38,7 +42,11 @@ public class OrcamentoController {
 
     // Adicionar novo orçamento
     @PostMapping
-    public Orcamento adicionar(@RequestBody Orcamento orcamento) {
+    public Orcamento adicionar(@RequestBody Orcamento orcamento, HttpSession session) {
+        if (orcamento.getUsuario() == null ||
+            !session.getAttribute(SessionOwnershipFilter.USER_ID).equals(orcamento.getUsuario().getIdUsuario())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuario nao autorizado");
+        }
         return service.adicionar(orcamento);
     }
 
