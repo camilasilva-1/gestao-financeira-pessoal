@@ -9,6 +9,8 @@ public class TransacaoDTO {
     private Integer categoriaId; // Tem de ser Integer
     private Integer usuarioId;   // Tem de ser Integer
     private LocalDate dataTransacao;
+    private String estabelecimento;
+    private Boolean recorrencia;
 
     // Getters e Setters
     public String getDescricao() { return descricao; }
@@ -28,4 +30,8 @@ public class TransacaoDTO {
 
     public LocalDate getDataTransacao() { return dataTransacao; }
     public void setDataTransacao(LocalDate dataTransacao) { this.dataTransacao = dataTransacao; }
+    public String getEstabelecimento() { return estabelecimento; }
+    public void setEstabelecimento(String estabelecimento) { this.estabelecimento = estabelecimento; }
+    public Boolean getRecorrencia() { return recorrencia; }
+    public void setRecorrencia(Boolean recorrencia) { this.recorrencia = recorrencia; }
 }
