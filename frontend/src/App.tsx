@@ -33,7 +33,8 @@ useEffect(() => {
       }
 
       const resposta = await fetch(
-        `http://localhost:8080/api/transacoes/usuario/${usuarioId}`
+        `http://localhost:8080/api/transacoes/usuario/${usuarioId}`,
+        { credentials: 'include' }
       );
 
       if (!resposta.ok) {
@@ -79,7 +80,8 @@ useEffect(() => {
         return;
       }
       const resposta = await fetch(
-        `http://localhost:8080/orcamentos/usuario/${usuarioId}`
+        `http://localhost:8080/orcamentos/usuario/${usuarioId}`,
+        { credentials: 'include' }
       );
 
       if (!resposta.ok) {
@@ -92,7 +94,8 @@ useEffect(() => {
 const orcamentosFormatados: Orcamento[] = await Promise.all(
   dados.map(async (orcamento) => {
     const respostaGasto = await fetch(
-      `http://localhost:8080/orcamentos/${orcamento.idOrcamento}/gasto`
+      `http://localhost:8080/orcamentos/${orcamento.idOrcamento}/gasto`,
+      { credentials: 'include' }
     );
 
     if (!respostaGasto.ok) {
@@ -144,10 +147,21 @@ const orcamentosFormatados: Orcamento[] = await Promise.all(
 }, []);
 
   // Função para fazer logout e limpar a sessão salva no navegador
-  const handleLogout = () => {
-    localStorage.removeItem('usuarioId');
-    localStorage.removeItem('usuarioNome');
-    setTelaAtual('login');
+  const handleLogout = async () => {
+    try {
+      await fetch('http://localhost:8080/api/usuarios/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
+    } finally {
+      localStorage.removeItem('usuarioId');
+      localStorage.removeItem('usuarioNome');
+      localStorage.removeItem('salarioLiquido');
+      setTransacoes([]);
+      setOrcamentos([]);
+      setTelaAtual('login');
+    }
   };
 
   // Cálculo dinâmico do saldo para o Header em degradê
