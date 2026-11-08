@@ -48,7 +48,7 @@ public class RelatorioService {
             String categoria = (String) r[0];
             BigDecimal valor = (BigDecimal) r[1];
             double percentual = total.compareTo(BigDecimal.ZERO) > 0
-                    ? valor.divide(total, 2, RoundingMode.HALF_UP).doubleValue() * 100
+                    ? valor.multiply(BigDecimal.valueOf(100)).divide(total, 2, RoundingMode.HALF_UP).doubleValue()
                     : 0.0;
             distribuicao.add(new DistribuicaoGastosDTO(categoria, valor, percentual));
         }
@@ -70,7 +70,7 @@ public class RelatorioService {
             String categoria = (String) r[0];
             BigDecimal valor = (BigDecimal) r[1];
             double percentual = total.compareTo(BigDecimal.ZERO) > 0
-                    ? valor.divide(total, 2, RoundingMode.HALF_UP).doubleValue() * 100
+                    ? valor.multiply(BigDecimal.valueOf(100)).divide(total, 2, RoundingMode.HALF_UP).doubleValue()
                     : 0.0;
             distribuicao.add(new DistribuicaoGastosDTO(categoria, valor, percentual));
         }
@@ -100,7 +100,7 @@ public class RelatorioService {
             String categoria = (String) r[0];
             BigDecimal valor = (BigDecimal) r[1];
             double percentual = total.compareTo(BigDecimal.ZERO) > 0
-                    ? valor.divide(total, 2, RoundingMode.HALF_UP).doubleValue() * 100
+                    ? valor.multiply(BigDecimal.valueOf(100)).divide(total, 2, RoundingMode.HALF_UP).doubleValue()
                     : 0.0;
             ranking.add(new RankingCategoriaDTO(categoria, valor, percentual));
         }

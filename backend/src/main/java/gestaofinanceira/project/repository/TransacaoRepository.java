@@ -80,6 +80,16 @@ public interface TransacaoRepository extends JpaRepository<Transacao, Integer> {
             LocalDate inicio,
             LocalDate fim);
 
+    @Query("SELECT COALESCE(SUM(t.valor), 0) FROM Transacao t " +
+           "WHERE t.tipo = gestaofinanceira.project.enums.Tipo.DESPESA " +
+           "AND t.usuario.idUsuario = :usuarioId " +
+           "AND t.categoria.nome IN :categorias " +
+           "AND t.dataTransacao BETWEEN :inicio AND :fim")
+    BigDecimal somaDespesasPorCategoriasNoPeriodo(@Param("usuarioId") Integer usuarioId,
+                                                  @Param("categorias") List<String> categorias,
+                                                  @Param("inicio") LocalDate inicio,
+                                                  @Param("fim") LocalDate fim);
+
     List<Transacao> findByCategoriaAndTipoAndDataTransacaoBetween(
             Categoria categoria,
             Tipo tipo,

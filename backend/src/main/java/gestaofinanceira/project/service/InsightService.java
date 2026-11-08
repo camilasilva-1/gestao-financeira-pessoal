@@ -66,10 +66,6 @@ public class InsightService {
                                 RoundingMode.HALF_UP)
                         .multiply(BigDecimal.valueOf(100));
 
-                if (variacao.compareTo(BigDecimal.valueOf(100)) > 0) {
-                    variacao = BigDecimal.valueOf(100);
-                }
-
                 if (variacao.compareTo(BigDecimal.valueOf(30)) > 0) {
 
                     insights.add(new InsightDTO(
