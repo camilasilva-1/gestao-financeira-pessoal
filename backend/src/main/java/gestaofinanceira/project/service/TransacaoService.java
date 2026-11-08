@@ -84,19 +84,18 @@ public class TransacaoService {
             t.setTipo(Tipo.valueOf(dto.getTipo().toUpperCase()));
         }
 
-        t.setDataTransacao(
-                dto.getDataTransacao() != null
-                        ? dto.getDataTransacao()
-                        : LocalDate.now());
+        t.setDataTransacao(dto.getDataTransacao());
+        t.setEstabelecimento(dto.getEstabelecimento());
+        t.setRecorrencia(dto.getRecorrencia() != null ? dto.getRecorrencia() : false);
 
-        if (dto.getUsuarioId() == null || dto.getCategoriaId() == null) {
-            throw new IllegalArgumentException("Usuário e categoria são obrigatórios");
+        if (dto.getUsuarioId() == null) {
+            throw new IllegalArgumentException("Usuário é obrigatório");
         }
 
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
+        Categoria categoria = dto.getCategoriaId() == null ? null : categoriaRepository.findById(dto.getCategoriaId())
                 .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
 
         t.setUsuario(usuario);
@@ -118,14 +117,11 @@ public class TransacaoService {
         nova.setUsuario(existente.getUsuario());
         validarTransacao(nova);
 
-        if (nova.getCategoria() == null || nova.getCategoria().getIdCategoria() == null) {
-            throw new RuntimeException("Categoria não informada.");
+        Categoria categoria = null;
+        if (nova.getCategoria() != null && nova.getCategoria().getIdCategoria() != null) {
+            categoria = categoriaRepository.findById(nova.getCategoria().getIdCategoria())
+                    .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
         }
-
-        int categoriaId = nova.getCategoria().getIdCategoria();
-
-        Categoria categoria = categoriaRepository.findById(categoriaId)
-                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
 
         existente.setDescricao(nova.getDescricao());
         existente.setValor(nova.getValor());
@@ -264,8 +260,11 @@ public class TransacaoService {
         Usuario usuario = usuarioRepository.findById(t.getUsuario().getIdUsuario())
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        Categoria categoria = categoriaRepository.findById(t.getCategoria().getIdCategoria())
-                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+        Categoria categoria = null;
+        if (t.getCategoria() != null && t.getCategoria().getIdCategoria() != null) {
+            categoria = categoriaRepository.findById(t.getCategoria().getIdCategoria())
+                    .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+        }
 
         t.setUsuario(usuario);
         t.setCategoria(categoria);
@@ -287,8 +286,9 @@ public class TransacaoService {
             throw new IllegalArgumentException("Usuário é obrigatório");
         }
 
-        if (t.getCategoria() == null || t.getCategoria().getIdCategoria() == null) {
-            throw new IllegalArgumentException("Categoria é obrigatória");
+        if (t.getTipo() == Tipo.DESPESA &&
+                (t.getCategoria() == null || t.getCategoria().getIdCategoria() == null)) {
+            throw new IllegalArgumentException("Categoria é obrigatória para despesas");
         }
     }
 }
