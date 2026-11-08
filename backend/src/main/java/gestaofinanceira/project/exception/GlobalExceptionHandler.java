@@ -14,6 +14,12 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(404, e.getMessage());
     }
 
+    @ExceptionHandler(java.util.NoSuchElementException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse tratarNaoEncontrado(java.util.NoSuchElementException e) {
+        return new ErrorResponse(404, e.getMessage());
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse tratarArgumentoInvalido(IllegalArgumentException e) {

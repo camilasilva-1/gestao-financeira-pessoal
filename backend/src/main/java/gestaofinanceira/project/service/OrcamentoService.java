@@ -36,7 +36,7 @@ public class OrcamentoService {
     // Buscar orçamento por Id
     public Orcamento buscar(int id) {
         return orcamentoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Orçamento não encontrado"));
+                .orElseThrow(() -> new java.util.NoSuchElementException("Orçamento não encontrado"));
     }
 
     // Adicionar um novo orçamento

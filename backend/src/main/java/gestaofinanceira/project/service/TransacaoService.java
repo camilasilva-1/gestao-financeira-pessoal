@@ -91,7 +91,7 @@ public class TransacaoService {
     public Transacao atualizarCategoria(int idTransacao, int idCategoria) {
         Transacao transacao = buscar(idTransacao);
         Categoria categoria = categoriaRepository.findById(idCategoria)
-                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+                .orElseThrow(() -> new java.util.NoSuchElementException("Categoria não encontrada"));
 
         transacao.setCategoria(categoria);
         return transacaoRepository.save(transacao);
@@ -198,10 +198,10 @@ public class TransacaoService {
 
     private void carregarRelacionamentos(Transacao t) {
         Usuario usuario = usuarioRepository.findById(t.getUsuario().getIdUsuario())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new java.util.NoSuchElementException("Usuário não encontrado"));
 
         Categoria categoria = categoriaRepository.findById(t.getCategoria().getIdCategoria())
-                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+                .orElseThrow(() -> new java.util.NoSuchElementException("Categoria não encontrada"));
 
         t.setUsuario(usuario);
         t.setCategoria(categoria);

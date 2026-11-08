@@ -26,7 +26,7 @@ public class UsuarioService {
 
     public Usuario buscarPorId(Integer id) {
         return usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new java.util.NoSuchElementException("Usuário não encontrado"));
     }
 
     public Usuario atualizar(Integer id, Usuario usuario) {

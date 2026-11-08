@@ -88,7 +88,7 @@ public class CategoriaService {
     // Buscar categoria por ID
     public Categoria buscarPorId(Integer id) {
         return categoriaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+                .orElseThrow(() -> new java.util.NoSuchElementException("Categoria não encontrada"));
     }
 
     // Sugere categoria com base no nome do estabelecimento

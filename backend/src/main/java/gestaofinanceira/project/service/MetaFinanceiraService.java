@@ -43,7 +43,7 @@ public class MetaFinanceiraService {
             throw new IllegalArgumentException("Prazo da meta é obrigatório");
         }
         Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+                .orElseThrow(() -> new java.util.NoSuchElementException("Usuário não encontrado"));
 
         meta.setUsuario(usuario);
         return metaRepository.save(meta);
