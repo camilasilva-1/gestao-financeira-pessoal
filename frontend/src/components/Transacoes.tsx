@@ -364,20 +364,22 @@ const handleExcluir = async (id: string) => {
 
       {/* Histórico com Barra de Filtros */}
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-start gap-3 border-b pb-4">
-          <h2 className="text-lg font-bold text-slate-800 lg:w-44 lg:shrink-0 lg:pt-1">
+        <div className="grid grid-cols-1 lg:grid-cols-[210px_minmax(0,1fr)] gap-4 border-b pb-4">
+          <h2 className="text-lg font-bold text-slate-800 lg:pt-2">
             Histórico de Transações
           </h2>
 
-          <div className="flex-1 min-w-0 space-y-2">
-            {/* Filtros principais: visual compacto da versão anterior */}
-            <div className="flex flex-wrap gap-2">
+          <div className="min-w-0 space-y-3">
+            {/* Linha 1: filtros principais alinhados */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
               <input type="text" placeholder="Buscar por descrição..." value={busca}
                 onChange={e => setBusca(e.target.value)}
-                className="w-full sm:w-44 min-w-0 border border-slate-300 rounded-lg px-3 py-1.5 text-xs" />
+                aria-label="Buscar por descrição"
+                className="w-full min-w-0 h-9 border border-slate-300 rounded-lg px-3 text-xs" />
               <select value={filtroPeriodo}
                 onChange={e => setFiltroPeriodo(e.target.value as 'TODOS' | 'ESTE_MES' | 'MES_PASSADO' | 'ESTE_ANO')}
-                className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs">
+                aria-label="Período"
+                className="w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs">
                 <option value="TODOS">Todos os Períodos</option>
                 <option value="ESTE_MES">Este Mês</option>
                 <option value="MES_PASSADO">Mês Passado</option>
@@ -385,46 +387,56 @@ const handleExcluir = async (id: string) => {
               </select>
               <select value={filtroTipo}
                 onChange={e => setFiltroTipo(e.target.value as 'TODOS' | 'RECEITA' | 'DESPESA')}
-                className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs">
+                aria-label="Tipo de transação"
+                className="w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs">
                 <option value="TODOS">Todos os Tipos</option>
                 <option value="RECEITA">Receitas</option>
                 <option value="DESPESA">Despesas</option>
               </select>
               <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}
-                className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs">
+                aria-label="Categoria"
+                className="w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs">
                 <option value="TODAS">Todas as Categorias</option>
                 {categorias.map(cat => <option key={cat} value={cat}>{cat}</option>)}
               </select>
             </div>
 
-            {/* Filtros adicionais: segunda linha organizada */}
-            <div className="flex flex-wrap items-end gap-2">
-              <label className="text-xs text-slate-600">
+            {/* Linha 2: filtros adicionais com campos do mesmo tamanho */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
+              <label className="block min-w-0 text-xs text-slate-600">
                 De
                 <input type="date" value={dataInicial} onChange={e => setDataInicial(e.target.value)}
-                  className="block w-36 border border-slate-300 rounded-lg px-2 py-1.5 text-xs" />
+                  className="mt-1 block w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs" />
               </label>
-              <label className="text-xs text-slate-600">
+              <label className="block min-w-0 text-xs text-slate-600">
                 Até
                 <input type="date" min={dataInicial || undefined} value={dataFinal}
                   onChange={e => setDataFinal(e.target.value)}
-                  className="block w-36 border border-slate-300 rounded-lg px-2 py-1.5 text-xs" />
+                  className="mt-1 block w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs" />
               </label>
-              <input type="text" aria-label="Filtrar estabelecimento" placeholder="Estabelecimento"
-                value={filtroEstabelecimento} onChange={e => setFiltroEstabelecimento(e.target.value)}
-                className="w-44 border border-slate-300 rounded-lg px-2 py-1.5 text-xs" />
-              <select value={filtroRecorrencia}
-                onChange={e => setFiltroRecorrencia(e.target.value as 'TODOS' | 'SIM' | 'NAO')}
-                aria-label="Filtrar recorrência"
-                className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs">
-                <option value="TODOS">Todas as recorrências</option>
-                <option value="SIM">Recorrentes</option>
-                <option value="NAO">Não recorrentes</option>
-              </select>
+              <label className="block min-w-0 text-xs text-slate-600">
+                Estabelecimento
+                <input type="text" placeholder="Nome do estabelecimento" value={filtroEstabelecimento}
+                  onChange={e => setFiltroEstabelecimento(e.target.value)}
+                  className="mt-1 block w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs" />
+              </label>
+              <label className="block min-w-0 text-xs text-slate-600">
+                Recorrência
+                <select value={filtroRecorrencia}
+                  onChange={e => setFiltroRecorrencia(e.target.value as 'TODOS' | 'SIM' | 'NAO')}
+                  className="mt-1 block w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs">
+                  <option value="TODOS">Todas as recorrências</option>
+                  <option value="SIM">Recorrentes</option>
+                  <option value="NAO">Não recorrentes</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="flex justify-end">
               <button type="button" onClick={() => {
                 setBusca(''); setFiltroTipo('TODOS'); setFiltroCategoria('TODAS'); setFiltroPeriodo('TODOS');
                 setDataInicial(''); setDataFinal(''); setFiltroEstabelecimento(''); setFiltroRecorrencia('TODOS');
-              }} className="text-xs text-blue-600 hover:underline py-1.5">
+              }} className="text-xs text-blue-600 hover:underline">
                 Limpar filtros
               </button>
             </div>
