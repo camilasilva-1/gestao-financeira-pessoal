@@ -91,16 +91,20 @@ public class SessionOwnershipFilter extends OncePerRequestFilter {
             int id = Integer.parseInt(m.group(1));
             authorized = "GET".equals(method) && transacoes.findById(id)
                 .map(t -> t.getUsuario().getIdUsuario().equals(userId)).orElse(false);
-        } else if ("/api/transacoes".equals(path) && "POST".equals(method)) {
-            authorized = true; // O controller compara o usuarioId do corpo com a sessao.
+        } else if ("/api/transacoes".equals(path) && ("POST".equals(method) || "GET".equals(method))) {
+            authorized = true; // GET e filtrado pelo usuario no controller; POST verifica o dono.
+        } else if ("GET".equals(method) && path.matches("^/api/transacoes/filtro/(tipo|periodo|categoria/\\d+)$")) {
+            authorized = true; // Resultados sao filtrados pelo usuario logado no controller.
         } else if ((m = match(path, "^/orcamentos/usuario/(\\d+)$")).matches()) {
             authorized = "GET".equals(method) && hasOwnId(m.group(1), userId);
         } else if ((m = match(path, "^/orcamentos/(\\d+)(?:/(?:gasto|saldo|percentual))?$")).matches()) {
             int id = Integer.parseInt(m.group(1));
             authorized = orcamentos.findById(id)
                 .map(o -> o.getUsuario().getIdUsuario().equals(userId)).orElse(false);
-        } else if ("/orcamentos".equals(path) && "POST".equals(method)) {
-            authorized = true; // O controller compara o usuarioId do corpo com a sessao.
+        } else if ("/orcamentos".equals(path) && ("POST".equals(method) || "GET".equals(method))) {
+            authorized = true; // GET e filtrado pelo usuario no controller; POST verifica o dono.
+        } else if ("/metas".equals(path) && "GET".equals(method)) {
+            authorized = true; // GET e filtrado pelo usuario no controller.
         } else if ((m = match(path, "^/metas/(?:usuario|criar|calcular)/(\\d+)$")).matches()) {
             authorized = hasOwnId(m.group(1), userId);
         } else if ((m = match(path, "^/categorias/ranking/(\\d+)$")).matches()) {
