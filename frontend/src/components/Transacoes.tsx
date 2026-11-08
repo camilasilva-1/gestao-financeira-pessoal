@@ -364,61 +364,70 @@ const handleExcluir = async (id: string) => {
 
       {/* Histórico com Barra de Filtros */}
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-        <div className="space-y-4 border-b pb-5">
-          <h2 className="text-lg font-bold text-slate-800">Histórico de Transações</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <input type="text" placeholder="Buscar por descrição..." value={busca} onChange={e => setBusca(e.target.value)}
-              className="w-full min-w-0 border border-slate-300 rounded-lg px-3 py-2 text-sm" />
-            <select value={filtroPeriodo} onChange={e => setFiltroPeriodo(e.target.value as 'TODOS' | 'ESTE_MES' | 'MES_PASSADO' | 'ESTE_ANO')}
-              className="w-full min-w-0 border border-slate-300 rounded-lg px-3 py-2 text-sm">
-              <option value="TODOS">Todos os períodos</option>
-              <option value="ESTE_MES">Este mês</option>
-              <option value="MES_PASSADO">Mês passado</option>
-              <option value="ESTE_ANO">Este ano</option>
-            </select>
-            <select value={filtroTipo} onChange={e => setFiltroTipo(e.target.value as 'TODOS' | 'RECEITA' | 'DESPESA')}
-              className="w-full min-w-0 border border-slate-300 rounded-lg px-3 py-2 text-sm">
-              <option value="TODOS">Todos os tipos</option>
-              <option value="RECEITA">Receitas</option>
-              <option value="DESPESA">Despesas</option>
-            </select>
-            <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}
-              className="w-full min-w-0 border border-slate-300 rounded-lg px-3 py-2 text-sm">
-              <option value="TODAS">Todas as categorias</option>
-              {categorias.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-            </select>
-            <label className="block text-xs font-medium text-slate-600">
-              Data inicial
-              <input type="date" value={dataInicial} onChange={e => setDataInicial(e.target.value)}
-                className="mt-1 block w-full min-w-0 border border-slate-300 rounded-lg px-3 py-2 text-sm" />
-            </label>
-            <label className="block text-xs font-medium text-slate-600">
-              Data final
-              <input type="date" min={dataInicial || undefined} value={dataFinal} onChange={e => setDataFinal(e.target.value)}
-                className="mt-1 block w-full min-w-0 border border-slate-300 rounded-lg px-3 py-2 text-sm" />
-            </label>
-            <label className="block text-xs font-medium text-slate-600">
-              Estabelecimento
-              <input type="text" placeholder="Nome do estabelecimento" value={filtroEstabelecimento}
-                onChange={e => setFiltroEstabelecimento(e.target.value)}
-                className="mt-1 block w-full min-w-0 border border-slate-300 rounded-lg px-3 py-2 text-sm" />
-            </label>
-            <label className="block text-xs font-medium text-slate-600">
-              Recorrência
+        <div className="flex flex-col lg:flex-row lg:items-start gap-3 border-b pb-4">
+          <h2 className="text-lg font-bold text-slate-800 lg:w-44 lg:shrink-0 lg:pt-1">
+            Histórico de Transações
+          </h2>
+
+          <div className="flex-1 min-w-0 space-y-2">
+            {/* Filtros principais: visual compacto da versão anterior */}
+            <div className="flex flex-wrap gap-2">
+              <input type="text" placeholder="Buscar por descrição..." value={busca}
+                onChange={e => setBusca(e.target.value)}
+                className="w-full sm:w-44 min-w-0 border border-slate-300 rounded-lg px-3 py-1.5 text-xs" />
+              <select value={filtroPeriodo}
+                onChange={e => setFiltroPeriodo(e.target.value as 'TODOS' | 'ESTE_MES' | 'MES_PASSADO' | 'ESTE_ANO')}
+                className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs">
+                <option value="TODOS">Todos os Períodos</option>
+                <option value="ESTE_MES">Este Mês</option>
+                <option value="MES_PASSADO">Mês Passado</option>
+                <option value="ESTE_ANO">Este Ano</option>
+              </select>
+              <select value={filtroTipo}
+                onChange={e => setFiltroTipo(e.target.value as 'TODOS' | 'RECEITA' | 'DESPESA')}
+                className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs">
+                <option value="TODOS">Todos os Tipos</option>
+                <option value="RECEITA">Receitas</option>
+                <option value="DESPESA">Despesas</option>
+              </select>
+              <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}
+                className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs">
+                <option value="TODAS">Todas as Categorias</option>
+                {categorias.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+              </select>
+            </div>
+
+            {/* Filtros adicionais: segunda linha organizada */}
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="text-xs text-slate-600">
+                De
+                <input type="date" value={dataInicial} onChange={e => setDataInicial(e.target.value)}
+                  className="block w-36 border border-slate-300 rounded-lg px-2 py-1.5 text-xs" />
+              </label>
+              <label className="text-xs text-slate-600">
+                Até
+                <input type="date" min={dataInicial || undefined} value={dataFinal}
+                  onChange={e => setDataFinal(e.target.value)}
+                  className="block w-36 border border-slate-300 rounded-lg px-2 py-1.5 text-xs" />
+              </label>
+              <input type="text" aria-label="Filtrar estabelecimento" placeholder="Estabelecimento"
+                value={filtroEstabelecimento} onChange={e => setFiltroEstabelecimento(e.target.value)}
+                className="w-44 border border-slate-300 rounded-lg px-2 py-1.5 text-xs" />
               <select value={filtroRecorrencia}
                 onChange={e => setFiltroRecorrencia(e.target.value as 'TODOS' | 'SIM' | 'NAO')}
-                className="mt-1 block w-full min-w-0 border border-slate-300 rounded-lg px-3 py-2 text-sm">
-                <option value="TODOS">Todas</option>
+                aria-label="Filtrar recorrência"
+                className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs">
+                <option value="TODOS">Todas as recorrências</option>
                 <option value="SIM">Recorrentes</option>
                 <option value="NAO">Não recorrentes</option>
               </select>
-            </label>
-          </div>
-          <div className="flex justify-end">
-            <button type="button" onClick={() => {
-              setBusca(''); setFiltroTipo('TODOS'); setFiltroCategoria('TODAS'); setFiltroPeriodo('TODOS');
-              setDataInicial(''); setDataFinal(''); setFiltroEstabelecimento(''); setFiltroRecorrencia('TODOS');
-            }} className="text-sm font-medium text-blue-600 hover:underline">Limpar filtros</button>
+              <button type="button" onClick={() => {
+                setBusca(''); setFiltroTipo('TODOS'); setFiltroCategoria('TODAS'); setFiltroPeriodo('TODOS');
+                setDataInicial(''); setDataFinal(''); setFiltroEstabelecimento(''); setFiltroRecorrencia('TODOS');
+              }} className="text-xs text-blue-600 hover:underline py-1.5">
+                Limpar filtros
+              </button>
+            </div>
           </div>
         </div>
 
