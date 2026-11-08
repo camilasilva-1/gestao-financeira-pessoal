@@ -18,10 +18,9 @@ export const Transacoes: React.FC<TransacoesProps> = ({
   const [valor, setValor] = useState('');
   const [data, setData] = useState('');
   const [tipo, setTipo] = useState<'RECEITA' | 'DESPESA'>('RECEITA');
-  const [categoria, setCategoria] = useState<string>(
-    categorias && categorias.length > 0 ? categorias[0] : 'Alimentação'
-  );
+  const [categoria, setCategoria] = useState<string>('');
   const [establishment, setEstablishment] = useState('');
+  const [recorrente, setRecorrente] = useState(false);
   const [carregando, setCarregando] = useState(false);
 
   // Filtros
@@ -61,9 +60,10 @@ export const Transacoes: React.FC<TransacoesProps> = ({
               valor: typeof t.valor === 'number' ? t.valor : parseFloat(t.valor),
               data: t.dataTransacao || t.data,
               tipo: t.tipo,
-              categoria: typeof t.categoria === 'object' ? t.categoria.nome : t.categoria,
+              categoria: t.categoria?.nome ?? '',
               establishment: t.estabelecimento,
               usuarioId: t.usuario?.idUsuario,
+              recorrente: t.recorrencia ?? false,
               categoriaId: t.categoria?.idCategoria
             }));
             setTransacoes(formatadas);
@@ -74,8 +74,8 @@ export const Transacoes: React.FC<TransacoesProps> = ({
   }, [setTransacoes]);
 
   useEffect(() => {
-    if (categorias && categorias.length > 0 && !categorias.includes(categoria)) {
-      setCategoria(categorias[0]);
+    if (categoria && !categorias.includes(categoria)) {
+      setCategoria('');
     }
   }, [categorias, categoria]);
 
@@ -96,9 +96,9 @@ export const Transacoes: React.FC<TransacoesProps> = ({
       c => c.nome?.trim().toLowerCase() === categoria.trim().toLowerCase()
       )?.idCategoria;
 
-      if (!categoriaIdSelecionada) {
-      alert('Não foi possível identificar a categoria selecionada.');
-    return;
+      if (tipo === 'DESPESA' && !categoriaIdSelecionada) {
+      alert('Selecione uma categoria para a despesa.');
+      return;
     }
 
     setCarregando(true);
@@ -111,7 +111,8 @@ export const Transacoes: React.FC<TransacoesProps> = ({
         categoriaId: categoriaIdSelecionada, // ID da categoria padrão no banco
         usuarioId: usuarioIdNum,
         dataTransacao: data,
-        estabelecimento: establishment.trim() ? establishment.trim() : undefined
+        estabelecimento: establishment.trim() ? establishment.trim() : undefined,
+        recorrencia: recorrente
       };
 
       const res = await cadastrarTransacao(payload);
@@ -124,6 +125,7 @@ export const Transacoes: React.FC<TransacoesProps> = ({
         data,
         tipo,
         categoria,
+        recorrente,
         establishment: establishment.trim() ? establishment.trim() : undefined,
         usuarioId: usuarioIdNum,
         categoriaId: payload.categoriaId
@@ -135,6 +137,7 @@ export const Transacoes: React.FC<TransacoesProps> = ({
       setDescricao('');
       setValor('');
       setEstablishment('');
+      setRecorrente(false);
       setData('');
     } catch (err) {
       console.error('Erro ao cadastrar transação:', err);
@@ -181,12 +184,12 @@ const handleExcluir = async (id: string) => {
   const handleSalvarEdicao = async (transacaoAtualizada: Transacao) => {
   try {
     const categoriaId = categoriasComId.find(
-      c => c.nome === transacaoAtualizada.categoria
+      c => c.nome?.trim().toLowerCase() === transacaoAtualizada.categoria.trim().toLowerCase()
     )?.idCategoria ?? transacaoAtualizada.categoriaId;
 
     const usuarioId = Number(localStorage.getItem('usuarioId'));
 
-    if (!categoriaId || !usuarioId) {
+    if ((transacaoAtualizada.tipo === 'DESPESA' && !categoriaId) || !usuarioId) {
       throw new Error('ID do usuário ou da categoria não encontrado.');
     }
 
@@ -205,9 +208,7 @@ const handleExcluir = async (id: string) => {
         dataTransacao: transacaoSalva.data,
         estabelecimento: transacaoSalva.establishment,
         recorrencia: transacaoSalva.recorrente,
-        categoria: {
-          idCategoria: categoriaId
-        }
+        categoria: categoriaId ? { idCategoria: categoriaId } : undefined
       }
     );
 
@@ -317,6 +318,7 @@ const handleExcluir = async (id: string) => {
                 onChange={(e) => setCategoria(e.target.value)}
                 className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
               >
+                <option value="">{tipo === 'RECEITA' ? 'Sem categoria' : 'Selecione uma categoria'}</option>
                 {categorias.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
@@ -334,6 +336,10 @@ const handleExcluir = async (id: string) => {
             </div>
           </div>
 
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <input type="checkbox" checked={recorrente} onChange={e => setRecorrente(e.target.checked)} />
+            Transação recorrente
+          </label>
           <div className="flex justify-end">
             <button
               type="submit"
