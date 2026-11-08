@@ -157,7 +157,7 @@ const handleExcluir = async (id: string) => {
 
       const resposta = await fetch(
         `http://localhost:8080/api/transacoes/${id}/usuario/${usuarioId}`,
-        { method: 'DELETE' }
+        { method: 'DELETE', credentials: 'include', headers: { 'X-Requested-With': 'XMLHttpRequest' } }
       );
 
       if (!resposta.ok) {
