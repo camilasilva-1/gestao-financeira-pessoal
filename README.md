@@ -60,4 +60,4 @@ O repositório contém componentes de login, cadastro, recuperação de senha, d
 
 ## Aviso
 
-Projeto acadêmico; não é um sistema bancário oficial nem possui, por si só, integração com contas do Bradesco.
+Projeto acadêmico; não é um sistema bancário oficial 
