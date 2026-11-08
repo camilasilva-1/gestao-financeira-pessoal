@@ -1,1 +1,11 @@
+# Backend
 backend/target/
+
+# Frontend / Node
+node_modules/
+frontend/node_modules/
+
+# Logs e arquivos locais
+*.log
+.DS_Store
+Thumbs.db
