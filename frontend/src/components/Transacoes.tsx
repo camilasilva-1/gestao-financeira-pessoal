@@ -93,7 +93,7 @@ export const Transacoes: React.FC<TransacoesProps> = ({
 
     const usuarioIdNum = Number(usuarioIdSalvo);
     const categoriaIdSelecionada = categoriasComId.find(
-      c => c.nome === categoria
+      c => c.nome?.trim().toLowerCase() === categoria.trim().toLowerCase()
       )?.idCategoria;
 
       if (!categoriaIdSelecionada) {
