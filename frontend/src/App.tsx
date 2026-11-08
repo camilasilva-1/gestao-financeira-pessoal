@@ -11,11 +11,26 @@ import { CATEGORIAS_PADRAO } from './types';
 import { Relatorios } from './components/Relatorios';
 
 function App() {
-  // Inicialização inteligente: se houver 'usuarioId' no localStorage, inicia direto em 'app'
-  const [telaAtual, setTelaAtual] = useState<'login' | 'cadastro' | 'esqueci-senha' | 'app'>(() => {
-    const usuarioSalvo = localStorage.getItem('usuarioId');
-    return usuarioSalvo ? 'app' : 'login';
-  });
+  // Um ID salvo no navegador nao confirma que a sessao no servidor continua valida.
+  const [telaAtual, setTelaAtual] = useState<'verificando' | 'login' | 'cadastro' | 'esqueci-senha' | 'app'>(() =>
+    localStorage.getItem('usuarioId') ? 'verificando' : 'login'
+  );
+
+  useEffect(() => {
+    const usuarioId = localStorage.getItem('usuarioId');
+    if (!usuarioId) return;
+    fetch(`http://localhost:8080/api/usuarios/${usuarioId}`, { credentials: 'include' })
+      .then(resposta => {
+        if (!resposta.ok) throw new Error('Sessao expirada');
+        setTelaAtual('app');
+      })
+      .catch(() => {
+        localStorage.removeItem('usuarioId');
+        localStorage.removeItem('usuarioNome');
+        localStorage.removeItem('salarioLiquido');
+        setTelaAtual('login');
+      });
+  }, []);
 
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
   const [carregandoTransacoes, setCarregandoTransacoes] = useState(true);
@@ -25,6 +40,7 @@ useEffect(() => {
     setCarregandoTransacoes(true);
 
     try {
+      if (telaAtual !== 'app') return;
       const usuarioId = localStorage.getItem('usuarioId');
 
       if (!usuarioId) {
@@ -73,6 +89,7 @@ useEffect(() => {
   const buscarOrcamentos = async () => {
     setCarregandoOrcamentos(true);
     try {
+      if (telaAtual !== 'app') return;
       const usuarioId = localStorage.getItem('usuarioId');
 
       if (!usuarioId) {
@@ -168,6 +185,11 @@ const orcamentosFormatados: Orcamento[] = await Promise.all(
   const saldoTotal = transacoes.reduce((acc, t) => {
     return t.tipo === 'RECEITA' ? acc + t.valor : acc - t.valor;
   }, 0);
+
+  // Evita exibir dashboard vazio enquanto confirma a sessao.
+  if (telaAtual === 'verificando') {
+    return <p className="p-6 text-center">Verificando sessão...</p>;
+  }
 
   // Renderização condicional das telas de entrada
   if (telaAtual === 'login') {
