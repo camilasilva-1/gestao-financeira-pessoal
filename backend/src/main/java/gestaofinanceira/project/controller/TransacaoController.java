@@ -10,10 +10,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import gestaofinanceira.project.config.SessionOwnershipFilter;
 
 @RestController
 @RequestMapping("/api/transacoes")
-@CrossOrigin(origins = "*")
+
 public class TransacaoController {
 
     private final TransacaoService service;
@@ -62,7 +66,10 @@ public class TransacaoController {
 
     // Adicionar transação recebendo DTO do React
     @PostMapping
-    public Transacao adicionar(@RequestBody TransacaoDTO dto) {
+    public Transacao adicionar(@RequestBody TransacaoDTO dto, HttpSession session) {
+        if (!session.getAttribute(SessionOwnershipFilter.USER_ID).equals(dto.getUsuarioId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuario nao autorizado");
+        }
         return service.adicionarDTO(dto);
     }
 
