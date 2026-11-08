@@ -1,13 +1,28 @@
+
 # Arquivos gerados pelo Maven
 **/target/
+backend/target/
 
-# Dependências e arquivos gerados pelo frontend
+# DependÃªncias e arquivos gerados pelo frontend
 node_modules/
 **/node_modules/
 **/dist/
+**/dist-ssr/
+**/build/
 
-# Configuração local do banco de dados
+# ConfiguraÃ§Ãµes locais e segredos
 /backend/src/main/resources/application.properties
+.env
+.env.*
+!.env.example
+*.local
 
 # Arquivos de log
 *.log
+
+# IDEs e sistema operacional
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

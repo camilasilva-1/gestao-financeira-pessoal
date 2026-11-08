@@ -288,4 +288,156 @@ public class InsightService {
                 descricao
         );
     }
+
+
+        // ============================
+    // RECOMENDAÇÃO DE INVESTIMENTO
+    // ============================
+    public InsightDTO gerarRecomendacaoInvestimento(Integer usuarioId) {
+
+        int mesAtual = LocalDate.now().getMonthValue();
+
+        BigDecimal receita =
+                transacaoService.calcularReceitaMensal(usuarioId, mesAtual);
+
+        BigDecimal despesa =
+                transacaoService.calcularDespesaMensal(usuarioId, mesAtual);
+
+        if (receita == null) {
+            receita = BigDecimal.ZERO;
+        }
+
+        if (despesa == null) {
+            despesa = BigDecimal.ZERO;
+        }
+
+        if (receita.compareTo(BigDecimal.ZERO) <= 0) {
+            return new InsightDTO(
+                    "Recomendação de Investimento",
+                    "Não há receita suficiente para gerar recomendação de investimento.",
+                    LocalDate.now(),
+                    "Informativo"
+            );
+        }
+
+        BigDecimal valorRecomendado =
+                receita.multiply(BigDecimal.valueOf(0.20));
+
+        BigDecimal reservaEmergencia =
+                despesa.multiply(BigDecimal.valueOf(6));
+
+        String descricao =
+                "Com sua renda atual, recomenda-se investir pelo menos R$ "
+                        + valorRecomendado.setScale(2, RoundingMode.HALF_UP)
+                        + " por mês. Sua reserva de emergência ideal é de R$ "
+                        + reservaEmergencia.setScale(2, RoundingMode.HALF_UP)
+                        + ".";
+
+        return new InsightDTO(
+                "Recomendação de Investimento",
+                descricao,
+                LocalDate.now(),
+                "Investimento"
+        );
+    }
+
+    // ============================
+    // METAS SUGERIDAS DE INVESTIMENTO
+    // ============================
+    public List<InsightDTO> gerarMetasSugeridas(Integer usuarioId) {
+
+        List<InsightDTO> metas = new ArrayList<>();
+
+        int mesAtual = LocalDate.now().getMonthValue();
+
+        BigDecimal receita =
+                transacaoService.calcularReceitaMensal(usuarioId, mesAtual);
+
+        BigDecimal despesa =
+                transacaoService.calcularDespesaMensal(usuarioId, mesAtual);
+
+        if (receita == null) {
+            receita = BigDecimal.ZERO;
+        }
+
+        if (despesa == null) {
+            despesa = BigDecimal.ZERO;
+        }
+
+        BigDecimal reservaEmergencia =
+                despesa.multiply(BigDecimal.valueOf(6));
+
+        metas.add(new InsightDTO(
+                "Meta Sugerida",
+                "Construir uma reserva de emergência de R$ "
+                        + reservaEmergencia.setScale(2, RoundingMode.HALF_UP),
+                LocalDate.now(),
+                "Meta"
+        ));
+
+        metas.add(new InsightDTO(
+                "Meta Sugerida",
+                "Investir mensalmente pelo menos R$ "
+                        + receita.multiply(BigDecimal.valueOf(0.20))
+                        .setScale(2, RoundingMode.HALF_UP),
+                LocalDate.now(),
+                "Meta"
+        ));
+
+        metas.add(new InsightDTO(
+                "Meta Sugerida",
+                "Acumular patrimônio equivalente a 12 meses da renda atual.",
+                LocalDate.now(),
+                "Meta"
+        ));
+
+        return metas;
+    }
+
+
+    // ============================
+// ALERTA DE RESERVA INSUFICIENTE
+// ============================
+public InsightDTO gerarAlertaReservaInsuficiente(Integer usuarioId) {
+
+        int mesAtual = LocalDate.now().getMonthValue();
+
+        BigDecimal despesa =
+                transacaoService.calcularDespesaMensal(usuarioId, mesAtual);
+
+        if (despesa == null) {
+            despesa = BigDecimal.ZERO;
+        }
+
+        BigDecimal reservaIdeal =
+                despesa.multiply(BigDecimal.valueOf(6));
+
+        BigDecimal valorGuardado =
+                transacaoService.calcularGastoPorCategoria(
+                        usuarioId,
+                        "Investimentos",
+                        mesAtual);
+
+        if (valorGuardado == null) {
+            valorGuardado = BigDecimal.ZERO;
+        }
+
+        if (valorGuardado.compareTo(reservaIdeal) < 0) {
+            return new InsightDTO(
+                    "Reserva insuficiente",
+                    "Sua reserva está abaixo do recomendado. O ideal é possuir pelo menos R$ "
+                            + reservaIdeal.setScale(2, RoundingMode.HALF_UP),
+                    LocalDate.now(),
+                    "Atenção"
+            );
+        }
+
+        return new InsightDTO(
+                "Reserva adequada",
+                "Sua reserva de emergência está dentro do valor recomendado.",
+                LocalDate.now(),
+                "Informativo"
+        );
+    }
+
 }

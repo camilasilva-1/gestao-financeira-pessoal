@@ -1,3 +1,4 @@
+
 package gestaofinanceira.project.service;
 
 import gestaofinanceira.project.dto.RankingCategoriaDTO;
@@ -28,16 +29,13 @@ public class TransacaoService {
     public TransacaoService(
             TransacaoRepository transacaoRepository,
             CategoriaRepository categoriaRepository,
-            UsuarioRepository usuarioRepository
-    ) {
+            UsuarioRepository usuarioRepository) {
         this.transacaoRepository = transacaoRepository;
         this.categoriaRepository = categoriaRepository;
         this.usuarioRepository = usuarioRepository;
     }
 
-    // ============================
-    // CRUD BÁSICO E SUPORTE AO FRONT
-    // ============================
+    // CRUD básico
 
     public List<Transacao> listar() {
         return transacaoRepository.findAll();
@@ -45,6 +43,20 @@ public class TransacaoService {
 
     public List<Transacao> listarPorUsuario(int usuarioId) {
         return transacaoRepository.findByUsuarioIdUsuario(usuarioId);
+    }
+
+    // Filtros de consulta
+
+    public List<Transacao> filtrarPorTipo(Tipo tipo) {
+        return transacaoRepository.findByTipo(tipo);
+    }
+
+    public List<Transacao> filtrarPorPeriodo(LocalDate inicio, LocalDate fim) {
+        return transacaoRepository.findByDataTransacaoBetween(inicio, fim);
+    }
+
+    public List<Transacao> filtrarPorCategoria(Integer idCategoria) {
+        return transacaoRepository.findByCategoria_IdCategoria(idCategoria);
     }
 
     public Transacao buscar(int id) {
@@ -58,7 +70,8 @@ public class TransacaoService {
         return transacaoRepository.save(t);
     }
 
-    // Método para salvar o DTO enviado pelo React
+    // Cadastro usando DTO enviado pelo React
+
     public Transacao adicionarDTO(TransacaoDTO dto) {
         Transacao t = new Transacao();
         t.setDescricao(dto.getDescricao());
@@ -71,86 +84,92 @@ public class TransacaoService {
             t.setTipo(Tipo.valueOf(dto.getTipo().toUpperCase()));
         }
 
-        t.setDataTransacao(dto.getDataTransacao() != null ? dto.getDataTransacao() : LocalDate.now());
+        t.setDataTransacao(
+                dto.getDataTransacao() != null
+                        ? dto.getDataTransacao()
+                        : LocalDate.now());
 
-        Usuario u = usuarioRepository.findById(dto.getUsuarioId())
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado com ID: " + dto.getUsuarioId()));
+        Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        Categoria c = categoriaRepository.findById(dto.getCategoriaId())
-                .orElseThrow(() -> new RuntimeException("Categoria não encontrada com ID: " + dto.getCategoriaId()));
+        Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
+                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
 
-        t.setUsuario(u);
-        t.setCategoria(c);
+        t.setUsuario(usuario);
+        t.setCategoria(categoria);
 
         validarTransacao(t);
         return transacaoRepository.save(t);
     }
 
+    // Editar verificando o proprietário
+
     public Transacao editar(int id, int usuarioId, Transacao nova) {
-    Transacao existente = buscar(id);
+        Transacao existente = buscar(id);
 
-    if (!existente.getUsuario().getIdUsuario().equals(usuarioId)) {
-        throw new RuntimeException("Transação não pertence a este usuário.");
+        if (!existente.getUsuario().getIdUsuario().equals(usuarioId)) {
+            throw new RuntimeException("Transação não pertence a este usuário.");
+        }
+
+        nova.setUsuario(existente.getUsuario());
+        validarTransacao(nova);
+
+        if (nova.getCategoria() == null || nova.getCategoria().getIdCategoria() == null) {
+            throw new RuntimeException("Categoria não informada.");
+        }
+
+        int categoriaId = nova.getCategoria().getIdCategoria();
+
+        Categoria categoria = categoriaRepository.findById(categoriaId)
+                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+
+        existente.setDescricao(nova.getDescricao());
+        existente.setValor(nova.getValor());
+        existente.setDataTransacao(nova.getDataTransacao());
+        existente.setTipo(nova.getTipo());
+        existente.setEstabelecimento(nova.getEstabelecimento());
+        existente.setRecorrencia(nova.getRecorrencia());
+        existente.setCategoria(categoria);
+
+        return transacaoRepository.save(existente);
     }
-    nova.setUsuario(existente.getUsuario());
 
-    validarTransacao(nova);
-
-    if (nova.getCategoria() == null || nova.getCategoria().getIdCategoria() == null) {
-        throw new RuntimeException("Categoria não informada.");
-    }
-
-    int categoriaId = java.util.Objects.requireNonNull(
-            nova.getCategoria().getIdCategoria()
-    );
-
-    Categoria categoria = categoriaRepository.findById(categoriaId)
-            .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
-
-    existente.setDescricao(nova.getDescricao());
-    existente.setValor(nova.getValor());
-    existente.setDataTransacao(nova.getDataTransacao());
-    existente.setTipo(nova.getTipo());
-    existente.setEstabelecimento(nova.getEstabelecimento());
-    existente.setRecorrencia(nova.getRecorrencia());
-    existente.setCategoria(categoria);
-
-    return transacaoRepository.save(existente);
-}
+    // Remover verificando o proprietário
 
     public void remover(int id, int usuarioId) {
-    Transacao existente = buscar(id);
+        Transacao existente = buscar(id);
 
-    if (!existente.getUsuario().getIdUsuario().equals(usuarioId)) {
-        throw new RuntimeException("Transação não pertence a este usuário.");
+        if (!existente.getUsuario().getIdUsuario().equals(usuarioId)) {
+            throw new RuntimeException("Transação não pertence a este usuário.");
+        }
+
+        transacaoRepository.delete(existente);
     }
 
-    transacaoRepository.delete(existente);
-}
-public Transacao atualizarCategoria(int idTransacao, int idCategoria, int usuarioId) {
-    Transacao transacao = buscar(idTransacao);
+    // Atualizar categoria verificando o proprietário
 
-    if (!transacao.getUsuario().getIdUsuario().equals(usuarioId)) {
-        throw new RuntimeException("Transação não pertence a este usuário.");
+    public Transacao atualizarCategoria(int idTransacao, int idCategoria, int usuarioId) {
+        Transacao transacao = buscar(idTransacao);
+
+        if (!transacao.getUsuario().getIdUsuario().equals(usuarioId)) {
+            throw new RuntimeException("Transação não pertence a este usuário.");
+        }
+
+        Categoria categoria = categoriaRepository.findById(idCategoria)
+                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+
+        transacao.setCategoria(categoria);
+        return transacaoRepository.save(transacao);
     }
 
-    Categoria categoria = categoriaRepository.findById(idCategoria)
-            .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
-
-    transacao.setCategoria(categoria);
-
-    return transacaoRepository.save(transacao);
-}
-
-    // ============================
-    // MÉTODOS AUXILIARES PARA INSIGHTS
-    // ============================
+    // Métodos auxiliares para insights
 
     public BigDecimal calcularGastoPorCategoria(Integer usuarioId, String nomeCategoria, int mes) {
         LocalDate inicio = LocalDate.of(LocalDate.now().getYear(), mes, 1);
         LocalDate fim = inicio.withDayOfMonth(inicio.lengthOfMonth());
 
-        List<Object[]> gastos = transacaoRepository.gastosPorCategoria(usuarioId.longValue(), inicio, fim);
+        List<Object[]> gastos = transacaoRepository.gastosPorCategoria(
+                usuarioId.longValue(), inicio, fim);
 
         return gastos.stream()
                 .filter(obj -> obj[0].equals(nomeCategoria))
@@ -162,33 +181,33 @@ public Transacao atualizarCategoria(int idTransacao, int idCategoria, int usuari
         LocalDate inicio = LocalDate.of(LocalDate.now().getYear(), mes, 1);
         LocalDate fim = inicio.withDayOfMonth(inicio.lengthOfMonth());
 
-        return transacaoRepository.somaReceitasPorPeriodo(usuarioId.longValue(), inicio, fim);
+        return transacaoRepository.somaReceitasPorPeriodo(
+                usuarioId.longValue(), inicio, fim);
     }
 
     public BigDecimal calcularDespesaMensal(Integer usuarioId, int mes) {
         LocalDate inicio = LocalDate.of(LocalDate.now().getYear(), mes, 1);
         LocalDate fim = inicio.withDayOfMonth(inicio.lengthOfMonth());
 
-        return transacaoRepository.somaDespesasPorPeriodo(usuarioId.longValue(), inicio, fim);
+        return transacaoRepository.somaDespesasPorPeriodo(
+                usuarioId.longValue(), inicio, fim);
     }
 
-    // ============================
-    // RANKING DE CATEGORIAS
-    // ============================
+    // Ranking de categorias
 
     public List<RankingCategoriaDTO> gerarRankingCategorias(Integer usuarioId, int mes) {
         LocalDate inicio = LocalDate.of(LocalDate.now().getYear(), mes, 1);
         LocalDate fim = inicio.withDayOfMonth(inicio.lengthOfMonth());
 
-        List<Object[]> gastos = transacaoRepository.gastosPorCategoria(usuarioId.longValue(), inicio, fim);
+        List<Object[]> gastos = transacaoRepository.gastosPorCategoria(
+                usuarioId.longValue(), inicio, fim);
+
+        List<String> categoriasPadrao = List.of(
+                "Alimentação", "Moradia", "Transporte", "Saúde", "Educação",
+                "Lazer", "Compras", "Investimentos", "Assinaturas",
+                "Impostos", "Contas e Serviços", "Outros");
 
         if (gastos == null || gastos.isEmpty()) {
-            List<String> categoriasPadrao = List.of(
-                    "Alimentação", "Moradia", "Transporte", "Saúde", "Educação",
-                    "Lazer", "Compras", "Investimentos", "Assinaturas",
-                    "Impostos", "Contas e Serviços", "Outros"
-            );
-
             return categoriasPadrao.stream()
                     .map(nome -> new RankingCategoriaDTO(nome, BigDecimal.ZERO, 0.0))
                     .collect(Collectors.toList());
@@ -202,23 +221,21 @@ public Transacao atualizarCategoria(int idTransacao, int idCategoria, int usuari
                 .map(obj -> {
                     String categoria = (String) obj[0];
                     BigDecimal valor = (BigDecimal) obj[1];
+
                     double percentual = total.compareTo(BigDecimal.ZERO) > 0
                             ? valor.divide(total, 4, RoundingMode.HALF_UP)
-                                   .multiply(BigDecimal.valueOf(100))
-                                   .doubleValue()
+                                    .multiply(BigDecimal.valueOf(100))
+                                    .doubleValue()
                             : 0.0;
+
                     return new RankingCategoriaDTO(categoria, valor, percentual);
                 })
                 .collect(Collectors.toList());
 
-        List<String> categoriasPadrao = List.of(
-                "Alimentação", "Moradia", "Transporte", "Saúde", "Educação",
-                "Lazer", "Compras", "Investimentos", "Assinaturas",
-                "Impostos", "Contas e Serviços", "Outros"
-        );
-
         categoriasPadrao.forEach(nome -> {
-            boolean existe = ranking.stream().anyMatch(r -> r.getCategoria().equals(nome));
+            boolean existe = ranking.stream()
+                    .anyMatch(r -> r.getCategoria().equals(nome));
+
             if (!existe) {
                 ranking.add(new RankingCategoriaDTO(nome, BigDecimal.ZERO, 0.0));
             }
@@ -229,9 +246,7 @@ public Transacao atualizarCategoria(int idTransacao, int idCategoria, int usuari
         return ranking;
     }
 
-    // ============================
-    // MÉTODOS INTERNOS DE VALIDAÇÃO
-    // ============================
+    // Métodos internos de validação e carregamento
 
     private void carregarRelacionamentos(Transacao t) {
         Usuario usuario = usuarioRepository.findById(t.getUsuario().getIdUsuario())
@@ -248,9 +263,11 @@ public Transacao atualizarCategoria(int idTransacao, int idCategoria, int usuari
         if (t.getValor() == null || t.getValor().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Valor da transação deve ser maior que zero");
         }
+
         if (t.getUsuario() == null) {
             throw new IllegalArgumentException("Usuário é obrigatório");
         }
+
         if (t.getCategoria() == null) {
             throw new IllegalArgumentException("Categoria é obrigatória");
         }
