@@ -53,8 +53,11 @@ public class OrcamentoController {
     // Atualizar orçamento existente
     @PutMapping("/{id}")
     public Orcamento editar(@PathVariable int id,
-            @RequestBody Orcamento orcamento) {
-
+            @RequestBody Orcamento orcamento, HttpSession session) {
+        if (orcamento.getUsuario() == null ||
+            !session.getAttribute(SessionOwnershipFilter.USER_ID).equals(orcamento.getUsuario().getIdUsuario())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Usuario nao autorizado");
+        }
         return service.editar(id, orcamento);
     }
 
