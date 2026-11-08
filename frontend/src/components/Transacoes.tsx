@@ -28,6 +28,10 @@ export const Transacoes: React.FC<TransacoesProps> = ({
   const [filtroTipo, setFiltroTipo] = useState<'TODOS' | 'RECEITA' | 'DESPESA'>('TODOS');
   const [filtroCategoria, setFiltroCategoria] = useState('TODAS');
   const [filtroPeriodo, setFiltroPeriodo] = useState<'TODOS' | 'ESTE_MES' | 'MES_PASSADO' | 'ESTE_ANO'>('TODOS');
+  const [dataInicial, setDataInicial] = useState('');
+  const [dataFinal, setDataFinal] = useState('');
+  const [filtroEstabelecimento, setFiltroEstabelecimento] = useState('');
+  const [filtroRecorrencia, setFiltroRecorrencia] = useState<'TODOS' | 'SIM' | 'NAO'>('TODOS');
 
   const [categoriasComId, setCategoriasComId] = useState<CategoriaAPI[]>([]);
 
@@ -253,9 +257,15 @@ const handleExcluir = async (id: string) => {
     const bateTipo = filtroTipo === 'TODOS' || t.tipo === filtroTipo;
     const bateCat = filtroCategoria === 'TODAS' || t.categoria === filtroCategoria;
     const batePeriodo = ehNoPeriodo(t.data);
+    const bateInicio = !dataInicial || t.data >= dataInicial;
+    const bateFim = !dataFinal || t.data <= dataFinal;
+    const bateEstabelecimento = !filtroEstabelecimento ||
+      (t.establishment ?? '').toLowerCase().includes(filtroEstabelecimento.toLowerCase());
+    const bateRecorrencia = filtroRecorrencia === 'TODOS' ||
+      (filtroRecorrencia === 'SIM' ? t.recorrente === true : t.recorrente !== true);
 
-    return bateTexto && bateTipo && bateCat && batePeriodo;
-  });
+    return bateTexto && bateTipo && bateCat && batePeriodo && bateInicio && bateFim && bateEstabelecimento && bateRecorrencia;
+  }).sort((a, b) => b.data.localeCompare(a.data) || Number(b.id) - Number(a.id));
 
   return (
     <div className="space-y-6">
@@ -397,6 +407,19 @@ const handleExcluir = async (id: string) => {
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
+            <label className="text-xs text-slate-600">De
+              <input type="date" value={dataInicial} onChange={e => setDataInicial(e.target.value)} className="block border border-slate-300 rounded-lg px-2 py-1.5 text-xs" />
+            </label>
+            <label className="text-xs text-slate-600">Até
+              <input type="date" min={dataInicial || undefined} value={dataFinal} onChange={e => setDataFinal(e.target.value)} className="block border border-slate-300 rounded-lg px-2 py-1.5 text-xs" />
+            </label>
+            <input type="text" placeholder="Filtrar estabelecimento" value={filtroEstabelecimento} onChange={e => setFiltroEstabelecimento(e.target.value)} className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs" />
+            <select value={filtroRecorrencia} onChange={e => setFiltroRecorrencia(e.target.value as 'TODOS' | 'SIM' | 'NAO')} className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs">
+              <option value="TODOS">Todas as recorrências</option>
+              <option value="SIM">Recorrentes</option>
+              <option value="NAO">Não recorrentes</option>
+            </select>
+            <button type="button" onClick={() => { setBusca(''); setFiltroTipo('TODOS'); setFiltroCategoria('TODAS'); setFiltroPeriodo('TODOS'); setDataInicial(''); setDataFinal(''); setFiltroEstabelecimento(''); setFiltroRecorrencia('TODOS'); }} className="text-xs text-blue-600">Limpar filtros</button>
           </div>
         </div>
 
@@ -430,7 +453,7 @@ const handleExcluir = async (id: string) => {
                     </td>
                     <td className="py-3">
                       <span className="px-2.5 py-1 text-xs rounded-full bg-slate-100 text-slate-600">
-                        {t.categoria}
+                        {t.categoria || 'Sem categoria'}
                       </span>
                     </td>
                     <td className="py-3 text-slate-500 text-xs">{t.data}</td>
