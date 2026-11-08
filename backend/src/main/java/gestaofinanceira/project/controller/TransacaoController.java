@@ -28,8 +28,8 @@ public class TransacaoController {
 
     // Listar todas as transações
     @GetMapping
-    public List<Transacao> listar() {
-        return service.listar();
+    public List<Transacao> listar(HttpSession session) {
+        return service.listarPorUsuario((Integer) session.getAttribute(SessionOwnershipFilter.USER_ID));
     }
 
     // Listar transações do usuário
@@ -40,22 +40,29 @@ public class TransacaoController {
 
     // Filtrar por tipo
     @GetMapping("/filtro/tipo")
-    public List<Transacao> filtrarPorTipo(@RequestParam Tipo tipo) {
-        return service.filtrarPorTipo(tipo);
+    public List<Transacao> filtrarPorTipo(@RequestParam Tipo tipo, HttpSession session) {
+        return service.filtrarPorTipo(tipo).stream()
+            .filter(t -> t.getUsuario().getIdUsuario().equals(session.getAttribute(SessionOwnershipFilter.USER_ID)))
+            .toList();
     }
 
     // Filtrar por período
     @GetMapping("/filtro/periodo")
     public List<Transacao> filtrarPorPeriodo(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim) {
-        return service.filtrarPorPeriodo(inicio, fim);
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fim,
+            HttpSession session) {
+        return service.filtrarPorPeriodo(inicio, fim).stream()
+            .filter(t -> t.getUsuario().getIdUsuario().equals(session.getAttribute(SessionOwnershipFilter.USER_ID)))
+            .toList();
     }
 
     // Filtrar por categoria
     @GetMapping("/filtro/categoria/{idCategoria}")
-    public List<Transacao> filtrarPorCategoria(@PathVariable Integer idCategoria) {
-        return service.filtrarPorCategoria(idCategoria);
+    public List<Transacao> filtrarPorCategoria(@PathVariable Integer idCategoria, HttpSession session) {
+        return service.filtrarPorCategoria(idCategoria).stream()
+            .filter(t -> t.getUsuario().getIdUsuario().equals(session.getAttribute(SessionOwnershipFilter.USER_ID)))
+            .toList();
     }
 
     // Buscar por ID
