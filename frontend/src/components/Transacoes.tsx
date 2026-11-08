@@ -184,7 +184,7 @@ const handleExcluir = async (id: string) => {
   const handleSalvarEdicao = async (transacaoAtualizada: Transacao) => {
   try {
     const categoriaId = categoriasComId.find(
-      c => c.nome?.trim().toLowerCase() === transacaoAtualizada.categoria.trim().toLowerCase()
+      c => c.nome?.trim().toLowerCase() === (transacaoAtualizada.categoria ?? '').trim().toLowerCase()
     )?.idCategoria ?? transacaoAtualizada.categoriaId;
 
     const usuarioId = Number(localStorage.getItem('usuarioId'));
