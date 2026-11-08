@@ -6,6 +6,8 @@ import gestaofinanceira.project.service.MetaFinanceiraService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import jakarta.servlet.http.HttpSession;
+import gestaofinanceira.project.config.SessionOwnershipFilter;
 
 @RestController
 @RequestMapping("/metas")
