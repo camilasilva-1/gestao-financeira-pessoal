@@ -30,7 +30,7 @@ export const loginUsuario = async (
 };
 
 // 2. Função de Registo/Cadastro
-export const cadastrarUsuario = async (usuarioData: { nome: string; email: string; senha: string; salarioLiquido: number }) => {
+export const cadastrarUsuario = async (usuarioData: { nome: string; email: string; senha: string; salarioLiquido?: number }) => {
   const response = await fetch(`${API_BASE_URL}/usuarios`, {
     method: 'POST',
     credentials: 'include',
@@ -53,7 +53,9 @@ export const cadastrarTransacao = async (transacaoData: {
   descricao: string;
   valor: number;
   tipo: 'RECEITA' | 'DESPESA';
-  categoriaId: number;
+  categoriaId?: number;
+  estabelecimento?: string;
+  recorrencia?: boolean;
   usuarioId: number;
   dataTransacao: string;
 }) => {
@@ -96,7 +98,7 @@ export const atualizarTransacao = async (
     dataTransacao: string;
     estabelecimento?: string;
     recorrencia?: boolean;
-    categoria: { idCategoria: number };
+    categoria?: { idCategoria: number };
   }
 ) => {
   const response = await fetch(
