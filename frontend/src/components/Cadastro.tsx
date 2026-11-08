@@ -28,9 +28,7 @@ export const Cadastro: React.FC<CadastroProps> = ({ onCadastroSuccess, onNavigat
     const regexSenhaForte = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
 
     if (!nome.trim()) novosErros.nome = 'O nome completo é obrigatório.';
-    if (!salarioLiquido) {
-      novosErros.salarioLiquido = 'O salário líquido é obrigatório.';
-    } else if (Number(salarioLiquido) <= 0) {
+    if (salarioLiquido && Number(salarioLiquido) <= 0) {
       novosErros.salarioLiquido = 'Informe um salário maior que zero.';
   }
 
@@ -66,7 +64,7 @@ export const Cadastro: React.FC<CadastroProps> = ({ onCadastroSuccess, onNavigat
         nome,
        email,
       senha,
-      salarioLiquido: Number(salarioLiquido)
+      ...(salarioLiquido ? { salarioLiquido: Number(salarioLiquido) } : {})
       });
 
         setCarregando(false);
@@ -159,7 +157,7 @@ export const Cadastro: React.FC<CadastroProps> = ({ onCadastroSuccess, onNavigat
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Salário Líquido Mensal (R$) *
+                Salário Líquido Mensal (R$) — opcional
               </label>
 
               <input
