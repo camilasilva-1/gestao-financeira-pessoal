@@ -73,6 +73,9 @@ public class TransacaoService {
     // Cadastro usando DTO enviado pelo React
 
     public Transacao adicionarDTO(TransacaoDTO dto) {
+        if (dto.getDataTransacao() == null) {
+            throw new IllegalArgumentException("Data é obrigatória");
+        }
         Transacao t = new Transacao();
         t.setDescricao(dto.getDescricao());
 
