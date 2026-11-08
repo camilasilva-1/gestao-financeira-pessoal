@@ -106,6 +106,15 @@ public class SessionOwnershipFilter extends OncePerRequestFilter {
         } else if ((m = match(path, "^/categorias/ranking/(\\d+)$")).matches()) {
             authorized = hasOwnId(m.group(1), userId);
         }
+        else if ((m = match(path, "^/insights/(\\d+)(?:/[-a-z0-9]+)?$")).matches()) {
+            authorized = "GET".equals(method) && hasOwnId(m.group(1), userId);
+        } else if ((m = match(path, "^/api/relatorios/regra-50-30-20/(\\d+)$")).matches()) {
+            authorized = "GET".equals(method) && hasOwnId(m.group(1), userId);
+        } else if (path.matches("^/api/relatorios/(mensal|distribuicao|evolucao|ranking)$")) {
+            authorized = "GET".equals(method)
+                && req.getParameter("usuarioId") != null
+                && hasOwnId(req.getParameter("usuarioId"), userId);
+        }
 
         // Rotas globais e nao reconhecidas nao devem vazar dados financeiros.
         if (!authorized) { res.sendError(403, "Acesso negado"); return; }
