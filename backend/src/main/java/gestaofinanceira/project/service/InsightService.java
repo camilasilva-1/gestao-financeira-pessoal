@@ -36,8 +36,8 @@ public class InsightService {
 
         List<InsightDTO> insights = new ArrayList<>();
 
-        int mesAtual = LocalDate.now().getMonthValue();
-        int mesAnterior = LocalDate.now().minusMonths(1).getMonthValue();
+        LocalDate mesAtual = LocalDate.now();
+        LocalDate mesAnterior = mesAtual.minusMonths(1);
 
         List<Categoria> categorias = categoriaService.listarTodas();
         boolean gerouInsight = false;

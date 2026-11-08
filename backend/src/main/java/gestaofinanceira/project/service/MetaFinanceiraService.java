@@ -33,6 +33,15 @@ public class MetaFinanceiraService {
     }
 
     public MetaFinanceira criarMeta(Integer usuarioId, MetaFinanceira meta) {
+        if (meta.getNome() == null || meta.getNome().isBlank()) {
+            throw new IllegalArgumentException("Nome da meta é obrigatório");
+        }
+        if (meta.getValorObjetivo() == null || meta.getValorObjetivo() <= 0) {
+            throw new IllegalArgumentException("Valor objetivo deve ser maior que zero");
+        }
+        if (meta.getDataDesejada() == null) {
+            throw new IllegalArgumentException("Prazo da meta é obrigatório");
+        }
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 

@@ -45,6 +45,9 @@ public class TransacaoService {
     }
 
     public List<Transacao> filtrarPorPeriodo(LocalDate inicio, LocalDate fim) {
+        if (inicio == null || fim == null || inicio.isAfter(fim)) {
+            throw new IllegalArgumentException("Período de datas inválido");
+        }
         return transacaoRepository.findByDataTransacaoBetween(inicio, fim);
     }
 
@@ -97,7 +100,13 @@ public class TransacaoService {
     // MÉTODOS AUXILIARES PARA INSIGHTS
 
     public BigDecimal calcularGastoPorCategoria(Integer usuarioId, String nomeCategoria, int mes) {
-        LocalDate inicio = LocalDate.of(LocalDate.now().getYear(), mes, 1);
+        if (mes < 1 || mes > 12) throw new IllegalArgumentException("Mês inválido");
+        return calcularGastoPorCategoria(usuarioId, nomeCategoria,
+                LocalDate.of(LocalDate.now().getYear(), mes, 1));
+    }
+
+    public BigDecimal calcularGastoPorCategoria(Integer usuarioId, String nomeCategoria, LocalDate referencia) {
+        LocalDate inicio = referencia.withDayOfMonth(1);
         LocalDate fim = inicio.withDayOfMonth(inicio.lengthOfMonth());
 
         List<Object[]> gastos = transacaoRepository.gastosPorCategoria(usuarioId.longValue(), inicio, fim);
