@@ -50,15 +50,17 @@ public class MetaFinanceiraService {
 
     public MetaFinanceiraDTO calcularMeta(Integer usuarioId, MetaFinanceiraDTO meta) {
 
-        List<Transacao> transacoes = transacaoService.listar()
-                .stream()
-                .filter(t -> t.getUsuario().getIdUsuario().equals(usuarioId))
-                .filter(t -> t.getTipo().toString().equalsIgnoreCase("RECEITA"))
-                .collect(Collectors.toList());
-
-        double acumulado = transacoes.stream()
-                .mapToDouble(t -> t.getValor().doubleValue())
-                .sum();
+        if (meta.getValorObjetivo() == null || meta.getValorObjetivo() <= 0) {
+            throw new IllegalArgumentException("Valor objetivo deve ser maior que zero");
+        }
+        if (meta.getDataDesejada() == null) {
+            throw new IllegalArgumentException("Data desejada é obrigatória");
+        }
+        // Valor guardado informado na própria meta; receitas não são automaticamente poupança.
+        double acumulado = meta.getValorAcumulado() != null ? meta.getValorAcumulado() : 0.0;
+        if (acumulado < 0) {
+            throw new IllegalArgumentException("Valor acumulado não pode ser negativo");
+        }
 
         meta.setValorAcumulado(acumulado);
 
@@ -75,7 +77,7 @@ public class MetaFinanceiraService {
         long mesesRestantes = ChronoUnit.MONTHS.between(LocalDate.now(), meta.getDataDesejada());
         if (mesesRestantes < 0) mesesRestantes = 0;
 
-        double restante = meta.getValorObjetivo() - acumulado;
+        double restante = Math.max(0, meta.getValorObjetivo() - acumulado);
         double mensal = mesesRestantes > 0 ? restante / mesesRestantes : restante;
 
         mensal = BigDecimal.valueOf(mensal)

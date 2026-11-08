@@ -20,16 +20,17 @@ public class Regra503020Service {
 
         // 2. Despesas com Necessidades Básicas (50%)
         BigDecimal realNecessidades = transacaoRepository.somaDespesasPorCategorias(
-                usuarioId, List.of("Alimentação", "Transporte", "Moradia", "Saúde")
+                usuarioId, List.of("Alimentação", "Transporte", "Moradia", "Saúde", "Educação", "Impostos", "Contas e Serviços")
         );
 
         // 3. Despesas com Desejos Pessoais (30%)
         BigDecimal realDesejos = transacaoRepository.somaDespesasPorCategorias(
-                usuarioId, List.of("Lazer", "Outros", "Viagens", "Vestuário")
+                usuarioId, List.of("Lazer", "Outros", "Compras", "Assinaturas")
         );
 
         // 4. Poupança (20%) - Valor restante
-        BigDecimal totalDespesas = realNecessidades.add(realDesejos);
+        // A sobra considera todas as despesas, não só as duas listas acima.
+        BigDecimal totalDespesas = transacaoRepository.somaDespesas(usuarioId.longValue());
         BigDecimal realPoupanca = rendaTotal.subtract(totalDespesas);
         if (realPoupanca.compareTo(BigDecimal.ZERO) < 0) {
             realPoupanca = BigDecimal.ZERO;

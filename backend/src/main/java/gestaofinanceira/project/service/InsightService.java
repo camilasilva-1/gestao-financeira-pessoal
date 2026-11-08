@@ -61,7 +61,7 @@ public class InsightService {
                 BigDecimal variacao = gastoAtual
                         .subtract(gastoAnterior)
                         .divide(
-                                gastoAtual.add(gastoAnterior),
+                                gastoAnterior,
                                 2,
                                 RoundingMode.HALF_UP)
                         .multiply(BigDecimal.valueOf(100));
@@ -249,8 +249,8 @@ public class InsightService {
 
         long riscos = alertas.stream()
                 .filter(a ->
-                        a.getTipo().equalsIgnoreCase("Risco")
-                                || a.getTipo().equalsIgnoreCase("Estourado"))
+                        a.getNivelAlerta().equalsIgnoreCase("Risco")
+                                || a.getNivelAlerta().equalsIgnoreCase("Estourado"))
                 .count();
 
         if (riscos == 0) {
