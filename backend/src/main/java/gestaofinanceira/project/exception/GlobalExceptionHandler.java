@@ -14,6 +14,12 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(404, e.getMessage());
     }
 
+    @ExceptionHandler(java.util.NoSuchElementException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse tratarNaoEncontrado(java.util.NoSuchElementException e) {
+        return new ErrorResponse(404, e.getMessage());
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse tratarArgumentoInvalido(IllegalArgumentException e) {
@@ -21,8 +27,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(RuntimeException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse tratarRuntimeException(RuntimeException e) {
-        return new ErrorResponse(400, e.getMessage());
+        return new ErrorResponse(500, "Erro interno ao processar solicitação");
     }
 }
