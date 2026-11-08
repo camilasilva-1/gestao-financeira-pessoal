@@ -9,6 +9,9 @@ export interface Transacao {
   categoria?: string;
   establishment?: string;
   recorrente?: boolean;
+
+  usuarioId?: number;
+  categoriaId?: number;
 }
 
   export interface TransacaoAPI {

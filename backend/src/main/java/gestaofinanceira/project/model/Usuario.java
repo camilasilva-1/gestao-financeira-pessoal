@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "usuario")
@@ -20,7 +21,7 @@ public class Usuario {
 
     @Column(unique = true, nullable = false)
     private String email;
-
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String senha; // Atributo necessário para login e cadastro
 
     @Column(name = "salario_liquido")

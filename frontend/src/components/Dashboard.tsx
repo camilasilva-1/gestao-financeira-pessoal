@@ -6,6 +6,7 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ transacoes }) => {
+  const salarioLiquido = Number(localStorage.getItem('salarioLiquido') || 0);
   const totalReceitas = transacoes
     .filter(t => t.tipo === 'RECEITA')
     .reduce((acc, t) => acc + t.valor, 0);
@@ -21,7 +22,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ transacoes }) => {
     : 0;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* Card: Salário Líquido */}
+    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-blue-500/30 transition-colors">
+      <div className="flex justify-between items-center text-slate-500 mb-2">
+            <span className="text-xs font-semibold uppercase tracking-wider">
+                Salário Líquido
+            </span>
+            <span className="text-base">💰</span>
+      </div>
+
+      <div>
+              <h3 className="text-2xl font-bold text-blue-600">
+              {salarioLiquido.toLocaleString('pt-BR', {
+              style: 'currency',
+              currency: 'BRL'
+              })}
+              </h3>
+              <p className="text-xs text-slate-400 mt-1">
+            Valor mensal informado no cadastro
+          </p>
+        </div>
+      </div>
       {/* Card 1: Saldo Total */}
       <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-[#c4003d]/30 transition-colors">
         <div className="flex justify-between items-center text-slate-500 mb-2">

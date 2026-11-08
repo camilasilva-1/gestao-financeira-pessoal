@@ -110,11 +110,13 @@ public Orcamento editar(int id, Orcamento novo) {
         LocalDate fimMes = hoje.withDayOfMonth(hoje.lengthOfMonth());
 
         List<Transacao> despesas =
-                transacaoRepository.findByCategoriaAndTipoAndDataTransacaoBetween(
-                        orcamento.getCategoria(),
-                        Tipo.DESPESA,
-                        inicioMes,
-                        fimMes);
+    transacaoRepository.findByCategoriaAndTipoAndDataTransacaoBetweenAndUsuarioIdUsuario(
+        orcamento.getCategoria(),
+        Tipo.DESPESA,
+        inicioMes,
+        fimMes,
+        orcamento.getUsuario().getIdUsuario()
+    );
 
         BigDecimal totalGasto = BigDecimal.ZERO;
 

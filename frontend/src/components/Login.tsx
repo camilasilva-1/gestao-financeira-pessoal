@@ -56,9 +56,12 @@ export const Login: React.FC<LoginProps> = ({
         const usuario = await loginUsuario({ email, senha });
 
         // 2. Guarda o id do utilizador no navegador para usar nas requisições do Dashboard/Transações
-        localStorage.setItem('usuarioId', usuario.idUsuario || usuario.id);
+        localStorage.setItem('usuarioId', String(usuario.idUsuario));
         if (usuario.nome) {
           localStorage.setItem('usuarioNome', usuario.nome);
+        }
+        if (usuario.salarioLiquido !== undefined && usuario.salarioLiquido !== null) {
+          localStorage.setItem('salarioLiquido', String(usuario.salarioLiquido));
         }
 
         setCarregando(false);

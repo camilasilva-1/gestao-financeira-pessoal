@@ -20,10 +20,21 @@ function App() {
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
   const [carregandoTransacoes, setCarregandoTransacoes] = useState(true);
 
-  useEffect(() => {
+useEffect(() => {
   const buscarTransacoes = async () => {
+    setCarregandoTransacoes(true);
+
     try {
-      const resposta = await fetch('http://localhost:8080/transacoes');
+      const usuarioId = localStorage.getItem('usuarioId');
+
+      if (!usuarioId) {
+        setTransacoes([]);
+        return;
+      }
+
+      const resposta = await fetch(
+        `http://localhost:8080/api/transacoes/usuario/${usuarioId}`
+      );
 
       if (!resposta.ok) {
         throw new Error('Erro ao buscar transações');
@@ -51,15 +62,25 @@ function App() {
   };
 
   buscarTransacoes();
-}, []);
+}, [telaAtual]);
+
 
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
 const [carregandoOrcamentos, setCarregandoOrcamentos] = useState(true);
 
 useEffect(() => {
   const buscarOrcamentos = async () => {
+    setCarregandoOrcamentos(true);
     try {
-      const resposta = await fetch('http://localhost:8080/orcamentos');
+      const usuarioId = localStorage.getItem('usuarioId');
+
+      if (!usuarioId) {
+          setOrcamentos([]);
+        return;
+      }
+      const resposta = await fetch(
+        `http://localhost:8080/orcamentos/usuario/${usuarioId}`
+      );
 
       if (!resposta.ok) {
         throw new Error('Erro ao buscar orçamentos');
@@ -98,9 +119,9 @@ const orcamentosFormatados: Orcamento[] = await Promise.all(
   };
 
   buscarOrcamentos();
-}, []);
+}, [telaAtual]);
 
-  const [categorias, setCategorias] = useState<string[]>(CATEGORIAS_PADRAO);
+  const [categorias] = useState<string[]>(CATEGORIAS_PADRAO);
   const [categoriasAPI, setCategoriasAPI] = useState<CategoriaAPI[]>([]);
 
   useEffect(() => {
@@ -121,12 +142,6 @@ const orcamentosFormatados: Orcamento[] = await Promise.all(
 
   buscarCategorias();
 }, []);
-
-  const adicionarCategoria = (novaCat: string) => {
-    if (!categorias.includes(novaCat)) {
-      setCategorias([...categorias, novaCat]);
-    }
-  };
 
   // Função para fazer logout e limpar a sessão salva no navegador
   const handleLogout = () => {
@@ -154,9 +169,9 @@ const orcamentosFormatados: Orcamento[] = await Promise.all(
   if (telaAtual === 'cadastro') {
     return (
       <Cadastro
-        onCadastroSuccess={() => setTelaAtual('app')}
+        onCadastroSuccess={() => setTelaAtual('login')}
         onNavigateToLogin={() => setTelaAtual('login')}
-      />
+        />
     );
   }
 
@@ -195,7 +210,6 @@ const orcamentosFormatados: Orcamento[] = await Promise.all(
             transacoes={transacoes}
             setTransacoes={setTransacoes}
             categorias={categorias}
-            adicionarCategoria={adicionarCategoria}
           />
           )}
 

@@ -42,22 +42,33 @@ public class TransacaoController {
         return service.adicionarDTO(dto);
     }
 
-    // Editar transação existente
-    @PutMapping("/{id}")
-    public Transacao editar(@PathVariable int id, @RequestBody Transacao t) {
-        return service.editar(id, t);
+    // Editar transação
+    @PutMapping("/{id}/usuario/{usuarioId}")
+    public Transacao editar(
+        @PathVariable int id,
+        @PathVariable int usuarioId,
+        @RequestBody Transacao t) {
+
+    return service.editar(id, usuarioId, t);
     }
 
-    // Remover transação
-    @DeleteMapping("/{id}")
-    public String remover(@PathVariable int id) {
-        service.remover(id);
+   // Remover transação
+    @DeleteMapping("/{id}/usuario/{usuarioId}")
+    public String remover(
+        @PathVariable int id,
+        @PathVariable int usuarioId) {
+
+        service.remover(id, usuarioId);
         return "Transação removida com sucesso!";
     }
 
     // Atualizar categoria de uma transação
-    @PutMapping("/{id}/categoria/{idCategoria}")
-    public Transacao atualizarCategoria(@PathVariable int id, @PathVariable int idCategoria) {
-        return service.atualizarCategoria(id, idCategoria);
+    @PutMapping("/{id}/categoria/{idCategoria}/usuario/{usuarioId}")
+    public Transacao atualizarCategoria(
+        @PathVariable int id,
+        @PathVariable int idCategoria,
+        @PathVariable int usuarioId) {
+
+        return service.atualizarCategoria(id, idCategoria, usuarioId);
     }
 }

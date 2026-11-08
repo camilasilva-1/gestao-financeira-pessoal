@@ -1,0 +1,13 @@
+# Arquivos gerados pelo Maven
+**/target/
+
+# Dependências e arquivos gerados pelo frontend
+node_modules/
+**/node_modules/
+**/dist/
+
+# Configuração local do banco de dados
+/backend/src/main/resources/application.properties
+
+# Arquivos de log
+*.log

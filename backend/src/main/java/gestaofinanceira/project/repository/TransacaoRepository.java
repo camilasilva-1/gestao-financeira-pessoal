@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface TransacaoRepository extends JpaRepository<Transacao, Integer> {
 
@@ -74,6 +75,13 @@ public interface TransacaoRepository extends JpaRepository<Transacao, Integer> {
             LocalDate inicio,
             LocalDate fim);
 
+    List<Transacao> findByCategoriaAndTipoAndDataTransacaoBetweenAndUsuarioIdUsuario(
+            Categoria categoria,
+            Tipo tipo,
+            LocalDate inicio,
+            LocalDate fim,
+            Integer usuarioId);
+
             @Query("SELECT COALESCE(SUM(t.valor), 0) FROM Transacao t " +
            "WHERE t.tipo = gestaofinanceira.project.enums.Tipo.RECEITA AND t.usuario.idUsuario = :usuarioId")
     BigDecimal somaReceitasPorUsuarioId(@Param("usuarioId") Integer usuarioId);
@@ -84,5 +92,10 @@ public interface TransacaoRepository extends JpaRepository<Transacao, Integer> {
            "AND t.categoria.nome IN :categorias")
     BigDecimal somaDespesasPorCategorias(@Param("usuarioId") Integer usuarioId,
                                         @Param("categorias") List<String> categorias);
+
+    Optional<Transacao> findByIdTransacaoAndUsuarioIdUsuario(
+              Integer idTransacao,
+              Integer usuarioId
+       );
 
 }

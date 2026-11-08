@@ -86,36 +86,61 @@ public class TransacaoService {
         return transacaoRepository.save(t);
     }
 
-    public Transacao editar(int id, Transacao nova) {
-        Transacao existente = buscar(id);
-        validarTransacao(nova);
-        carregarRelacionamentos(nova);
+    public Transacao editar(int id, int usuarioId, Transacao nova) {
+    Transacao existente = buscar(id);
 
-        existente.setDescricao(nova.getDescricao());
-        existente.setValor(nova.getValor());
-        existente.setDataTransacao(nova.getDataTransacao());
-        existente.setTipo(nova.getTipo());
-        existente.setEstabelecimento(nova.getEstabelecimento());
-        existente.setRecorrencia(nova.getRecorrencia());
-        existente.setUsuario(nova.getUsuario());
-        existente.setCategoria(nova.getCategoria());
+    if (!existente.getUsuario().getIdUsuario().equals(usuarioId)) {
+        throw new RuntimeException("Transação não pertence a este usuário.");
+    }
+    nova.setUsuario(existente.getUsuario());
 
-        return transacaoRepository.save(existente);
+    validarTransacao(nova);
+
+    if (nova.getCategoria() == null || nova.getCategoria().getIdCategoria() == null) {
+        throw new RuntimeException("Categoria não informada.");
     }
 
-    public void remover(int id) {
-        Transacao existente = buscar(id);
-        transacaoRepository.delete(existente);
+    int categoriaId = java.util.Objects.requireNonNull(
+            nova.getCategoria().getIdCategoria()
+    );
+
+    Categoria categoria = categoriaRepository.findById(categoriaId)
+            .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+
+    existente.setDescricao(nova.getDescricao());
+    existente.setValor(nova.getValor());
+    existente.setDataTransacao(nova.getDataTransacao());
+    existente.setTipo(nova.getTipo());
+    existente.setEstabelecimento(nova.getEstabelecimento());
+    existente.setRecorrencia(nova.getRecorrencia());
+    existente.setCategoria(categoria);
+
+    return transacaoRepository.save(existente);
+}
+
+    public void remover(int id, int usuarioId) {
+    Transacao existente = buscar(id);
+
+    if (!existente.getUsuario().getIdUsuario().equals(usuarioId)) {
+        throw new RuntimeException("Transação não pertence a este usuário.");
     }
 
-    public Transacao atualizarCategoria(int idTransacao, int idCategoria) {
-        Transacao transacao = buscar(idTransacao);
-        Categoria categoria = categoriaRepository.findById(idCategoria)
-                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+    transacaoRepository.delete(existente);
+}
+public Transacao atualizarCategoria(int idTransacao, int idCategoria, int usuarioId) {
+    Transacao transacao = buscar(idTransacao);
 
-        transacao.setCategoria(categoria);
-        return transacaoRepository.save(transacao);
+    if (!transacao.getUsuario().getIdUsuario().equals(usuarioId)) {
+        throw new RuntimeException("Transação não pertence a este usuário.");
     }
+
+    Categoria categoria = categoriaRepository.findById(idCategoria)
+            .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+
+    transacao.setCategoria(categoria);
+
+    return transacaoRepository.save(transacao);
+}
 
     // ============================
     // MÉTODOS AUXILIARES PARA INSIGHTS

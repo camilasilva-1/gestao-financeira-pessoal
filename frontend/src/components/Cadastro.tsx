@@ -10,6 +10,7 @@ export const Cadastro: React.FC<CadastroProps> = ({ onCadastroSuccess, onNavigat
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [salarioLiquido, setSalarioLiquido] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [carregando, setCarregando] = useState(false);
   const [erros, setErros] = useState<{
@@ -18,6 +19,7 @@ export const Cadastro: React.FC<CadastroProps> = ({ onCadastroSuccess, onNavigat
     senha?: string;
     confirmarSenha?: string;
     geral?: string
+    salarioLiquido?: string;
   }>({});
 
   const validar = () => {
@@ -26,6 +28,11 @@ export const Cadastro: React.FC<CadastroProps> = ({ onCadastroSuccess, onNavigat
     const regexSenhaForte = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
 
     if (!nome.trim()) novosErros.nome = 'O nome completo é obrigatório.';
+    if (!salarioLiquido) {
+      novosErros.salarioLiquido = 'O salário líquido é obrigatório.';
+    } else if (Number(salarioLiquido) <= 0) {
+      novosErros.salarioLiquido = 'Informe um salário maior que zero.';
+  }
 
     if (!email) {
       novosErros.email = 'O e-mail é obrigatório.';
@@ -55,7 +62,12 @@ export const Cadastro: React.FC<CadastroProps> = ({ onCadastroSuccess, onNavigat
 
       try {
         // 1. Chamada assíncrona ao Spring Boot
-        await cadastrarUsuario({ nome, email, senha });
+        await cadastrarUsuario({
+        nome,
+       email,
+      senha,
+      salarioLiquido: Number(salarioLiquido)
+      });
 
         setCarregando(false);
         // 2. Notifica o componente pai sobre o sucesso do cadastro
@@ -145,6 +157,26 @@ export const Cadastro: React.FC<CadastroProps> = ({ onCadastroSuccess, onNavigat
               />
               {erros.email && <p className="mt-1 text-xs text-red-500 font-medium">{erros.email}</p>}
             </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Salário Líquido Mensal (R$) *
+              </label>
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={salarioLiquido}
+                onChange={(e) => setSalarioLiquido(e.target.value)}
+                placeholder="Ex: 2500.00"
+                className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d] transition"
+                />
+                  {erros.salarioLiquido && (
+                    <p className="mt-1 text-xs text-red-500 font-medium">
+                      {erros.salarioLiquido}
+                    </p>
+                  )}
+              </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">

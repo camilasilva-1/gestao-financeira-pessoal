@@ -1,20 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import type { Transacao } from '../types';
+import type { Transacao, CategoriaAPI } from '../types';
 import { ModalEditarTransacao } from './ModalEditarTransacao';
-import { cadastrarTransacao, listarTransacoes } from '../Services/api';
+import { cadastrarTransacao,listarTransacoes,atualizarTransacao,listarCategorias } from '../Services/api';
 
 interface TransacoesProps {
   transacoes: Transacao[];
   setTransacoes: React.Dispatch<React.SetStateAction<Transacao[]>>;
   categorias: string[];
-  adicionarCategoria: (novaCat: string) => void;
 }
 
 export const Transacoes: React.FC<TransacoesProps> = ({
   transacoes,
   setTransacoes,
-  categorias,
-  adicionarCategoria
+  categorias
 }) => {
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
@@ -31,6 +29,18 @@ export const Transacoes: React.FC<TransacoesProps> = ({
   const [filtroTipo, setFiltroTipo] = useState<'TODOS' | 'RECEITA' | 'DESPESA'>('TODOS');
   const [filtroCategoria, setFiltroCategoria] = useState('TODAS');
   const [filtroPeriodo, setFiltroPeriodo] = useState<'TODOS' | 'ESTE_MES' | 'MES_PASSADO' | 'ESTE_ANO'>('TODOS');
+
+  const [categoriasComId, setCategoriasComId] = useState<CategoriaAPI[]>([]);
+
+  useEffect(() => {
+  listarCategorias()
+    .then((dados: CategoriaAPI[]) => {
+      setCategoriasComId(dados);
+    })
+    .catch((erro) => {
+      console.error('Erro ao carregar categorias:', erro);
+    });
+}, []);
 
   // Modal de Edição
   const [transacaoParaEditar, setTransacaoParaEditar] = useState<Transacao | null>(null);
@@ -52,7 +62,9 @@ export const Transacoes: React.FC<TransacoesProps> = ({
               data: t.dataTransacao || t.data,
               tipo: t.tipo,
               categoria: typeof t.categoria === 'object' ? t.categoria.nome : t.categoria,
-              establishment: t.estabelecimento
+              establishment: t.estabelecimento,
+              usuarioId: t.usuario?.idUsuario,
+              categoriaId: t.categoria?.idCategoria
             }));
             setTransacoes(formatadas);
           }
@@ -73,7 +85,21 @@ export const Transacoes: React.FC<TransacoesProps> = ({
     if (!descricao || !valor || !data) return;
 
     const usuarioIdSalvo = localStorage.getItem('usuarioId');
-    const usuarioIdNum = usuarioIdSalvo ? parseInt(usuarioIdSalvo, 10) : 1;
+
+    if (!usuarioIdSalvo) {
+      alert('Usuário não identificado. Faça login novamente.');
+      return;
+    }
+
+    const usuarioIdNum = Number(usuarioIdSalvo);
+    const categoriaIdSelecionada = categoriasComId.find(
+      c => c.nome === categoria
+      )?.idCategoria;
+
+      if (!categoriaIdSelecionada) {
+      alert('Não foi possível identificar a categoria selecionada.');
+    return;
+    }
 
     setCarregando(true);
 
@@ -82,7 +108,7 @@ export const Transacoes: React.FC<TransacoesProps> = ({
         descricao,
         valor: parseFloat(valor),
         tipo,
-        categoriaId: 1, // ID da categoria padrão no banco
+        categoriaId: categoriaIdSelecionada, // ID da categoria padrão no banco
         usuarioId: usuarioIdNum,
         dataTransacao: data,
         estabelecimento: establishment.trim() ? establishment.trim() : undefined
@@ -92,13 +118,15 @@ export const Transacoes: React.FC<TransacoesProps> = ({
 
       // Adiciona na lista do estado
       const nova: Transacao = {
-        id: String(res.idTransacao || Date.now()),
+        id: String(res.idTransacao),
         descricao,
         valor: parseFloat(valor),
         data,
         tipo,
         categoria,
-        establishment: establishment.trim() ? establishment.trim() : undefined
+        establishment: establishment.trim() ? establishment.trim() : undefined,
+        usuarioId: usuarioIdNum,
+        categoriaId: payload.categoriaId
       };
 
       setTransacoes([nova, ...transacoes]);
@@ -117,25 +145,81 @@ export const Transacoes: React.FC<TransacoesProps> = ({
   };
 
   // 3. Exclui transação
-  const handleExcluir = async (id: string) => {
-    if (confirm('Deseja realmente excluir esta transação?')) {
-      try {
-        await fetch(`http://localhost:8080/api/transacoes/${id}`, { method: 'DELETE' });
-        setTransacoes(transacoes.filter(t => t.id !== id));
-      } catch (err) {
-        console.error('Erro ao excluir transação:', err);
+const handleExcluir = async (id: string) => {
+  if (confirm('Deseja realmente excluir esta transação?')) {
+    try {
+      const usuarioId = localStorage.getItem('usuarioId');
+
+      if (!usuarioId) {
+        alert('Usuário não identificado. Faça login novamente.');
+        return;
       }
+
+      const resposta = await fetch(
+        `http://localhost:8080/api/transacoes/${id}/usuario/${usuarioId}`,
+        { method: 'DELETE' }
+      );
+
+      if (!resposta.ok) {
+        throw new Error('Erro ao excluir transação');
+      }
+
+      setTransacoes(transacoes.filter(t => t.id !== id));
+
+    } catch (err) {
+      console.error('Erro ao excluir transação:', err);
+      alert('Não foi possível excluir a transação.');
     }
-  };
+  }
+};
 
   const handleAbrirEditar = (t: Transacao) => {
     setTransacaoParaEditar(t);
     setIsModalOpen(true);
   };
 
-  const handleSalvarEdicao = (transacaoAtualizada: Transacao) => {
-    setTransacoes(transacoes.map(t => t.id === transacaoAtualizada.id ? transacaoAtualizada : t));
-  };
+  const handleSalvarEdicao = async (transacaoAtualizada: Transacao) => {
+  try {
+    const categoriaId = categoriasComId.find(
+      c => c.nome === transacaoAtualizada.categoria
+    )?.idCategoria ?? transacaoAtualizada.categoriaId;
+
+    const usuarioId = Number(localStorage.getItem('usuarioId'));
+
+    if (!categoriaId || !usuarioId) {
+      throw new Error('ID do usuário ou da categoria não encontrado.');
+    }
+
+    const transacaoSalva = {
+      ...transacaoAtualizada,
+      categoriaId
+    };
+
+    await atualizarTransacao(
+      transacaoSalva.id,
+      usuarioId,
+      {
+        descricao: transacaoSalva.descricao,
+        valor: transacaoSalva.valor,
+        tipo: transacaoSalva.tipo,
+        dataTransacao: transacaoSalva.data,
+        estabelecimento: transacaoSalva.establishment,
+        recorrencia: transacaoSalva.recorrente,
+        categoria: {
+          idCategoria: categoriaId
+        }
+      }
+    );
+
+    setTransacoes(transacoes.map(t =>
+      t.id === transacaoSalva.id ? transacaoSalva : t
+    ));
+
+  } catch (erro) {
+    console.error('Erro ao atualizar transação:', erro);
+    alert('Não foi possível salvar a alteração.');
+  }
+};
 
   const ehNoPeriodo = (dataString: string) => {
     if (filtroPeriodo === 'TODOS') return true;

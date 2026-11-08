@@ -133,16 +133,22 @@ const handleDefinirOrcamento = async (e: React.FormEvent) => {
   );
 
   // Dados enviados ao Spring Boot
-  const dadosOrcamento = {
-    limiteValor: limiteNum,
-    usuario: {
-      idUsuario: 2, // ID temporário para o teste local
-    },
-    categoria: {
-      idCategoria: categoriaAPI.idCategoria,
-    },
-  };
+  const usuarioId = localStorage.getItem('usuarioId');
 
+if (!usuarioId) {
+  alert('Usuário não identificado. Faça login novamente.');
+  return;
+}
+
+const dadosOrcamento = {
+  limiteValor: limiteNum,
+  usuario: {
+    idUsuario: Number(usuarioId),
+  },
+  categoria: {
+    idCategoria: categoriaAPI.idCategoria,
+  },
+};
   try {
     const resposta = await fetch(
       orcamentoExistente
@@ -277,7 +283,7 @@ const handleRemoverOrcamento = async (id: string) => {
 
         <div className="space-y-3 pt-2">
           {orcamentos.map((orc) => {
-            const gastoAtual = orc.gasto;
+            const gastoAtual = calcularGasto(orc.categoria);
             const porc = Math.min(100, Math.round((gastoAtual / orc.limite) * 100));
             const resta = orc.limite - gastoAtual;
 

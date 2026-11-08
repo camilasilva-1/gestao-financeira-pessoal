@@ -43,18 +43,25 @@ export const Relatorios: React.FC<RelatoriosProps> = ({ transacoes }) => {
     : 0;
 
   // Agrupamento e Ranking de Categorias (#14 e #15)
-  const despesasPorCategoria: { [cat: string]: number } = {};
+const despesasPorCategoria: { [cat: string]: number } = {};
+
   transacoesMesAtual
     .filter(t => t.tipo === 'DESPESA')
     .forEach(t => {
-      despesasPorCategoria[t.categoria] = (despesasPorCategoria[t.categoria] || 0) + t.valor;
+      const categoria = t.categoria || 'Sem categoria';
+
+      despesasPorCategoria[categoria] =
+        (despesasPorCategoria[categoria] || 0) + t.valor;
     });
 
+  const totalDespesas = despesasMesAtual;
   const rankingCategorias = Object.entries(despesasPorCategoria)
     .map(([categoria, valor]) => ({
       categoria,
       valor,
-      porcentagem: despesasMesAtual > 0 ? Math.round((valor / despesasMesAtual) * 100) : 0
+      porcentagem: totalDespesas > 0
+  ? Math.round((valor / totalDespesas) * 100)
+  : 0
     }))
     .sort((a, b) => b.valor - a.valor);
 
