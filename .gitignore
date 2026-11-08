@@ -1,1 +1,23 @@
+# Dependências Node.js
+node_modules/
+**/node_modules/
+
+# Compilações
 backend/target/
+**/dist/
+**/dist-ssr/
+**/build/
+
+# Arquivos locais e segredos
+.env
+.env.*
+!.env.example
+*.local
+*.log
+
+# IDEs e sistema operacional
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
