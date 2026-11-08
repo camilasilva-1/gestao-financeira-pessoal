@@ -49,7 +49,7 @@ useEffect(() => {
         valor: Number(t.valor),
         data: t.dataTransacao,
         tipo: t.tipo,
-        categoria: t.categoria.nome,
+        categoria: t.categoria?.nome ?? '',
         establishment: t.estabelecimento,
         recorrente: t.recorrencia,
       }));
