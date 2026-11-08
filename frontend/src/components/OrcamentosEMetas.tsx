@@ -156,8 +156,10 @@ const dadosOrcamento = {
         : 'http://localhost:8080/orcamentos',
       {
         method: orcamentoExistente ? 'PUT' : 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
         },
         body: JSON.stringify(dadosOrcamento),
       }
@@ -172,7 +174,8 @@ const dadosOrcamento = {
 
     // Buscar o gasto atualizado no backend
     const respostaGasto = await fetch(
-      `http://localhost:8080/orcamentos/${salvo.idOrcamento}/gasto`
+      `http://localhost:8080/orcamentos/${salvo.idOrcamento}/gasto`,
+      { credentials: 'include' }
     );
 
     const gasto = respostaGasto.ok
@@ -222,6 +225,8 @@ const handleRemoverOrcamento = async (id: string) => {
       `http://localhost:8080/orcamentos/${id}`,
       {
         method: 'DELETE',
+        credentials: 'include',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
       }
     );
 
