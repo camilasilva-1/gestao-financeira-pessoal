@@ -72,7 +72,8 @@ public class OrcamentoService {
         LocalDate fimMes = hoje.withDayOfMonth(hoje.lengthOfMonth());
 
         List<Transacao> despesas =
-                transacaoRepository.findByCategoriaAndTipoAndDataTransacaoBetween(
+                transacaoRepository.findByUsuario_IdUsuarioAndCategoriaAndTipoAndDataTransacaoBetween(
+                        orcamento.getUsuario().getIdUsuario(),
                         orcamento.getCategoria(),
                         Tipo.DESPESA,
                         inicioMes,
@@ -111,13 +112,13 @@ public class OrcamentoService {
     private void validarOrcamento(Orcamento orcamento) {
         if (orcamento.getLimiteValor() == null ||
                 orcamento.getLimiteValor().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("O limite do orçamento deve ser maior que zero");
+            throw new IllegalArgumentException("O limite do orçamento deve ser maior que zero");
         }
         if (orcamento.getUsuario() == null) {
-            throw new RuntimeException("Usuário é obrigatório");
+            throw new IllegalArgumentException("Usuário é obrigatório");
         }
         if (orcamento.getCategoria() == null) {
-            throw new RuntimeException("Categoria é obrigatória");
+            throw new IllegalArgumentException("Categoria é obrigatória");
         }
     }
 }

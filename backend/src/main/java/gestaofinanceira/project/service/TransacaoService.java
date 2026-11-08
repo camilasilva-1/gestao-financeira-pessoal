@@ -202,10 +202,19 @@ public class TransacaoService {
         if (t.getValor() == null || t.getValor().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Valor da transação deve ser maior que zero");
         }
-        if (t.getUsuario() == null) {
+        if (t.getDescricao() == null || t.getDescricao().isBlank()) {
+            throw new IllegalArgumentException("Descrição é obrigatória");
+        }
+        if (t.getDataTransacao() == null) {
+            throw new IllegalArgumentException("Data é obrigatória");
+        }
+        if (t.getTipo() == null) {
+            throw new IllegalArgumentException("Tipo é obrigatório");
+        }
+        if (t.getUsuario() == null || t.getUsuario().getIdUsuario() == null) {
             throw new IllegalArgumentException("Usuário é obrigatório");
         }
-        if (t.getCategoria() == null) {
+        if (t.getCategoria() == null || t.getCategoria().getIdCategoria() == null) {
             throw new IllegalArgumentException("Categoria é obrigatória");
         }
     }

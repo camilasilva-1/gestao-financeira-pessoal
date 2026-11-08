@@ -73,6 +73,13 @@ public interface TransacaoRepository extends JpaRepository<Transacao, Integer> {
            "GROUP BY t.categoria.nome")
     List<Object[]> gastosPorCategoriaGeral(@Param("usuarioId") Long usuarioId);
 
+    List<Transacao> findByUsuario_IdUsuarioAndCategoriaAndTipoAndDataTransacaoBetween(
+            Integer usuarioId,
+            Categoria categoria,
+            Tipo tipo,
+            LocalDate inicio,
+            LocalDate fim);
+
     List<Transacao> findByCategoriaAndTipoAndDataTransacaoBetween(
             Categoria categoria,
             Tipo tipo,
