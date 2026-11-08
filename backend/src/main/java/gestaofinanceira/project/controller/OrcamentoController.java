@@ -25,8 +25,8 @@ public class OrcamentoController {
 
     // Listar todos os orçamentos
     @GetMapping
-    public List<Orcamento> listar() {
-        return service.listar();
+    public List<Orcamento> listar(HttpSession session) {
+        return service.listarPorUsuario((Integer) session.getAttribute(SessionOwnershipFilter.USER_ID));
     }
 
     @GetMapping("/usuario/{usuarioId}")
