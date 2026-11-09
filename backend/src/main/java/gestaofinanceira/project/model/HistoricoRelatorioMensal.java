@@ -45,7 +45,9 @@ public class HistoricoRelatorioMensal {
     @Column(name = "saldo_final", nullable = false, precision = 16, scale = 2)
     private BigDecimal saldoFinal;
 
+    // Snapshot completo em MySQL: evitar o limite de TEXT (64 KiB).
+    // LONGTEXT tambem corresponde ao SQL oficial de instalacao.
     @Lob
-    @Column(name = "relatorio_json", nullable = false)
+    @Column(name = "relatorio_json", nullable = false, columnDefinition = "LONGTEXT")
     private String relatorioJson;
 }
