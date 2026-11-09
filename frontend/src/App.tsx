@@ -139,7 +139,8 @@ const orcamentosFormatados: Orcamento[] = await Promise.all(
   };
 
   buscarOrcamentos();
-}, [telaAtual]);
+// Recalcular os gastos mensais quando as transacoes forem alteradas.
+}, [telaAtual, transacoes]);
 
   const [categorias] = useState<string[]>(CATEGORIAS_PADRAO);
   const [categoriasAPI, setCategoriasAPI] = useState<CategoriaAPI[]>([]);
