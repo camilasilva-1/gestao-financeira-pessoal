@@ -14,7 +14,7 @@ const resultados = [];
   try {
     await page.goto(SITE, { waitUntil: 'domcontentloaded' });
     console.log('Entre na janela do Chromium. Nenhum dado sera criado, editado ou excluido.');
-    await page.waitForFunction(() => /^\\d+$/.test(localStorage.getItem('usuarioId') || '')
+    await page.waitForFunction(() => /^\d+$/.test(localStorage.getItem('usuarioId') || '')
       && document.body.innerText.includes('Histórico de Transações'), null, { timeout: 180000 });
     const id = Number(await page.evaluate(() => localStorage.getItem('usuarioId')));
     const get = async path => page.evaluate(async url => {
@@ -73,12 +73,12 @@ const resultados = [];
 
     // Ordenacao exibida no frontend: datas ISO em ordem decrescente.
     const datasNaTela = await page.locator('table tbody tr').evaluateAll(rows =>
-      rows.map(tr => tr.querySelectorAll('td')[2]?.textContent?.trim()).filter(v => /^\\d{4}-\\d{2}-\\d{2}$/.test(v || '')));
+      rows.map(tr => tr.querySelectorAll('td')[2]?.textContent?.trim()).filter(v => /^\d{4}-\d{2}-\d{2}$/.test(v || '')));
     verificar('Ordenacao por data na tela',
       datasNaTela.every((v,i) => i===0 || datasNaTela[i-1]>=v),
       datasNaTela.length + ' linhas conferidas');
 
-    console.log('\\n=== HISTORICO ETAPA 1 — SOMENTE LEITURA ===');
+    console.log('\n=== HISTORICO ETAPA 1 — SOMENTE LEITURA ===');
     console.table(resultados);
     const falhas = resultados.filter(t => t.resultado === 'FALHOU');
     console.log(falhas.length ? 'PENDENCIAS: ' + falhas.map(f=>f.teste).join(', ') : 'Todos os cenarios verificados passaram.');
