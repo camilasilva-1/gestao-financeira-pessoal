@@ -60,3 +60,27 @@ Auditoria de leitura `qa/auditoria-etapa2.cjs`: **26/26 aprovações**, mais 34 
 7. **Faixas em porcentagens não inteiras**: o Takeoff tem lacuna em exatamente 90%; foi adotado Risco a partir de 90% para não haver ausência de aviso. Pedir alinhamento da equipe apenas se necessário.
 
 Nenhuma mudança em `main` ou no Trello durante esta conferência. **Não marcar 100% por 26/26**, pois a auditoria não abrange integralmente a documentação.
+
+## Implementações finais preparadas na branch (09/11/2026; NÃO testadas após este conjunto de mudanças)
+
+- **Regra 50/30/20 visível:** seção simples `Planejamento 50/30/20` na interface de relatórios, alimentada pelo endpoint existente. A base explicitamente apresentada é a **soma das receitas registradas no mês**; o vínculo conceitual com salário informado separadamente continua merecendo conferência com o Takeoff. Não há alteração do cálculo para evitar dupla contagem de salário com receitas.
+- **RN009 — histórico de relatórios gerados:** entidade/tabela nova `historico_relatorio_mensal`, repositório isolado por usuário, POST de arquivamento do mês completo sob clique explícito e GET de consulta ao histórico. O relatório completo é preservado em `relatorio_json`, junto dos totais do período. Não altera transações nem orçamentos existentes. O Hibernate em `ddl-auto=update` pode **criar essa nova tabela no MySQL local** ao iniciar o backend atualizado; fazer backup antes de aplicar mudanças em ambiente compartilhado. Todos os testes de cadastro/arquivamento automatizados devem usar mocks ou banco temporário, não a base pessoal.
+- **Auditoria consolidada:** `qa/auditoria-etapa2.cjs` mantém os 26 cenários anteriores e acrescenta checagem visual da regra, interface e consulta de histórico, controle de acesso, limite de 10 s para geração mensal, e 4 faixas visuais de orçamento com respostas GET simuladas (nada gravado no MySQL).
+- **Testes Java adicionais:** `HistoricoRelatorioMensalServiceTest` (3 testes); teste de limites `AlertasOrcamentoFaixasTest` já existente.
+
+### Rodada final a executar (na máquina local com banco preservado)
+```powershell
+cd "C:\Projetos\gestao financeira pessoal\gestao-financeira-pessoal-fix-correcoes-etapa-2\versao-atualizada"
+git pull
+cd backend
+.\mvnw.cmd test
+cd ..\frontend
+npm run build
+```
+Reiniciar os servidores backend/frontend **atualizados** antes de rodar:
+```powershell
+cd "C:\Projetos\gestao financeira pessoal\gestao-financeira-pessoal-fix-correcoes-etapa-2\versao-atualizada"
+node qa/auditoria-etapa2.cjs
+```
+
+**Não declarar Etapa 2 concluída somente por essas alterações.** Falhas devem ser corrigidas antes de atualizar o Trello. A `main` permanece intocada. Os requisitos de relatório e a correspondência entre renda e salário serão analisados pelos resultados da auditoria e revisão documental.
