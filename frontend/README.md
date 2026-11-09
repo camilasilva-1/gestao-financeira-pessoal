@@ -1,75 +1,34 @@
-# React + TypeScript + Vite
+# Frontend — Gestão Financeira Pessoal
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interface das Etapas 1 e 2 do projeto acadêmico, desenvolvida em **React, TypeScript, Vite e Tailwind CSS**.
 
-Currently, two official plugins are available:
+## Executar localmente
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Pré-requisitos: Node.js compatível com o Vite e backend Spring Boot em execução na porta `8080`.
 
-## React Compiler
+No terminal, dentro da pasta `frontend`:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```powershell
+npm ci
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+Abra `http://localhost:5173`. O frontend consulta o backend em `http://localhost:8080`, no mesmo computador.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## O que é possível testar
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Etapa 1: cadastro, login/logout, receitas, despesas, categorias, filtros, edição/exclusão e indicadores.
+- Etapa 2: orçamento por categoria, alertas, regra 50/30/20 e relatórios mensais com histórico salvo.
 
+Os dados são persistidos pelo backend no MySQL; não são criados diretamente no frontend.
+
+## Conferência técnica
+
+```powershell
+npm run build
+npm run lint
 ```
+
+O roteiro manual de homologação está em `../docs/roteiro-homologacao-frontend-etapas1e2.md`. Para instalação completa, consulte o `../README.md` e `../database/README.md`.
+
+A hospedagem e o acesso por outro dispositivo ainda precisam de configuração de URLs e CORS; não fazem parte desta execução local.
