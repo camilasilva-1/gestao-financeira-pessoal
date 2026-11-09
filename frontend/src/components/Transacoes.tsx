@@ -363,13 +363,13 @@ const handleExcluir = async (id: string) => {
       </div>
 
       {/* Histórico com Barra de Filtros */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-        <div className="grid grid-cols-1 lg:grid-cols-[210px_minmax(0,1fr)] gap-4 border-b pb-4">
-          <h2 className="text-lg font-bold text-slate-800 lg:pt-2">
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-2">
+        <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] gap-3 border-b pb-3">
+          <h2 className="text-lg font-bold text-slate-800 lg:pt-1 lg:whitespace-nowrap">
             Histórico de Transações
           </h2>
 
-          <div className="min-w-0 space-y-3">
+          <div className="min-w-0 space-y-2">
             {/* Linha 1: filtros principais alinhados */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
               <input type="text" placeholder="Buscar por descrição..." value={busca}
@@ -406,39 +406,36 @@ const handleExcluir = async (id: string) => {
               <label className="block min-w-0 text-xs text-slate-600">
                 De
                 <input type="date" value={dataInicial} onChange={e => setDataInicial(e.target.value)}
-                  className="mt-1 block w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs" />
+                  className="mt-0.5 block w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs" />
               </label>
               <label className="block min-w-0 text-xs text-slate-600">
                 Até
                 <input type="date" min={dataInicial || undefined} value={dataFinal}
                   onChange={e => setDataFinal(e.target.value)}
-                  className="mt-1 block w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs" />
+                  className="mt-0.5 block w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs" />
               </label>
               <label className="block min-w-0 text-xs text-slate-600">
                 Estabelecimento
                 <input type="text" placeholder="Nome do estabelecimento" value={filtroEstabelecimento}
                   onChange={e => setFiltroEstabelecimento(e.target.value)}
-                  className="mt-1 block w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs" />
+                  className="mt-0.5 block w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs" />
               </label>
-              <label className="block min-w-0 text-xs text-slate-600">
-                Recorrência
-                <select value={filtroRecorrencia}
+              <div className="block min-w-0">
+                <div className="flex items-center justify-between gap-2 text-xs text-slate-600">
+                  <label htmlFor="filtro-recorrencia">Recorrência</label>
+                  <button type="button" onClick={() => {
+                    setBusca(''); setFiltroTipo('TODOS'); setFiltroCategoria('TODAS'); setFiltroPeriodo('TODOS');
+                    setDataInicial(''); setDataFinal(''); setFiltroEstabelecimento(''); setFiltroRecorrencia('TODOS');
+                  }} className="text-blue-600 hover:underline whitespace-nowrap">Limpar filtros</button>
+                </div>
+                <select id="filtro-recorrencia" value={filtroRecorrencia}
                   onChange={e => setFiltroRecorrencia(e.target.value as 'TODOS' | 'SIM' | 'NAO')}
-                  className="mt-1 block w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs">
+                  className="mt-0.5 block w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs">
                   <option value="TODOS">Todas as recorrências</option>
                   <option value="SIM">Recorrentes</option>
                   <option value="NAO">Não recorrentes</option>
                 </select>
-              </label>
-            </div>
-
-            <div className="flex justify-end">
-              <button type="button" onClick={() => {
-                setBusca(''); setFiltroTipo('TODOS'); setFiltroCategoria('TODAS'); setFiltroPeriodo('TODOS');
-                setDataInicial(''); setDataFinal(''); setFiltroEstabelecimento(''); setFiltroRecorrencia('TODOS');
-              }} className="text-xs text-blue-600 hover:underline">
-                Limpar filtros
-              </button>
+              </div>
             </div>
           </div>
         </div>
