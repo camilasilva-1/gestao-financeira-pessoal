@@ -22,6 +22,7 @@ export const ModalEditarTransacao: React.FC<ModalEditarTransacaoProps> = ({
   const [tipo, setTipo] = useState<'RECEITA' | 'DESPESA'>('DESPESA');
   const [categoria, setCategoria] = useState('');
   const [establishment, setEstablishment] = useState('');
+  const [recorrente, setRecorrente] = useState(false);
 
   useEffect(() => {
     if (transacao) {
@@ -29,8 +30,9 @@ export const ModalEditarTransacao: React.FC<ModalEditarTransacaoProps> = ({
       setValor(transacao.valor.toString());
       setData(transacao.data);
       setTipo(transacao.tipo);
-      setCategoria(transacao.categoria || (categorias && categorias.length > 0 ? categorias[0] : 'Alimentação'));
+      setCategoria(transacao.categoria ?? '');
       setEstablishment(transacao.establishment || '');
+      setRecorrente(transacao.recorrente ?? false);
     }
   }, [transacao, categorias]);
 
@@ -38,7 +40,7 @@ export const ModalEditarTransacao: React.FC<ModalEditarTransacaoProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!descricao || !valor || !data) return;
+    if (!descricao.trim() || !valor || Number(valor) <= 0 || !data || (tipo === 'DESPESA' && !categoria)) return;
 
     onSave({
       ...transacao,
@@ -47,7 +49,8 @@ export const ModalEditarTransacao: React.FC<ModalEditarTransacaoProps> = ({
       data,
       tipo,
       categoria,
-      establishment: establishment.trim() ? establishment.trim() : undefined
+      establishment: establishment.trim() ? establishment.trim() : undefined,
+      recorrente
     });
     onClose();
   };
@@ -115,6 +118,7 @@ export const ModalEditarTransacao: React.FC<ModalEditarTransacaoProps> = ({
                 onChange={(e) => setCategoria(e.target.value)}
                 className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
               >
+                <option value="">{tipo === 'RECEITA' ? 'Sem categoria' : 'Selecione uma categoria'}</option>
                 {categorias.map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
@@ -131,6 +135,11 @@ export const ModalEditarTransacao: React.FC<ModalEditarTransacaoProps> = ({
               className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
             />
           </div>
+
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <input type="checkbox" checked={recorrente} onChange={e => setRecorrente(e.target.checked)} />
+            Transação recorrente
+          </label>
 
           <div className="flex justify-end space-x-2 pt-3 border-t">
             <button
