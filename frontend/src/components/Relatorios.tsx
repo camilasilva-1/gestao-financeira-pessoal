@@ -58,11 +58,15 @@ export const Relatorios: React.FC<RelatoriosProps> = ({ transacoes }) => {
         credentials: 'include',
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
       });
-      if (!resposta.ok) throw new Error('Falha ao salvar relatório');
+      if (!resposta.ok) {
+        throw new Error(`HTTP ${resposta.status}`);
+      }
       await buscarHistorico();
       setMensagemRelatorio('Relatório mensal salvo no histórico.');
-    } catch {
-      setMensagemRelatorio('Não foi possível salvar o relatório mensal.');
+    } catch (erro) {
+      const detalhe = erro instanceof Error ? erro.message : 'falha desconhecida';
+      console.error('Falha ao salvar relatório mensal:', erro);
+      setMensagemRelatorio(`Não foi possível salvar o relatório mensal (${detalhe}).`);
     } finally {
       setSalvandoRelatorio(false);
     }
