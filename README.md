@@ -21,7 +21,7 @@ gestao-financeira-pessoal/
 Requisitos: MySQL 8+, Java 21 e Node.js compatível com a versão do Vite. Não inclua arquivos de senha, dump de contas pessoais ou `node_modules` no Git.
 
 1. Criar o schema e as tabelas pelo `database/01_instalacao_mysql8.sql` no MySQL. As 12 categorias padrão são inseridas sem duplicação.
-2. Para atualizar uma base **existente**, antes faça backup e leia `database/README.md` e `02_atualizacao_banco_existente.sql`. **Não execute o script antigo que define `transacao.id_categoria NOT NULL`.**
+2. Para uma base **existente**, faça backup e leia `database/README.md`. O script de instalação não corrige estruturas antigas: atualizações devem ser avaliadas separadamente, sem excluir dados.
 3. Definir na própria máquina as variáveis `DB_URL`, `DB_USERNAME` e `DB_PASSWORD`. Exemplo PowerShell:
 
 ```powershell
