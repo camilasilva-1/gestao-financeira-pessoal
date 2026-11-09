@@ -8,7 +8,7 @@ Sistema de controle e planejamento financeiro pessoal. **Este repositório não 
 gestao-financeira-pessoal/
 ├── backend/      API Java 21 + Spring Boot + testes
 ├── frontend/     React + TypeScript + Vite
-├── database/     SQL de instalação, migração e conferência
+├── database/     SQL de instalação e conferência
 ├── docs/         Takeoff/validações e roteiro de homologação
 ├── qa/           Auditorias automatizadas locais
 └── README.md
