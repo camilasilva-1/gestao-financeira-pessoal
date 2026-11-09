@@ -12,12 +12,12 @@ export const Relatorios: React.FC<RelatoriosProps> = ({ transacoes }) => {
 
   // Filtrar transações do mês atual e mês anterior
   const transacoesMesAtual = transacoes.filter(t => {
-    const d = new Date(t.data);
+    const d = new Date(t.data + 'T00:00:00');
     return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
   });
 
   const transacoesMesAnterior = transacoes.filter(t => {
-    const d = new Date(t.data);
+    const d = new Date(t.data + 'T00:00:00');
     const mesAnterior = mesAtual === 0 ? 11 : mesAtual - 1;
     const anoAnterior = mesAtual === 0 ? anoAtual - 1 : anoAtual;
     return d.getMonth() === mesAnterior && d.getFullYear() === anoAnterior;
