@@ -55,7 +55,23 @@ function percentil95(valores) {
       const ok = info.documento <= info.janela + 4 && info.historico && info.formulario;
       resultado.push({ teste: 'Layout '+tela.nome, status: status(ok),
         largura: tela.width, overflowPx: Math.max(0, info.documento-info.janela) });
-      if (!ok) falhas.push('Layout '+tela.nome);
+      if (!ok) {
+        falhas.push('Layout '+tela.nome);
+        const elementos = await page.evaluate(() => [...document.querySelectorAll('body *')]
+          .filter(el => {
+            const r = el.getBoundingClientRect();
+            return r.width > 0 && (r.right > innerWidth + 4 || r.left < -4);
+          })
+          .slice(0, 12)
+          .map(el => ({
+            tag: el.tagName.toLowerCase(),
+            classe: String(el.className).slice(0, 75),
+            largura: Math.round(el.getBoundingClientRect().width),
+            direita: Math.round(el.getBoundingClientRect().right)
+          })));
+        console.log('Elementos fora da tela em '+tela.nome+':');
+        console.table(elementos);
+      }
     }
     await page.setViewportSize({ width: 1366, height: 768 });
 
