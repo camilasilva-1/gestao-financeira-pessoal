@@ -46,11 +46,13 @@ const fim = yyyy+'-'+mm+'-'+String(new Date(yyyy,mes.getMonth()+1,0).getDate()).
    add('Relatorio: receitas mensais',quase(relatorio.dados.receitaTotal,receitas));
    add('Relatorio: despesas mensais',quase(relatorio.dados.despesaTotal,despesas));
    add('Relatorio: saldo mensal',quase(relatorio.dados.saldoFinal,receitas-despesas));
-   add('Regra: renda mensal',quase(regra.dados.rendaTotal,receitas));
-   add('Regra: ideal 50%',quase(regra.dados.idealNecessidades,receitas*.5));
-   add('Regra: ideal 30%',quase(regra.dados.idealDesejos,receitas*.3));
-   add('Regra: ideal 20%',quase(regra.dados.idealPoupanca,receitas*.2));
-   add('Regra: saldo poupavel',quase(regra.dados.realPoupanca,Math.max(0,receitas-despesas)));
+   const rendaBase = receitas > 0 ? receitas : Math.max(0, Number(usuario.dados?.salarioLiquido??0));
+   add('Regra: renda mensal',quase(regra.dados.rendaTotal,rendaBase),
+      'Receitas: '+receitas+'; salario: '+Number(usuario.dados?.salarioLiquido??0));
+   add('Regra: ideal 50%',quase(regra.dados.idealNecessidades,rendaBase*.5));
+   add('Regra: ideal 30%',quase(regra.dados.idealDesejos,rendaBase*.3));
+   add('Regra: ideal 20%',quase(regra.dados.idealPoupanca,rendaBase*.2));
+   add('Regra: saldo poupavel',quase(regra.dados.realPoupanca,Math.max(0,rendaBase-despesas)));
 
    const grupo={};
    for(const t of trs.filter(t=>t.tipo==='DESPESA')){
