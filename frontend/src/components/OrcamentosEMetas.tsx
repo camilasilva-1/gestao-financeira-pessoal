@@ -257,11 +257,11 @@ const handleRemoverOrcamento = async (id: string) => {
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
         <h2 className="text-lg font-bold text-slate-800">Orçamentos por Categoria</h2>
 
-        <form onSubmit={handleDefinirOrcamento} className="flex gap-2">
+        <form onSubmit={handleDefinirOrcamento} className="flex flex-col sm:flex-row gap-2">
           <select
             value={categoriaSel}
             onChange={(e) => setCategoriaSel(e.target.value)}
-            className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
+            className="w-full sm:flex-1 min-w-0 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
           >
             <option value="">Selecione uma categoria...</option>
             {categorias.map((cat) => (
@@ -276,7 +276,7 @@ const handleRemoverOrcamento = async (id: string) => {
             placeholder="Limite R$"
             value={limiteOrcamento}
             onChange={(e) => setLimiteOrcamento(e.target.value)}
-            className="w-28 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
+            className="w-full sm:w-28 min-w-0 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
           />
           <button
             type="submit"
@@ -349,7 +349,7 @@ const handleRemoverOrcamento = async (id: string) => {
             onChange={(e) => setNomeMeta(e.target.value)}
             className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
           />
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <input
               type="number"
               step="0.01"
@@ -367,12 +367,12 @@ const handleRemoverOrcamento = async (id: string) => {
               className="rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="date"
               value={dataLimiteMeta}
               onChange={(e) => setDataLimiteMeta(e.target.value)}
-              className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
+              className="w-full sm:flex-1 min-w-0 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
             />
             <button
               type="submit"
