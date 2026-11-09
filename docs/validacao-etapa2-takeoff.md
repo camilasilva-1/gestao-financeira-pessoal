@@ -39,3 +39,24 @@
 - Revisar evidências e a branch com equipe antes de qualquer merge na `main`.
 
 **Importante:** este documento registra mudanças e verificações propostas. Não é um certificado de aprovação dos novos testes.
+
+## Conferência documental adicional após 26/26 (08/11/2026)
+
+Auditoria de leitura `qa/auditoria-etapa2.cjs`: **26/26 aprovações**, mais 34 testes Java e build frontend aprovados. Esse resultado confirma os casos exercitados; NÃO encerra requisitos fora da cobertura.
+
+### Confirmado no código
+- Faixas e percentuais na interface em `OrcamentosEMetas.tsx`, associados ao gasto mensal retornado pela API; testes unitários das faixas aprovados. A auditoria real só exercitou percentuais baixos (0% e ~13%), portanto falta validar visualmente faixas Atenção/Risco/Estourado com massa isolada.
+- Regra 50/30/20 tem DTO/serviço/endpoint backend, com teste unitário; valores ideais da renda mensal por transações foram comparados na auditoria. Não foi encontrada exibição da regra 50/30/20 no `App.tsx`, `Relatorios.tsx` ou `OrcamentosEMetas.tsx`.
+- Relatórios mensais e ranking têm endpoints, e os totais foram conferidos na auditoria; existe interface para comparação mês atual/anterior e ranking.
+- Cadastro de salário é opcional no frontend; login recebe e guarda valor do backend; auditoria confirmou valor de R$ 2.000 naquele usuário.
+
+### Lacunas que impedem declarar conformidade literal de 100% sem novas evidências
+1. **RN009** (histórico dos relatórios mensais gerados): não foi identificada persistência ou listagem de histórico de relatórios no fluxo consultado; conferir todo o repositório antes de propor implementação.
+2. **Regra 50/30/20 visível ao usuário**: endpoint existe, mas falta verificar como o usuário acompanha a recomendação; avaliação de necessidade de exibição simples conforme seção 3.7.
+3. **Base da renda usada na regra 50/30/20**: backend usa receitas do mês, enquanto seção 3.7 exemplifica salário líquido. Verificar se salário + receitas devem compor a base (sem dupla contagem) antes de alterar fórmula.
+4. **Relatório de distribuição (seção 3.6)**: conferir apresentação completa das principais categorias e evolução em relação ao mês anterior; API e interface não equivalem automaticamente a todas as informações exigidas.
+5. **Faixas do card 21**: já corrigidas na branch e testes de limites Java aprovados, mas só Normal foi efetivamente exercitado pela auditoria com dados do usuário. Não finalizar o card de terceiro sem revisão.
+6. **RNF020**: geração de relatório mensal em menos de 10 segundos ainda não foi cronometrada especificamente.
+7. **Faixas em porcentagens não inteiras**: o Takeoff tem lacuna em exatamente 90%; foi adotado Risco a partir de 90% para não haver ausência de aviso. Pedir alinhamento da equipe apenas se necessário.
+
+Nenhuma mudança em `main` ou no Trello durante esta conferência. **Não marcar 100% por 26/26**, pois a auditoria não abrange integralmente a documentação.
