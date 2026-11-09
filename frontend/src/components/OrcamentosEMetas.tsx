@@ -244,13 +244,8 @@ const handleRemoverOrcamento = async (id: string) => {
 };
 
 
-  // Calcular gastos por categoria
-  const calcularGasto = (categoria: string) => {
-    return transacoes
-      .filter((t) => t.tipo === 'DESPESA' && t.categoria === categoria)
-      .reduce((acc, t) => acc + t.valor, 0);
-  };
-
+  // Gasto mensal calculado pelo backend, vinculado ao usuário e à categoria.
+  // Não somar todo o histórico de transações: o Takeoff define orçamento mensal.
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* SEÇÃO 1: ORÇAMENTOS POR CATEGORIA */}
@@ -288,22 +283,28 @@ const handleRemoverOrcamento = async (id: string) => {
 
         <div className="space-y-3 pt-2">
           {orcamentos.map((orc) => {
-            const gastoAtual = calcularGasto(orc.categoria);
-            const porc = Math.min(100, Math.round((gastoAtual / orc.limite) * 100));
+            const gastoAtual = orc.gasto;
+            const percentual = orc.limite > 0 ? (gastoAtual / orc.limite) * 100 : 0;
+            const porc = Math.round(percentual);
+            const larguraBarra = Math.min(100, Math.max(0, percentual));
             const resta = orc.limite - gastoAtual;
 
             let statusColor = 'bg-emerald-100 text-emerald-700';
             let barColor = 'bg-emerald-500';
             let statusText = 'Normal';
 
-            if (porc >= 80 && porc < 100) {
+            if (percentual > 100) {
+              statusColor = 'bg-red-100 text-red-700';
+              barColor = 'bg-red-600';
+              statusText = 'Estourado';
+            } else if (percentual >= 90) {
+              statusColor = 'bg-orange-100 text-orange-700';
+              barColor = 'bg-orange-500';
+              statusText = 'Risco';
+            } else if (percentual > 70) {
               statusColor = 'bg-amber-100 text-amber-700';
               barColor = 'bg-amber-500';
               statusText = 'Atenção';
-            } else if (porc >= 100) {
-              statusColor = 'bg-red-100 text-red-700';
-              barColor = 'bg-red-600';
-              statusText = 'Excedido';
             }
 
             return (
@@ -324,7 +325,7 @@ const handleRemoverOrcamento = async (id: string) => {
                 </div>
 
                 <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                  <div className={`${barColor} h-2 rounded-full transition-all`} style={{ width: `${porc}%` }} />
+                  <div className={`${barColor} h-2 rounded-full transition-all`} style={{ width: `${larguraBarra}%` }} />
                 </div>
 
                 <div className="flex justify-between text-xs text-slate-500">
