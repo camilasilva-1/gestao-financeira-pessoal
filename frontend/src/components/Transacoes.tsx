@@ -255,7 +255,7 @@ const handleExcluir = async (id: string) => {
     const bateTexto = t.descricao.toLowerCase().includes(busca.toLowerCase()) ||
       (t.establishment && t.establishment.toLowerCase().includes(busca.toLowerCase()));
     const bateTipo = filtroTipo === 'TODOS' || t.tipo === filtroTipo;
-    const bateCat = filtroCategoria === 'TODAS' || t.categoria === filtroCategoria;
+    const bateCat = filtroCategoria === 'TODAS' || (filtroCategoria === 'SEM_CATEGORIA' ? !t.categoria : t.categoria === filtroCategoria);
     const batePeriodo = ehNoPeriodo(t.data);
     const bateInicio = !dataInicial || t.data >= dataInicial;
     const bateFim = !dataFinal || t.data <= dataFinal;
@@ -397,6 +397,7 @@ const handleExcluir = async (id: string) => {
                 aria-label="Categoria"
                 className="w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs">
                 <option value="TODAS">Todas as Categorias</option>
+                <option value="SEM_CATEGORIA">Sem categoria</option>
                 {categorias.map(cat => <option key={cat} value={cat}>{cat}</option>)}
               </select>
             </div>
