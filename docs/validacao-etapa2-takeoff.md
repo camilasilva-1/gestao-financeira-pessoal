@@ -84,3 +84,11 @@ node qa/auditoria-etapa2.cjs
 ```
 
 **Não declarar Etapa 2 concluída somente por essas alterações.** Falhas devem ser corrigidas antes de atualizar o Trello. A `main` permanece intocada. Os requisitos de relatório e a correspondência entre renda e salário serão analisados pelos resultados da auditoria e revisão documental.
+
+## Fechamento técnico preparado — rodada final pendente de execução
+
+- A regra 50/30/20 agora usa a soma das receitas do mês como referência; **se não houver receitas registradas**, utiliza o salário líquido informado no cadastro. Não soma salário + receita, prevenindo dupla contagem. Testes específicos de ambos os casos foram incluídos em `Regra503020ServiceTest`.
+- O histórico RN009 agora possui teste de integração HTTP + JPA com H2 em memória `HistoricoRelatorioMensalIntegracaoTest`: gravação efetiva, consulta do registro, período inválido, isolamento entre usuários e autenticação. Nenhuma dessas gravações toca MySQL.
+- Foi preparado `qa/validar-etapa2.ps1` para atualizar a branch, executar **toda** a suíte Java e gerar o build do frontend em uma única execução, interrompendo na primeira falha.
+- A auditoria `qa/auditoria-etapa2.cjs` foi adaptada para aceitar salário como base somente quando as receitas mensais forem zero.
+- **Os testes novos ainda não foram executados no Windows da usuária; não declarar aprovação nem atualizar Trello/main antecipadamente.** Auditoria anterior 35/35 passou antes dos últimos ajustes.
