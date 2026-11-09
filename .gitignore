@@ -1,5 +1,6 @@
 
 # Arquivos gerados pelo Maven
+backend/classpath.txt
 **/target/
 backend/target/
 
