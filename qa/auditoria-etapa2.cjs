@@ -91,6 +91,15 @@ const fim = yyyy+'-'+mm+'-'+String(new Date(yyyy,mes.getMonth()+1,0).getDate()).
    }
    // RN009: verifica o endpoint e a secao da interface, SEM clicar em Salvar.
    const historicoRelatorios = await get('/api/relatorios/historico?usuarioId='+id);
+   const historicoOutro = await get('/api/relatorios/historico?usuarioId='+(id+1));
+   add('RN009: historico isolado por usuario',historicoOutro.status===403,
+     'HTTP '+historicoOutro.status);
+   const inicioTempo = Date.now();
+   const tempoRelatorio = await get('/api/relatorios/mensal?usuarioId='+id+'&inicio='+inicio+'&fim='+fim);
+   const demora = Date.now() - inicioTempo;
+   add('RNF020: geracao mensal em ate 10 segundos',
+     tempoRelatorio.status===200 && demora<10000, demora+' ms');
+
    add('RN009: consulta historico mensal', historicoRelatorios.status===200
       && Array.isArray(historicoRelatorios.dados),'HTTP '+historicoRelatorios.status);
    add('RN009: historico na interface',
