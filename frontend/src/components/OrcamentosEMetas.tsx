@@ -18,7 +18,6 @@ interface OrcamentosEMetasProps {
 }
 
 export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
-  transacoes,
   orcamentos,
   setOrcamentos,
   categorias,
