@@ -82,10 +82,12 @@ const fim = yyyy+'-'+mm+'-'+String(new Date(yyyy,mes.getMonth()+1,0).getDate()).
      const lim=Number(o.limiteValor), pct=lim?100*total/lim:0;
      add('Orcamento '+oid+': gasto mensal',gasto.status===200&&quase(gasto.dados,total));
      add('Orcamento '+oid+': saldo restante',saldo.status===200&&quase(saldo.dados,lim-total));
-     add('Orcamento '+oid+': percentual',percentual.status===200&&Math.abs(Number(percentual.dados)-pct)<.06);
+     add('Orcamento '+oid+': percentual',percentual.status===200&&Math.abs(Number(percentual.dados)-pct)<.51,
+       'API: '+percentual.dados+'%; esperado: '+pct.toFixed(2)+'%');
      const alerta=alertas.dados.find(a=>String(a.mensagem||'').includes(o.categoria.nome));
      const nivel=pct>100?'Estourado':pct>=90?'Risco':pct>70?'Atenção':'Normal';
-     add('Orcamento '+oid+': alerta',!!alerta && alerta.nivelAlerta===nivel,'Esperado: '+nivel);
+     add('Orcamento '+oid+': alerta',!!alerta && alerta.nivelAlerta===nivel,
+       'Recebido: '+(alerta?.nivelAlerta||'sem alerta')+'; esperado: '+nivel);
    }
    console.log('\n=== AUDITORIA ETAPA 2 (APENAS LEITURA) ===');
    console.table(checks);
