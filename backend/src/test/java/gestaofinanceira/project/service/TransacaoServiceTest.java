@@ -6,6 +6,13 @@ import gestaofinanceira.project.repository.CategoriaRepository;
 import gestaofinanceira.project.repository.TransacaoRepository;
 import gestaofinanceira.project.repository.UsuarioRepository;
 
+import gestaofinanceira.project.dto.TransacaoDTO;
+import gestaofinanceira.project.enums.Tipo;
+import gestaofinanceira.project.model.Usuario;
+import gestaofinanceira.project.model.Categoria;
+import java.time.LocalDate;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.any;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -107,4 +114,115 @@ public class TransacaoServiceTest {
         // confere a quantidade retornada
         assertEquals(2, resultado.size());
     }
+
+    @Test
+    void naoPermiteTransacaoSemData() {
+        TransacaoDTO dto = new TransacaoDTO();
+        dto.setDescricao("Teste");
+        dto.setValor(20.0);
+        dto.setTipo("RECEITA");
+        dto.setUsuarioId(1);
+        assertThrows(IllegalArgumentException.class, () -> transacaoService.adicionarDTO(dto));
+    }
+
+    @Test
+    void permiteReceitaSemCategoriaComCamposOpcionais() {
+        TransacaoDTO dto = new TransacaoDTO();
+        dto.setDescricao("Salario");
+        dto.setValor(200.0);
+        dto.setTipo("RECEITA");
+        dto.setUsuarioId(1);
+        dto.setDataTransacao(LocalDate.of(2026, 11, 8));
+        dto.setEstabelecimento("Empresa");
+        dto.setRecorrencia(true);
+
+        Usuario usuario = new Usuario();
+        usuario.setIdUsuario(1);
+        when(usuarioRepository.findById(1)).thenReturn(Optional.of(usuario));
+        when(transacaoRepository.save(any(Transacao.class))).thenAnswer(a -> a.getArgument(0));
+
+        Transacao salva = transacaoService.adicionarDTO(dto);
+        assertEquals(null, salva.getCategoria());
+        assertEquals("Empresa", salva.getEstabelecimento());
+        assertEquals(true, salva.getRecorrencia());
+    }
+
+    @Test
+    void exigeCategoriaParaDespesa() {
+        TransacaoDTO dto = new TransacaoDTO();
+        dto.setDescricao("Almoco");
+        dto.setValor(40.0);
+        dto.setTipo("DESPESA");
+        dto.setUsuarioId(1);
+        dto.setDataTransacao(LocalDate.of(2026, 11, 8));
+        Usuario usuario = new Usuario();
+        usuario.setIdUsuario(1);
+        when(usuarioRepository.findById(1)).thenReturn(Optional.of(usuario));
+        assertThrows(IllegalArgumentException.class, () -> transacaoService.adicionarDTO(dto));
+    }
+
+
+    @Test
+    void rejeitaValorZero() {
+        Transacao t = new Transacao();
+        t.setDescricao("Teste");
+        t.setValor(java.math.BigDecimal.ZERO);
+        t.setTipo(Tipo.RECEITA);
+        t.setDataTransacao(LocalDate.of(2026, 11, 8));
+        assertThrows(IllegalArgumentException.class, () -> transacaoService.adicionar(t));
+    }
+
+    @Test
+    void rejeitaValorNegativo() {
+        Transacao t = new Transacao();
+        t.setDescricao("Teste");
+        t.setValor(new java.math.BigDecimal("-1"));
+        t.setTipo(Tipo.RECEITA);
+        t.setDataTransacao(LocalDate.of(2026, 11, 8));
+        assertThrows(IllegalArgumentException.class, () -> transacaoService.adicionar(t));
+    }
+
+    @Test
+    void rejeitaDescricaoEmBranco() {
+        Transacao t = new Transacao();
+        t.setDescricao("   ");
+        t.setValor(new java.math.BigDecimal("5"));
+        t.setTipo(Tipo.RECEITA);
+        t.setDataTransacao(LocalDate.of(2026, 11, 8));
+        assertThrows(IllegalArgumentException.class, () -> transacaoService.adicionar(t));
+    }
+
+    @Test
+    void rejeitaDespesaSemCategoria() {
+        Transacao t = new Transacao();
+        t.setDescricao("Despesa");
+        t.setValor(new java.math.BigDecimal("5"));
+        t.setTipo(Tipo.DESPESA);
+        t.setDataTransacao(LocalDate.of(2026, 11, 8));
+        Usuario usuario = new Usuario();
+        usuario.setIdUsuario(1);
+        t.setUsuario(usuario);
+        assertThrows(IllegalArgumentException.class, () -> transacaoService.adicionar(t));
+    }
+
+    @Test
+    void naoEditaTransacaoDeOutroUsuario() {
+        Usuario proprietario = new Usuario();
+        proprietario.setIdUsuario(1);
+        Transacao existente = new Transacao();
+        existente.setUsuario(proprietario);
+        when(transacaoRepository.findById(9)).thenReturn(Optional.of(existente));
+        assertThrows(RuntimeException.class, () -> transacaoService.editar(9, 2, new Transacao()));
+    }
+
+    @Test
+    void naoExcluiTransacaoDeOutroUsuario() {
+        Usuario proprietario = new Usuario();
+        proprietario.setIdUsuario(1);
+        Transacao existente = new Transacao();
+        existente.setUsuario(proprietario);
+        when(transacaoRepository.findById(9)).thenReturn(Optional.of(existente));
+        assertThrows(RuntimeException.class, () -> transacaoService.remover(9, 2));
+    }
+
 }

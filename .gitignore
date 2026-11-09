@@ -1,18 +1,24 @@
-# Dependências Node.js
+
+# Arquivos gerados pelo Maven
+backend/classpath.txt
+**/target/
+backend/target/
+
+# Dependências e arquivos gerados pelo frontend
 node_modules/
 **/node_modules/
-
-# Compilações
-backend/target/
 **/dist/
 **/dist-ssr/
 **/build/
 
-# Arquivos locais e segredos
+# Configurações locais e segredos
+/backend/src/main/resources/application.properties
 .env
 .env.*
 !.env.example
 *.local
+
+# Arquivos de log
 *.log
 
 # IDEs e sistema operacional

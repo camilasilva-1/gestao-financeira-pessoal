@@ -36,8 +36,8 @@ public class InsightService {
 
         List<InsightDTO> insights = new ArrayList<>();
 
-        int mesAtual = LocalDate.now().getMonthValue();
-        int mesAnterior = LocalDate.now().minusMonths(1).getMonthValue();
+        LocalDate mesAtual = LocalDate.now();
+        LocalDate mesAnterior = mesAtual.minusMonths(1);
 
         List<Categoria> categorias = categoriaService.listarTodas();
         boolean gerouInsight = false;
@@ -61,14 +61,10 @@ public class InsightService {
                 BigDecimal variacao = gastoAtual
                         .subtract(gastoAnterior)
                         .divide(
-                                gastoAtual.add(gastoAnterior),
+                                gastoAnterior,
                                 2,
                                 RoundingMode.HALF_UP)
                         .multiply(BigDecimal.valueOf(100));
-
-                if (variacao.compareTo(BigDecimal.valueOf(100)) > 0) {
-                    variacao = BigDecimal.valueOf(100);
-                }
 
                 if (variacao.compareTo(BigDecimal.valueOf(30)) > 0) {
 
@@ -171,6 +167,20 @@ public class InsightService {
 
                 gerouAlerta = true;
 
+            } else if (percentual.compareTo(BigDecimal.valueOf(70)) > 0) {
+
+                alertas.add(new InsightDTO(
+                        "Orçamento em atenção",
+                        "Você já utilizou "
+                                + percentual.setScale(2, RoundingMode.HALF_UP)
+                                + "% do orçamento da categoria "
+                                + o.getCategoria().getNome(),
+                        LocalDate.now(),
+                        "Atenção"
+                ));
+
+                gerouAlerta = true;
+
             } else {
 
                 alertas.add(new InsightDTO(
@@ -179,7 +189,7 @@ public class InsightService {
                                 + o.getCategoria().getNome()
                                 + ".",
                         LocalDate.now(),
-                        "Informativo"
+                        "Normal"
                 ));
 
                 gerouAlerta = true;
@@ -249,8 +259,8 @@ public class InsightService {
 
         long riscos = alertas.stream()
                 .filter(a ->
-                        a.getTipo().equalsIgnoreCase("Risco")
-                                || a.getTipo().equalsIgnoreCase("Estourado"))
+                        a.getNivelAlerta().equalsIgnoreCase("Risco")
+                                || a.getNivelAlerta().equalsIgnoreCase("Estourado"))
                 .count();
 
         if (riscos == 0) {
@@ -401,27 +411,27 @@ public class InsightService {
 public InsightDTO gerarAlertaReservaInsuficiente(Integer usuarioId) {
 
         int mesAtual = LocalDate.now().getMonthValue();
-    
+
         BigDecimal despesa =
                 transacaoService.calcularDespesaMensal(usuarioId, mesAtual);
-    
+
         if (despesa == null) {
             despesa = BigDecimal.ZERO;
         }
-    
+
         BigDecimal reservaIdeal =
                 despesa.multiply(BigDecimal.valueOf(6));
-    
+
         BigDecimal valorGuardado =
                 transacaoService.calcularGastoPorCategoria(
                         usuarioId,
                         "Investimentos",
                         mesAtual);
-    
+
         if (valorGuardado == null) {
             valorGuardado = BigDecimal.ZERO;
         }
-    
+
         if (valorGuardado.compareTo(reservaIdeal) < 0) {
             return new InsightDTO(
                     "Reserva insuficiente",
@@ -431,7 +441,7 @@ public InsightDTO gerarAlertaReservaInsuficiente(Integer usuarioId) {
                     "Atenção"
             );
         }
-    
+
         return new InsightDTO(
                 "Reserva adequada",
                 "Sua reserva de emergência está dentro do valor recomendado.",
@@ -439,5 +449,5 @@ public InsightDTO gerarAlertaReservaInsuficiente(Integer usuarioId) {
                 "Informativo"
         );
     }
-    
+
 }

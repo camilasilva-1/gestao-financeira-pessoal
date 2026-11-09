@@ -59,6 +59,6 @@ public class InsightController {
     return service.gerarAlertaReservaInsuficiente(usuarioId);
 }
 
- 
+
 
 }

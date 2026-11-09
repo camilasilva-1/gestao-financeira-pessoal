@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import type { Transacao, Orcamento } from '../types';
+import { useState } from 'react';
+import type { Transacao, Orcamento, CategoriaAPI } from '../types';
 
 export interface Meta {
   id: string;
@@ -14,13 +14,14 @@ interface OrcamentosEMetasProps {
   orcamentos: Orcamento[];
   setOrcamentos: React.Dispatch<React.SetStateAction<Orcamento[]>>;
   categorias: string[];
+  categoriasAPI: CategoriaAPI[];
 }
 
 export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
-  transacoes,
   orcamentos,
   setOrcamentos,
   categorias,
+  categoriasAPI,
 }) => {
   // Estados para Metas
   const [metas, setMetas] = useState<Meta[]>([
@@ -101,51 +102,160 @@ export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
   };
 
   // Definir ou atualizar Limite de Orçamento
-  const handleDefinirOrcamento = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!categoriaSel || !limiteOrcamento) return;
+  
+const handleDefinirOrcamento = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
 
-    const limiteNum = parseFloat(limiteOrcamento);
-    const orcamentoExistente = orcamentos.find((o) => o.categoria === categoriaSel);
+  if (!categoriaSel || !limiteOrcamento) return;
 
+  const limiteNum = Number(limiteOrcamento);
+
+  if (!Number.isFinite(limiteNum) || limiteNum <= 0) {
+    alert('Informe um limite válido maior que zero.');
+    return;
+  }
+
+  // Encontrar a categoria e seu ID no backend
+  const categoriaAPI = categoriasAPI.find(
+    (cat) => cat.nome === categoriaSel
+  );
+
+  if (!categoriaAPI) {
+    alert('Categoria não encontrada na API.');
+    return;
+  }
+
+  // Verificar se já existe orçamento para essa categoria
+  const orcamentoExistente = orcamentos.find(
+    (o) => o.categoria === categoriaSel
+  );
+
+  // Dados enviados ao Spring Boot
+  const usuarioId = localStorage.getItem('usuarioId');
+
+if (!usuarioId) {
+  alert('Usuário não identificado. Faça login novamente.');
+  return;
+}
+
+const dadosOrcamento = {
+  limiteValor: limiteNum,
+  usuario: {
+    idUsuario: Number(usuarioId),
+  },
+  categoria: {
+    idCategoria: categoriaAPI.idCategoria,
+  },
+};
+  try {
+    const resposta = await fetch(
+      orcamentoExistente
+        ? `http://localhost:8080/orcamentos/${orcamentoExistente.id}`
+        : 'http://localhost:8080/orcamentos',
+      {
+        method: orcamentoExistente ? 'PUT' : 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify(dadosOrcamento),
+      }
+    );
+
+    if (!resposta.ok) {
+      const detalhe = await resposta.text();
+      throw new Error(detalhe || 'Erro ao salvar orçamento');
+    }
+
+    const salvo = await resposta.json();
+
+    // Buscar o gasto atualizado no backend
+    const respostaGasto = await fetch(
+      `http://localhost:8080/orcamentos/${salvo.idOrcamento}/gasto`,
+      { credentials: 'include' }
+    );
+
+    const gasto = respostaGasto.ok
+      ? Number(await respostaGasto.json())
+      : 0;
+
+    const orcamentoFormatado: Orcamento = {
+      id: String(salvo.idOrcamento),
+      categoria: salvo.categoria.nome,
+      limite: Number(salvo.limiteValor),
+      gasto,
+    };
+
+    // Atualizar a tela com o resultado salvo no banco
     if (orcamentoExistente) {
-      setOrcamentos(
-        orcamentos.map((o) =>
-          o.categoria === categoriaSel ? { ...o, limite: limiteNum } : o
+      setOrcamentos((atuais) =>
+        atuais.map((o) =>
+          o.id === orcamentoFormatado.id
+            ? orcamentoFormatado
+            : o
         )
       );
     } else {
-      setOrcamentos([
-        ...orcamentos,
-        { id: Date.now().toString(), categoria: categoriaSel, limite: limiteNum, gasto: 0 },
+      setOrcamentos((atuais) => [
+        ...atuais,
+        orcamentoFormatado,
       ]);
     }
 
     setLimiteOrcamento('');
-  };
+    alert('Orçamento salvo com sucesso!');
+  } catch (erro) {
+    console.error('Erro ao salvar orçamento:', erro);
+    alert('Não foi possível salvar o orçamento. Confira o console e o backend.');
+  }
+};
+  
+const handleRemoverOrcamento = async (id: string) => {
+  const confirmar = window.confirm(
+    'Deseja realmente remover este orçamento?'
+  );
 
-  const handleRemoverOrcamento = (id: string) => {
-    setOrcamentos(orcamentos.filter((o) => o.id !== id));
-  };
+  if (!confirmar) return;
 
-  // Calcular gastos por categoria
-  const calcularGasto = (categoria: string) => {
-    return transacoes
-      .filter((t) => t.tipo === 'DESPESA' && t.categoria === categoria)
-      .reduce((acc, t) => acc + t.valor, 0);
-  };
+  try {
+    const resposta = await fetch(
+      `http://localhost:8080/orcamentos/${id}`,
+      {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      }
+    );
 
+    if (!resposta.ok) {
+      throw new Error('Erro ao remover orçamento');
+    }
+
+    setOrcamentos((atuais) =>
+      atuais.filter((orcamento) => orcamento.id !== id)
+    );
+  } catch (erro) {
+    console.error('Erro ao remover orçamento:', erro);
+    alert('Não foi possível remover o orçamento.');
+  }
+};
+
+
+  // Gasto mensal calculado pelo backend, vinculado ao usuário e à categoria.
+  // Não somar todo o histórico de transações: o Takeoff define orçamento mensal.
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* SEÇÃO 1: ORÇAMENTOS POR CATEGORIA */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
         <h2 className="text-lg font-bold text-slate-800">Orçamentos por Categoria</h2>
 
-        <form onSubmit={handleDefinirOrcamento} className="flex gap-2">
+        <form onSubmit={handleDefinirOrcamento} className="flex flex-col sm:flex-row gap-2">
           <select
             value={categoriaSel}
             onChange={(e) => setCategoriaSel(e.target.value)}
-            className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
+            className="w-full sm:flex-1 min-w-0 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
           >
             <option value="">Selecione uma categoria...</option>
             {categorias.map((cat) => (
@@ -160,7 +270,7 @@ export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
             placeholder="Limite R$"
             value={limiteOrcamento}
             onChange={(e) => setLimiteOrcamento(e.target.value)}
-            className="w-28 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
+            className="w-full sm:w-28 min-w-0 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
           />
           <button
             type="submit"
@@ -172,22 +282,28 @@ export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
 
         <div className="space-y-3 pt-2">
           {orcamentos.map((orc) => {
-            const gastoAtual = calcularGasto(orc.categoria);
-            const porc = Math.min(100, Math.round((gastoAtual / orc.limite) * 100));
+            const gastoAtual = orc.gasto;
+            const percentual = orc.limite > 0 ? (gastoAtual / orc.limite) * 100 : 0;
+            const porc = Math.round(percentual);
+            const larguraBarra = Math.min(100, Math.max(0, percentual));
             const resta = orc.limite - gastoAtual;
 
             let statusColor = 'bg-emerald-100 text-emerald-700';
             let barColor = 'bg-emerald-500';
             let statusText = 'Normal';
 
-            if (porc >= 80 && porc < 100) {
+            if (percentual > 100) {
+              statusColor = 'bg-red-100 text-red-700';
+              barColor = 'bg-red-600';
+              statusText = 'Estourado';
+            } else if (percentual >= 90) {
+              statusColor = 'bg-orange-100 text-orange-700';
+              barColor = 'bg-orange-500';
+              statusText = 'Risco';
+            } else if (percentual > 70) {
               statusColor = 'bg-amber-100 text-amber-700';
               barColor = 'bg-amber-500';
               statusText = 'Atenção';
-            } else if (porc >= 100) {
-              statusColor = 'bg-red-100 text-red-700';
-              barColor = 'bg-red-600';
-              statusText = 'Excedido';
             }
 
             return (
@@ -208,7 +324,7 @@ export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
                 </div>
 
                 <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                  <div className={`${barColor} h-2 rounded-full transition-all`} style={{ width: `${porc}%` }} />
+                  <div className={`${barColor} h-2 rounded-full transition-all`} style={{ width: `${larguraBarra}%` }} />
                 </div>
 
                 <div className="flex justify-between text-xs text-slate-500">
@@ -233,7 +349,7 @@ export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
             onChange={(e) => setNomeMeta(e.target.value)}
             className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
           />
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <input
               type="number"
               step="0.01"
@@ -251,12 +367,12 @@ export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
               className="rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="date"
               value={dataLimiteMeta}
               onChange={(e) => setDataLimiteMeta(e.target.value)}
-              className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
+              className="w-full sm:flex-1 min-w-0 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
             />
             <button
               type="submit"
