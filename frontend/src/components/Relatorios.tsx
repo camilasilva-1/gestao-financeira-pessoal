@@ -1,11 +1,52 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import type { Transacao } from '../types';
+
+interface Regra503020 {
+  rendaTotal: number;
+  idealNecessidades: number;
+  idealDesejos: number;
+  idealPoupanca: number;
+}
 
 interface RelatoriosProps {
   transacoes: Transacao[];
 }
 
 export const Relatorios: React.FC<RelatoriosProps> = ({ transacoes }) => {
+  const [regra, setRegra] = useState<Regra503020 | null>(null);
+  const [erroRegra, setErroRegra] = useState(false);
+
+  useEffect(() => {
+    const id = localStorage.getItem('usuarioId');
+    if (!id) return;
+    const controller = new AbortController();
+    fetch(`http://localhost:8080/api/relatorios/regra-50-30-20/${id}`, {
+      credentials: 'include',
+      signal: controller.signal
+    })
+      .then(async r => {
+        if (!r.ok) throw new Error('Não foi possível consultar a regra');
+        return r.json();
+      })
+      .then(d => {
+        setRegra({
+          rendaTotal: Number(d.rendaTotal),
+          idealNecessidades: Number(d.idealNecessidades),
+          idealDesejos: Number(d.idealDesejos),
+          idealPoupanca: Number(d.idealPoupanca)
+        });
+        setErroRegra(false);
+      })
+      .catch(e => {
+        if (e.name !== 'AbortError') setErroRegra(true);
+      });
+    return () => controller.abort();
+  }, [transacoes]);
+
+  const moeda = (valor: number) => valor.toLocaleString('pt-BR', {
+    style: 'currency', currency: 'BRL'
+  });
+
   const agora = new Date();
   const mesAtual = agora.getMonth();
   const anoAtual = agora.getFullYear();
@@ -105,6 +146,37 @@ const despesasPorCategoria: { [cat: string]: number } = {};
           </div>
         </div>
       </div>
+
+      {/* Regra 50/30/20 — seção 3.7 do Takeoff, dados da API */}
+      <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3" aria-label="Planejamento pela regra 50/30/20">
+        <h2 className="text-lg font-bold text-slate-800">Planejamento 50/30/20</h2>
+        {regra ? (
+          <>
+            <p className="text-sm text-slate-600">
+              Base: receitas registradas neste mês — <strong>{moeda(regra.rendaTotal)}</strong>.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {([
+                ['50% Necessidades', regra.idealNecessidades],
+                ['30% Desejos', regra.idealDesejos],
+                ['20% Reserva e investimentos', regra.idealPoupanca]
+              ] as const).map(([titulo, valor]) => (
+                <div key={titulo} className="rounded-xl bg-slate-50 p-4 border border-slate-200">
+                  <p className="text-xs font-semibold text-slate-500">{titulo}</p>
+                  <p className="text-lg font-bold text-slate-800">{moeda(valor)}</p>
+                </div>
+              ))}
+            </div>
+            {regra.rendaTotal === 0 && (
+              <p className="text-xs text-slate-500">Registre receitas no mês para calcular os valores sugeridos.</p>
+            )}
+          </>
+        ) : (
+          <p className="text-sm text-slate-500">{erroRegra
+            ? 'Não foi possível consultar o planejamento. Verifique a conexão com o backend.'
+            : 'Carregando planejamento...'}</p>
+        )}
+      </section>
 
       {/* #14 & #15 - Relatório Mensal e Ranking de Categorias */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
