@@ -26,9 +26,12 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(400, e.getMessage());
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse tratarRuntimeException(RuntimeException e) {
-        return new ErrorResponse(500, "Erro interno ao processar solicitação");
-    }
+  @ExceptionHandler(RuntimeException.class)
+@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+public ErrorResponse tratarRuntimeException(RuntimeException e) {
+    return new ErrorResponse(
+        500,
+        "Erro interno ao processar solicitação"
+    );
+}
 }

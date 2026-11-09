@@ -59,6 +59,9 @@ public class InsightController {
     return service.gerarAlertaReservaInsuficiente(usuarioId);
 }
 
-
+@GetMapping("/{usuarioId}/queda-renda")
+public InsightDTO detectarQuedaRenda(@PathVariable Integer usuarioId) {
+    return service.detectarQuedaRenda(usuarioId);
+}
 
 }

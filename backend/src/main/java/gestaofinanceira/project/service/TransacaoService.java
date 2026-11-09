@@ -195,7 +195,16 @@ public class TransacaoService {
         return transacaoRepository.somaReceitasPorPeriodo(
                 usuarioId.longValue(), inicio, fim);
     }
+    public BigDecimal calcularReceitaPorPeriodo(
+        Integer usuarioId,
+        LocalDate inicio,
+        LocalDate fim) {
 
+    return transacaoRepository.somaReceitasPorPeriodo(
+            usuarioId.longValue(),
+            inicio,
+            fim);
+}
     public BigDecimal calcularDespesaMensal(Integer usuarioId, int mes) {
         LocalDate inicio = LocalDate.of(LocalDate.now().getYear(), mes, 1);
         LocalDate fim = inicio.withDayOfMonth(inicio.lengthOfMonth());

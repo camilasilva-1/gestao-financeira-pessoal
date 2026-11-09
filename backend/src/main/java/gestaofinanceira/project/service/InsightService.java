@@ -122,6 +122,80 @@ public class InsightService {
         return insights;
     }
 
+        // ============================
+    // DETECÇÃO DE QUEDA DE RENDA
+    // ============================
+    public InsightDTO detectarQuedaRenda(Integer usuarioId) {
+
+        // Identifica o último mês completo
+        LocalDate fimUltimoMes = LocalDate.now()
+                .withDayOfMonth(1)
+                .minusDays(1);
+
+        LocalDate inicioUltimoMes = fimUltimoMes
+                .withDayOfMonth(1);
+
+        // Identifica os três meses completos anteriores
+        LocalDate fimTresMeses = inicioUltimoMes.minusDays(1);
+
+        LocalDate inicioTresMeses = fimTresMeses
+                .minusMonths(2)
+                .withDayOfMonth(1);
+
+        // Consulta as receitas dos períodos
+        BigDecimal receitaUltimoMes =
+                transacaoService.calcularReceitaPorPeriodo(
+                        usuarioId,
+                        inicioUltimoMes,
+                        fimUltimoMes);
+
+        BigDecimal totalTresMeses =
+                transacaoService.calcularReceitaPorPeriodo(
+                        usuarioId,
+                        inicioTresMeses,
+                        fimTresMeses);
+
+        // Calcula a média de receita dos três meses
+        BigDecimal mediaTresMeses = totalTresMeses
+                .divide(BigDecimal.valueOf(3), 2, RoundingMode.HALF_UP);
+
+        // Verifica se existem dados suficientes
+        if (mediaTresMeses.compareTo(BigDecimal.ZERO) <= 0) {
+            return new InsightDTO(
+                    "Sem dados suficientes",
+                    "Não há receitas registradas nos três meses anteriores para comparar.",
+                    LocalDate.now(),
+                    "Informativo"
+            );
+        }
+
+        // Calcula o percentual de queda da receita
+        BigDecimal percentualQueda = mediaTresMeses
+                .subtract(receitaUltimoMes)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(mediaTresMeses, 2, RoundingMode.HALF_UP);
+
+        // Identifica queda igual ou superior a 20%
+        if (percentualQueda.compareTo(BigDecimal.valueOf(20)) >= 0) {
+
+            return new InsightDTO(
+                    "Queda de renda",
+                    "Sua receita registrada caiu "
+                            + percentualQueda
+                            + "% em relação à média dos três meses anteriores.",
+                    LocalDate.now(),
+                    "Atenção"
+            );
+        }
+
+        return new InsightDTO(
+                "Renda estável",
+                "Não foi identificada queda de receita igual ou superior a 20%.",
+                LocalDate.now(),
+                "Informativo"
+        );
+    }
+
     // ============================
     // GERAÇÃO DE ALERTAS
     // ============================
