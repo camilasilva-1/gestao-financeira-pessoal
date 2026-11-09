@@ -89,6 +89,45 @@ const fim = yyyy+'-'+mm+'-'+String(new Date(yyyy,mes.getMonth()+1,0).getDate()).
      add('Orcamento '+oid+': alerta',!!alerta && alerta.nivelAlerta===nivel,
        'Recebido: '+(alerta?.nivelAlerta||'sem alerta')+'; esperado: '+nivel);
    }
+   // RN009: verifica o endpoint e a secao da interface, SEM clicar em Salvar.
+   const historicoRelatorios = await get('/api/relatorios/historico?usuarioId='+id);
+   add('RN009: consulta historico mensal', historicoRelatorios.status===200
+      && Array.isArray(historicoRelatorios.dados),'HTTP '+historicoRelatorios.status);
+   add('RN009: historico na interface',
+      await page.getByRole('heading',{name:'Histórico de Relatórios Mensais'}).count()>0
+      && await page.getByRole('button',{name:'Salvar relatório deste mês'}).count()>0);
+   add('50/30/20: recomendacao visivel',
+      await page.getByRole('heading',{name:'Planejamento 50/30/20'}).count()>0
+      && await page.getByText('50% Necessidades').count()>0
+      && await page.getByText('30% Desejos').count()>0
+      && await page.getByText('20% Reserva e investimentos').count()>0);
+
+   // Faixas visuais simuladas: o navegador recebe mock GET, sem escrever no MySQL.
+   const casos=[
+     {id:90001,nome:'QA 70%',gasto:700,esperado:'Normal (70%)'},
+     {id:90002,nome:'QA 71%',gasto:710,esperado:'Atenção (71%)'},
+     {id:90003,nome:'QA 90%',gasto:900,esperado:'Risco (90%)'},
+     {id:90004,nome:'QA 101%',gasto:1010,esperado:'Estourado (101%)'}
+   ];
+   await page.route('**/orcamentos/usuario/*',route => route.fulfill({
+     status:200,contentType:'application/json',
+     body:JSON.stringify(casos.map(c=>({
+       idOrcamento:c.id,limiteValor:1000,categoria:{idCategoria:c.id,nome:c.nome}
+     })))
+   }));
+   await page.route(/\/orcamentos\/9000[1-4]\/gasto$/,route=>{
+     const oid=Number(route.request().url().match(/\/orcamentos\/(\d+)\/gasto$/)?.[1]);
+     const item=casos.find(c=>c.id===oid);
+     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(item?.gasto??0)});
+   });
+   await page.reload({waitUntil:'domcontentloaded'});
+   await page.getByText('QA 101%',{exact:true}).waitFor({timeout:15000});
+   for(const caso of casos){
+     const texto=await page.getByText(caso.nome,{exact:true}).locator('..').innerText();
+     add('Alerta visual '+caso.nome,texto.includes(caso.esperado),
+       'Esperado '+caso.esperado+'; exibido '+texto.replace(/\s+/g,' ').slice(0,95));
+   }
+   console.log('Faixas visuais simuladas sem alterar o banco.');
    console.log('\n=== AUDITORIA ETAPA 2 (APENAS LEITURA) ===');
    console.table(checks);
    const falhas=checks.filter(x=>x.status==='FALHOU');
