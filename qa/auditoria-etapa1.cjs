@@ -36,7 +36,7 @@ function percentil95(valores) {
     await page.waitForFunction(() =>
       !!localStorage.getItem('usuarioId') &&
       document.body.innerText.includes('Histórico de Transações'),
-      { timeout: 180000 }
+      undefined, { timeout: 180000 }
     );
 
     // Exige que a API esteja acessivel com a sessao real do login.
