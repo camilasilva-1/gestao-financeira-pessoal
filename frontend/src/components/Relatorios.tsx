@@ -8,6 +8,16 @@ interface Regra503020 {
   idealPoupanca: number;
 }
 
+interface RelatorioSalvo {
+  idHistorico: number;
+  inicio: string;
+  fim: string;
+  geradoEm: string;
+  receitaTotal: number;
+  despesaTotal: number;
+  saldoFinal: number;
+}
+
 interface RelatoriosProps {
   transacoes: Transacao[];
 }
@@ -15,6 +25,48 @@ interface RelatoriosProps {
 export const Relatorios: React.FC<RelatoriosProps> = ({ transacoes }) => {
   const [regra, setRegra] = useState<Regra503020 | null>(null);
   const [erroRegra, setErroRegra] = useState(false);
+  const [historicoRelatorios, setHistoricoRelatorios] = useState<RelatorioSalvo[]>([]);
+  const [salvandoRelatorio, setSalvandoRelatorio] = useState(false);
+  const [mensagemRelatorio, setMensagemRelatorio] = useState('');
+
+  const buscarHistorico = async () => {
+    const id = localStorage.getItem('usuarioId');
+    if (!id) return;
+    const resposta = await fetch(`http://localhost:8080/api/relatorios/historico?usuarioId=${id}`, {
+      credentials: 'include'
+    });
+    if (!resposta.ok) throw new Error('Falha na consulta ao histórico');
+    setHistoricoRelatorios(await resposta.json());
+  };
+
+  useEffect(() => {
+    buscarHistorico().catch(() => setMensagemRelatorio('Histórico indisponível no momento.'));
+  }, []);
+
+  const salvarRelatorioDoMes = async () => {
+    const id = localStorage.getItem('usuarioId');
+    if (!id || salvandoRelatorio) return;
+    const hoje = new Date();
+    const inicio = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-01`;
+    const fim = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(new Date(hoje.getFullYear(), hoje.getMonth()+1, 0).getDate()).padStart(2,'0')}`;
+    setSalvandoRelatorio(true);
+    setMensagemRelatorio('');
+    try {
+      const params = new URLSearchParams({ usuarioId: id, inicio, fim });
+      const resposta = await fetch(`http://localhost:8080/api/relatorios/mensal/arquivar?${params}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      if (!resposta.ok) throw new Error('Falha ao salvar relatório');
+      await buscarHistorico();
+      setMensagemRelatorio('Relatório mensal salvo no histórico.');
+    } catch {
+      setMensagemRelatorio('Não foi possível salvar o relatório mensal.');
+    } finally {
+      setSalvandoRelatorio(false);
+    }
+  };
 
   useEffect(() => {
     const id = localStorage.getItem('usuarioId');
@@ -175,6 +227,36 @@ const despesasPorCategoria: { [cat: string]: number } = {};
           <p className="text-sm text-slate-500">{erroRegra
             ? 'Não foi possível consultar o planejamento. Verifique a conexão com o backend.'
             : 'Carregando planejamento...'}</p>
+        )}
+      </section>
+
+      {/* RN009: histórico salvo somente sob comando da pessoa usuária. */}
+      <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3" aria-label="Histórico de relatórios mensais">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h2 className="text-lg font-bold text-slate-800">Histórico de Relatórios Mensais</h2>
+          <button type="button" disabled={salvandoRelatorio} onClick={salvarRelatorioDoMes}
+            className="bg-slate-900 text-white text-xs font-bold rounded-xl px-4 py-2 disabled:opacity-50">
+            {salvandoRelatorio ? 'Salvando...' : 'Salvar relatório deste mês'}
+          </button>
+        </div>
+        <p className="text-xs text-slate-500">O relatório é registrado somente quando você seleciona Salvar.</p>
+        {mensagemRelatorio && <p className="text-sm text-slate-600" role="status">{mensagemRelatorio}</p>}
+        {historicoRelatorios.length === 0 ? (
+          <p className="text-sm text-slate-500">Nenhum relatório mensal salvo.</p>
+        ) : (
+          <div className="space-y-2">
+            {historicoRelatorios.map(item => (
+              <div key={item.idHistorico} className="bg-slate-50 rounded-xl border border-slate-200 p-3 text-sm">
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <strong className="text-slate-700">{item.inicio.slice(0,7)} — gerado em {new Date(item.geradoEm).toLocaleString('pt-BR')}</strong>
+                  <span className="text-slate-600">Saldo: {moeda(Number(item.saldoFinal))}</span>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Receitas: {moeda(Number(item.receitaTotal))} · Despesas: {moeda(Number(item.despesaTotal))}
+                </p>
+              </div>
+            ))}
+          </div>
         )}
       </section>
 
