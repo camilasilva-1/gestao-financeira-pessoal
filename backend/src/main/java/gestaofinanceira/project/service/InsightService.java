@@ -196,6 +196,36 @@ public class InsightService {
         );
     }
 
+    private BigDecimal calcularMediaDespesas(Integer usuarioId) {
+
+    LocalDate fim = LocalDate.now()
+            .withDayOfMonth(1)
+            .minusDays(1);
+
+    LocalDate inicio = fim
+            .withDayOfMonth(1)
+            .minusMonths(5);
+
+    BigDecimal totalDespesas =
+            transacaoService.calcularDespesaPorPeriodo(
+                    usuarioId,
+                    inicio,
+                    fim);
+
+    return totalDespesas.divide(
+            BigDecimal.valueOf(6),
+            2,
+            RoundingMode.HALF_UP);
+}
+
+    private BigDecimal calcularReservaIdeal(Integer usuarioId) {
+
+    BigDecimal mediaDespesas = calcularMediaDespesas(usuarioId);
+
+    return mediaDespesas.multiply(BigDecimal.valueOf(6))
+            .setScale(2, RoundingMode.HALF_UP);
+}
+
     // ============================
     // GERAÇÃO DE ALERTAS
     // ============================
@@ -468,46 +498,26 @@ public class InsightService {
     // ============================
 // ALERTA DE RESERVA INSUFICIENTE
 // ============================
+
 public InsightDTO gerarAlertaReservaInsuficiente(Integer usuarioId) {
 
-        int mesAtual = LocalDate.now().getMonthValue();
+    BigDecimal reservaIdeal = calcularReservaIdeal(usuarioId);
 
-        BigDecimal despesa =
-                transacaoService.calcularDespesaMensal(usuarioId, mesAtual);
-
-        if (despesa == null) {
-            despesa = BigDecimal.ZERO;
-        }
-
-        BigDecimal reservaIdeal =
-                despesa.multiply(BigDecimal.valueOf(6));
-
-        BigDecimal valorGuardado =
-                transacaoService.calcularGastoPorCategoria(
-                        usuarioId,
-                        "Investimentos",
-                        mesAtual);
-
-        if (valorGuardado == null) {
-            valorGuardado = BigDecimal.ZERO;
-        }
-
-        if (valorGuardado.compareTo(reservaIdeal) < 0) {
-            return new InsightDTO(
-                    "Reserva insuficiente",
-                    "Sua reserva está abaixo do recomendado. O ideal é possuir pelo menos R$ "
-                            + reservaIdeal.setScale(2, RoundingMode.HALF_UP),
-                    LocalDate.now(),
-                    "Atenção"
-            );
-        }
-
+    if (reservaIdeal.compareTo(BigDecimal.ZERO) <= 0) {
         return new InsightDTO(
-                "Reserva adequada",
-                "Sua reserva de emergência está dentro do valor recomendado.",
+                "Dados insuficientes",
+                "Não há despesas registradas nos últimos seis meses para calcular sua reserva de emergência.",
                 LocalDate.now(),
                 "Informativo"
         );
     }
 
+    return new InsightDTO(
+            "Reserva de emergência",
+            "Com base na média das suas despesas dos últimos seis meses, sua reserva de emergência recomendada é de R$ "
+                    + reservaIdeal + ".",
+            LocalDate.now(),
+            "Informativo"
+    );
+}
 }

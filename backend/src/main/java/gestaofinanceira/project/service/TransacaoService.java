@@ -213,6 +213,16 @@ public class TransacaoService {
                 usuarioId.longValue(), inicio, fim);
     }
 
+    public BigDecimal calcularDespesaPorPeriodo(
+        Integer usuarioId,
+        LocalDate inicio,
+        LocalDate fim) {
+
+    return transacaoRepository.somaDespesasPorPeriodo(
+            usuarioId.longValue(),
+            inicio,
+            fim);
+}
     // Ranking de categorias
 
     public List<RankingCategoriaDTO> gerarRankingCategorias(Integer usuarioId, int mes) {

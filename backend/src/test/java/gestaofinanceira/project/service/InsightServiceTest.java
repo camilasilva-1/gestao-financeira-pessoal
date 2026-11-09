@@ -72,4 +72,43 @@ class InsightServiceTest {
         List<InsightDTO> insights = service.gerarInsights(1);
         assertTrue(insights.stream().anyMatch(i -> i.getMensagem().contains("100.00%")));
     }
+
+    @Test
+void reservaDeEmergenciaDeveSerCalculadaComBaseNasDespesas() {
+    LocalDate fim = LocalDate.now()
+            .withDayOfMonth(1)
+            .minusDays(1);
+
+    LocalDate inicio = fim
+            .withDayOfMonth(1)
+            .minusMonths(5);
+
+    when(transacaoService.calcularDespesaPorPeriodo(
+            1, inicio, fim))
+            .thenReturn(new BigDecimal("7200.00"));
+
+    InsightDTO resultado = service.gerarAlertaReservaInsuficiente(1);
+
+    assertTrue(resultado.getMensagem().contains("7200.00"));
+}
+
+@Test
+void reservaDeEmergenciaDeveInformarQuandoNaoExistiremDespesas() {
+    LocalDate fim = LocalDate.now()
+            .withDayOfMonth(1)
+            .minusDays(1);
+
+    LocalDate inicio = fim
+            .withDayOfMonth(1)
+            .minusMonths(5);
+
+    when(transacaoService.calcularDespesaPorPeriodo(
+            1, inicio, fim))
+            .thenReturn(BigDecimal.ZERO);
+
+    InsightDTO resultado = service.gerarAlertaReservaInsuficiente(1);
+
+    assertTrue(resultado.getMensagem().contains("Não há despesas registradas"));
+}
+
 }
