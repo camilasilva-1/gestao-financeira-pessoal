@@ -114,6 +114,11 @@ public class SessionOwnershipFilter extends OncePerRequestFilter {
             authorized = "GET".equals(method) && hasOwnId(m.group(1), userId);
         } else if ((m = match(path, "^/api/relatorios/regra-50-30-20/(\\d+)$")).matches()) {
             authorized = "GET".equals(method) && hasOwnId(m.group(1), userId);
+        } else if (path.matches("^/api/relatorios/(historico|mensal/arquivar)$")) {
+            authorized = ("GET".equals(method) && "/api/relatorios/historico".equals(path)
+                      || "POST".equals(method) && "/api/relatorios/mensal/arquivar".equals(path))
+                && req.getParameter("usuarioId") != null
+                && hasOwnId(req.getParameter("usuarioId"), userId);
         } else if (path.matches("^/api/relatorios/(mensal|distribuicao|evolucao|ranking)$")) {
             authorized = "GET".equals(method)
                 && req.getParameter("usuarioId") != null
