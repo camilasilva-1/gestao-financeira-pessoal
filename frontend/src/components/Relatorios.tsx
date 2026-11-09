@@ -205,7 +205,7 @@ const despesasPorCategoria: { [cat: string]: number } = {};
         {regra ? (
           <>
             <p className="text-sm text-slate-600">
-              Base: receitas registradas neste mês — <strong>{moeda(regra.rendaTotal)}</strong>.
+              Base: receitas registradas no mês (ou salário líquido, quando não há receitas lançadas) — <strong>{moeda(regra.rendaTotal)}</strong>.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {([
