@@ -167,6 +167,20 @@ public class InsightService {
 
                 gerouAlerta = true;
 
+            } else if (percentual.compareTo(BigDecimal.valueOf(70)) > 0) {
+
+                alertas.add(new InsightDTO(
+                        "Orçamento em atenção",
+                        "Você já utilizou "
+                                + percentual.setScale(2, RoundingMode.HALF_UP)
+                                + "% do orçamento da categoria "
+                                + o.getCategoria().getNome(),
+                        LocalDate.now(),
+                        "Atenção"
+                ));
+
+                gerouAlerta = true;
+
             } else {
 
                 alertas.add(new InsightDTO(
@@ -175,7 +189,7 @@ public class InsightService {
                                 + o.getCategoria().getNome()
                                 + ".",
                         LocalDate.now(),
-                        "Informativo"
+                        "Normal"
                 ));
 
                 gerouAlerta = true;
