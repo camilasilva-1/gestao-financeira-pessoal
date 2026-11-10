@@ -50,13 +50,6 @@ O repositório contém componentes de login, cadastro, recuperação de senha, d
 
 **Importante:** os dados iniciais do frontend incluem exemplos definidos no código. A comunicação efetiva com a API, a autenticação, a persistência e os testes precisam ser verificados antes de declarar o sistema concluído.
 
-## Próximas verificações
-
-- Conferir segurança de credenciais e autenticação.
-- Testar os endpoints e regras de negócio do backend.
-- Verificar a integração real entre frontend e backend.
-- Executar testes, lint e build.
-- Revisar funcionalidades, documentação e branches.
 
 ## Aviso
 
