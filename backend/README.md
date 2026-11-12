@@ -39,4 +39,4 @@ Os testes de serviço utilizam mocks, e o teste de integração do histórico ut
 
 As regras validadas das Etapas 1 e 2 incluem: receitas sem categoria, despesas com categoria, orçamento mensal isolado por usuário, alertas por faixas, cálculo 50/30/20 e persistência explícita de relatórios mensais.
 
-Veja `../docs/roteiro-homologacao-frontend-etapas1e2.md` e `../README.md`. Instalação em outra máquina e integração à `main` ainda dependem de validação da equipe.
+Veja `../README.md` e `../database/README.md`. A instalação em outra máquina ainda precisa ser validada pela equipe.
