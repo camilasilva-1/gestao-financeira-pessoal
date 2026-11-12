@@ -29,6 +29,6 @@ npm run build
 npm run lint
 ```
 
-O roteiro manual de homologação está em `../docs/roteiro-homologacao-frontend-etapas1e2.md`. Para instalação completa, consulte o `../README.md` e `../database/README.md`.
+Para instalação completa, consulte o `../README.md` e `../database/README.md`.
 
 A hospedagem e o acesso por outro dispositivo ainda precisam de configuração de URLs e CORS; não fazem parte desta execução local.
