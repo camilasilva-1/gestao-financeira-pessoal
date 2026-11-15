@@ -5,6 +5,8 @@ import gestaofinanceira.project.dto.InsightDTO;
 import gestaofinanceira.project.dto.ScoreFinanceiroDTO;
 import gestaofinanceira.project.model.Orcamento;
 import gestaofinanceira.project.model.Categoria;
+import gestaofinanceira.project.model.MetaFinanceira;
+import gestaofinanceira.project.repository.MetaFinanceiraRepository;
 
 import org.springframework.stereotype.Service;
 
@@ -13,6 +15,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class InsightService {
@@ -20,15 +23,18 @@ public class InsightService {
     private final TransacaoService transacaoService;
     private final OrcamentoService orcamentoService;
     private final CategoriaService categoriaService;
+    private final MetaFinanceiraRepository metaFinanceiraRepository;
 
     public InsightService(
             TransacaoService transacaoService,
             OrcamentoService orcamentoService,
-            CategoriaService categoriaService) {
+            CategoriaService categoriaService,
+            MetaFinanceiraRepository metaFinanceiraRepository) {
 
         this.transacaoService = transacaoService;
         this.orcamentoService = orcamentoService;
         this.categoriaService = categoriaService;
+        this.metaFinanceiraRepository = metaFinanceiraRepository;
     }
 
     // ============================================
@@ -485,18 +491,39 @@ public class InsightService {
             despesa = BigDecimal.ZERO;
         }
 
-        BigDecimal reservaIdeal =
-                despesa.multiply(BigDecimal.valueOf(6));
-
-        BigDecimal valorGuardado =
-                transacaoService.calcularGastoPorCategoria(
-                        usuarioId,
-                        "Investimentos",
-                        mesAtual);
-
-        if (valorGuardado == null) {
-            valorGuardado = BigDecimal.ZERO;
+        // Sem despesas, não há base para calcular a reserva recomendada.
+        if (despesa.compareTo(BigDecimal.ZERO) <= 0) {
+            return new InsightDTO(
+                    "Dados insuficientes",
+                    "Cadastre despesas para calcular sua reserva de emergência ideal.",
+                    LocalDate.now(),
+                    "Informativo"
+            );
         }
+
+        BigDecimal reservaIdeal = despesa.multiply(BigDecimal.valueOf(6));
+
+        // Dinheiro guardado não é a mesma coisa que despesa em Investimentos.
+        // Usar somente uma meta identificada pelo usuário como reserva.
+        List<MetaFinanceira> reservas = metaFinanceiraRepository
+                .findByUsuario_IdUsuario(usuarioId).stream()
+                .filter(meta -> meta.getNome() != null
+                        && meta.getNome().toLowerCase(Locale.ROOT).contains("reserva"))
+                .toList();
+
+        if (reservas.isEmpty()) {
+            return new InsightDTO(
+                    "Dados insuficientes",
+                    "Cadastre uma meta de reserva de emergência para acompanhar o valor guardado.",
+                    LocalDate.now(),
+                    "Informativo"
+            );
+        }
+
+        BigDecimal valorGuardado = reservas.stream()
+                .map(meta -> BigDecimal.valueOf(
+                        meta.getValorAcumulado() == null ? 0.0 : meta.getValorAcumulado()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         if (valorGuardado.compareTo(reservaIdeal) < 0) {
             return new InsightDTO(
