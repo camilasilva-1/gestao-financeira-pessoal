@@ -438,48 +438,59 @@ public class InsightService {
         int mesAtual = LocalDate.now().getMonthValue();
 
         BigDecimal receita =
-                transacaoService.calcularReceitaMensal(
-                        usuarioId, mesAtual);
-
+                transacaoService.calcularReceitaMensal(usuarioId, mesAtual);
         BigDecimal despesa =
-                transacaoService.calcularDespesaMensal(
-                        usuarioId, mesAtual);
+                transacaoService.calcularDespesaMensal(usuarioId, mesAtual);
 
         if (receita == null) {
             receita = BigDecimal.ZERO;
         }
-
         if (despesa == null) {
             despesa = BigDecimal.ZERO;
         }
 
-        BigDecimal reservaEmergencia =
-                despesa.multiply(BigDecimal.valueOf(6));
+        // RN006: não gerar metas de valor zero sem dados que sustentem o cálculo.
+        if (receita.compareTo(BigDecimal.ZERO) <= 0
+                && despesa.compareTo(BigDecimal.ZERO) <= 0) {
+            metas.add(new InsightDTO(
+                    "Dados insuficientes",
+                    "Cadastre receitas e despesas para receber metas sugeridas.",
+                    LocalDate.now(),
+                    "Informativo"
+            ));
+            return metas;
+        }
 
-        metas.add(new InsightDTO(
-                "Meta Sugerida",
-                "Construir uma reserva de emergência de R$ "
-                        + reservaEmergencia.setScale(
-                                2, RoundingMode.HALF_UP),
-                LocalDate.now(),
-                "Meta"
-        ));
+        if (despesa.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal reservaEmergencia =
+                    despesa.multiply(BigDecimal.valueOf(6));
+            metas.add(new InsightDTO(
+                    "Meta Sugerida",
+                    "Construir uma reserva de emergência de R$ "
+                            + reservaEmergencia.setScale(
+                                    2, RoundingMode.HALF_UP),
+                    LocalDate.now(),
+                    "Meta"
+            ));
+        }
 
-        metas.add(new InsightDTO(
-                "Meta Sugerida",
-                "Investir mensalmente pelo menos R$ "
-                        + receita.multiply(BigDecimal.valueOf(0.20))
-                                .setScale(2, RoundingMode.HALF_UP),
-                LocalDate.now(),
-                "Meta"
-        ));
-
-        metas.add(new InsightDTO(
-                "Meta Sugerida",
-                "Acumular patrimônio equivalente a 12 meses da renda atual.",
-                LocalDate.now(),
-                "Meta"
-        ));
+        // RN007: recomendações de investimento dependem de renda positiva.
+        if (receita.compareTo(BigDecimal.ZERO) > 0) {
+            metas.add(new InsightDTO(
+                    "Meta Sugerida",
+                    "Investir mensalmente pelo menos R$ "
+                            + receita.multiply(BigDecimal.valueOf(0.20))
+                                    .setScale(2, RoundingMode.HALF_UP),
+                    LocalDate.now(),
+                    "Meta"
+            ));
+            metas.add(new InsightDTO(
+                    "Meta Sugerida",
+                    "Acumular patrimônio equivalente a 12 meses da renda atual.",
+                    LocalDate.now(),
+                    "Meta"
+            ));
+        }
 
         return metas;
     }
