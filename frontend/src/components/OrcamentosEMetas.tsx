@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Transacao, Orcamento, CategoriaAPI } from '../types';
 
 export interface Meta {
@@ -7,7 +7,29 @@ export interface Meta {
   valorAlvo: number;
   valorAtual: number;
   dataLimite: string;
+  diasRestantes: number;
+  valorMensalNecessario: number;
 }
+
+interface MetaAPI {
+  idMeta: number;
+  nome: string;
+  valorObjetivo: number;
+  valorAcumulado: number | null;
+  dataDesejada: string;
+  diasRestantes: number | null;
+  valorMensalNecessario: number | null;
+}
+
+const adaptarMeta = (dados: MetaAPI): Meta => ({
+  id: String(dados.idMeta),
+  nome: dados.nome,
+  valorAlvo: Number(dados.valorObjetivo),
+  valorAtual: Number(dados.valorAcumulado ?? 0),
+  dataLimite: dados.dataDesejada,
+  diasRestantes: Number(dados.diasRestantes ?? 0),
+  valorMensalNecessario: Number(dados.valorMensalNecessario ?? 0),
+});
 
 interface OrcamentosEMetasProps {
   transacoes: Transacao[];
@@ -24,10 +46,11 @@ export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
   categoriasAPI,
 }) => {
   // Estados para Metas
-  const [metas, setMetas] = useState<Meta[]>([
-    { id: '1', nome: 'Reserva de Emergência', valorAlvo: 10000, valorAtual: 4500, dataLimite: '2027-12-31' },
-    { id: '2', nome: 'Viagem de Férias', valorAlvo: 3000, valorAtual: 2100, dataLimite: '2026-12-15' },
-  ]);
+  const [metas, setMetas] = useState<Meta[]>([]);
+  const [carregandoMetas, setCarregandoMetas] = useState(true);
+  const [erroMetas, setErroMetas] = useState('');
+  const [salvandoMeta, setSalvandoMeta] = useState(false);
+  const [alterandoMeta, setAlterandoMeta] = useState(false);
 
   const [nomeMeta, setNomeMeta] = useState('');
   const [valorAlvoMeta, setValorAlvoMeta] = useState('');
@@ -44,32 +67,100 @@ export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
   const [tipoAcaoModal, setTipoAcaoModal] = useState<'guardar' | 'resgatar'>('guardar');
   const [valorModal, setValorModal] = useState('');
 
-  // Adicionar Nova Meta
-  const handleAdicionarMeta = (e: React.FormEvent) => {
+  // Busca somente as metas do usuário no MySQL.
+  useEffect(() => {
+    const usuarioId = localStorage.getItem('usuarioId');
+    if (!usuarioId) {
+      setErroMetas('Faça login para consultar suas metas.');
+      setCarregandoMetas(false);
+      return;
+    }
+    let ativo = true;
+    fetch('http://localhost:8080/metas/usuario/' + usuarioId, {
+      credentials: 'include'
+    })
+      .then(async resposta => {
+        if (!resposta.ok) throw new Error('Não foi possível consultar as metas');
+        return (await resposta.json()) as MetaAPI[];
+      })
+      .then(dados => {
+        if (ativo) {
+          setMetas(dados.map(adaptarMeta));
+          setErroMetas('');
+        }
+      })
+      .catch(() => {
+        if (ativo) setErroMetas('Não foi possível carregar suas metas. Confira o backend.');
+      })
+      .finally(() => {
+        if (ativo) setCarregandoMetas(false);
+      });
+    return () => { ativo = false; };
+  }, []);
+
+  const handleAdicionarMeta = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nomeMeta || !valorAlvoMeta || !dataLimiteMeta) return;
-
-    const novaMeta: Meta = {
-      id: Date.now().toString(),
-      nome: nomeMeta,
-      valorAlvo: parseFloat(valorAlvoMeta),
-      valorAtual: valorAtualMeta ? parseFloat(valorAtualMeta) : 0,
-      dataLimite: dataLimiteMeta,
-    };
-
-    setMetas([...metas, novaMeta]);
-    setNomeMeta('');
-    setValorAlvoMeta('');
-    setValorAtualMeta('');
-    setDataLimiteMeta('');
+    if (salvandoMeta || !nomeMeta.trim() || !valorAlvoMeta || !dataLimiteMeta) return;
+    const objetivo = Number(valorAlvoMeta);
+    const acumulado = valorAtualMeta === '' ? 0 : Number(valorAtualMeta);
+    if (!Number.isFinite(objetivo) || objetivo <= 0
+        || !Number.isFinite(acumulado) || acumulado < 0) {
+      alert('Informe um objetivo maior que zero e um valor guardado válido.');
+      return;
+    }
+    const usuarioId = localStorage.getItem('usuarioId');
+    if (!usuarioId) { alert('Faça login novamente.'); return; }
+    setSalvandoMeta(true);
+    try {
+      const resposta = await fetch('http://localhost:8080/metas/criar/' + usuarioId, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          nome: nomeMeta.trim(),
+          valorObjetivo: objetivo,
+          valorAcumulado: acumulado,
+          dataDesejada: dataLimiteMeta
+        })
+      });
+      if (!resposta.ok) throw new Error('Falha ao salvar');
+      const salva = (await resposta.json()) as MetaAPI;
+      setMetas(atuais => [...atuais, adaptarMeta(salva)]);
+      setNomeMeta('');
+      setValorAlvoMeta('');
+      setValorAtualMeta('');
+      setDataLimiteMeta('');
+      setErroMetas('');
+    } catch (erro) {
+      console.error('Falha ao criar meta:', erro);
+      alert('Não foi possível salvar a meta. Confira o backend.');
+    } finally {
+      setSalvandoMeta(false);
+    }
   };
 
-  // Remover Meta
-  const handleRemoverMeta = (id: string) => {
-    setMetas(metas.filter((m) => m.id !== id));
+  const handleRemoverMeta = async (id: string) => {
+    if (!window.confirm('Deseja excluir esta meta?')) return;
+    const usuarioId = localStorage.getItem('usuarioId');
+    if (!usuarioId) return;
+    try {
+      const resposta = await fetch(
+        'http://localhost:8080/metas/' + id + '/usuario/' + usuarioId, {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+      if (!resposta.ok) throw new Error('Falha ao excluir');
+      setMetas(atuais => atuais.filter(meta => meta.id !== id));
+    } catch (erro) {
+      console.error('Falha ao excluir meta:', erro);
+      alert('Não foi possível excluir a meta.');
+    }
   };
 
-  // Abrir o Modal Personalizado
   const abrirModal = (meta: Meta, tipo: 'guardar' | 'resgatar') => {
     setMetaSelecionada(meta);
     setTipoAcaoModal(tipo);
@@ -77,28 +168,44 @@ export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
     setModalAberto(true);
   };
 
-  // Confirmar ação do Modal
-  const handleConfirmarModal = (e: React.FormEvent) => {
+  const handleConfirmarModal = async (e: React.FormEvent) => {
     e.preventDefault();
-    const val = parseFloat(valorModal);
-
-    if (isNaN(val) || val <= 0 || !metaSelecionada) return;
-
-    setMetas(
-      metas.map((meta) => {
-        if (meta.id === metaSelecionada.id) {
-          const novoValor =
-            tipoAcaoModal === 'guardar'
-              ? meta.valorAtual + val
-              : Math.max(0, meta.valorAtual - val);
-          return { ...meta, valorAtual: novoValor };
-        }
-        return meta;
-      })
-    );
-
-    setModalAberto(false);
-    setMetaSelecionada(null);
+    if (!metaSelecionada || alterandoMeta) return;
+    const val = Number(valorModal);
+    if (!Number.isFinite(val) || val <= 0) return;
+    const novoValor = tipoAcaoModal === 'guardar'
+      ? metaSelecionada.valorAtual + val
+      : metaSelecionada.valorAtual - val;
+    if (novoValor < 0) {
+      alert('Não é possível resgatar mais do que foi guardado.');
+      return;
+    }
+    const usuarioId = localStorage.getItem('usuarioId');
+    if (!usuarioId) return;
+    setAlterandoMeta(true);
+    try {
+      const resposta = await fetch(
+        'http://localhost:8080/metas/' + metaSelecionada.id + '/usuario/' + usuarioId, {
+          method: 'PUT',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ valorAcumulado: Number(novoValor.toFixed(2)) })
+        });
+      if (!resposta.ok) throw new Error('Falha ao atualizar');
+      const salva = (await resposta.json()) as MetaAPI;
+      setMetas(atuais => atuais.map(meta =>
+        meta.id === String(salva.idMeta) ? adaptarMeta(salva) : meta));
+      setModalAberto(false);
+      setMetaSelecionada(null);
+    } catch (erro) {
+      console.error('Falha ao atualizar meta:', erro);
+      alert('Não foi possível atualizar o valor guardado.');
+    } finally {
+      setAlterandoMeta(false);
+    }
   };
 
   // Definir ou atualizar Limite de Orçamento
@@ -376,6 +483,7 @@ const handleRemoverOrcamento = async (id: string) => {
             />
             <button
               type="submit"
+              disabled={salvandoMeta}
               className="bg-[#c4003d] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#a00032] transition cursor-pointer"
             >
               Adicionar Meta
@@ -384,7 +492,13 @@ const handleRemoverOrcamento = async (id: string) => {
         </form>
 
         <div className="space-y-3 pt-2">
-          {metas.map((meta) => {
+          {carregandoMetas ? (
+            <p className="text-sm text-slate-500">Carregando suas metas...</p>
+          ) : erroMetas ? (
+            <p role="alert" className="text-sm text-red-600">{erroMetas}</p>
+          ) : metas.length === 0 ? (
+            <p className="text-sm text-slate-500">Nenhuma meta cadastrada.</p>
+          ) : metas.map((meta) => {
             const porcMeta = Math.min(100, Math.round((meta.valorAtual / meta.valorAlvo) * 100));
 
             return (
@@ -414,6 +528,9 @@ const handleRemoverOrcamento = async (id: string) => {
                   />
                 </div>
 
+                <p className="text-xs text-slate-500">
+                  Faltam {meta.diasRestantes} dias · Necessário por mês: R$ {meta.valorMensalNecessario.toFixed(2)}
+                </p>
                 <div className="flex justify-between items-center text-xs pt-1">
                   <span className="text-slate-500">
                     Guardado: <strong>R$ {meta.valorAtual.toFixed(2)}</strong> / Alvo: R${' '}
