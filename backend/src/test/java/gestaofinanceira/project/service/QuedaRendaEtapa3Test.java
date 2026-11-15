@@ -128,4 +128,43 @@ class QuedaRendaEtapa3Test {
         assertTrue(resultados.get(0).getMensagem().contains("18.00%"));
     }
 
+
+    // Confirma que uma queda pequena de 10% não gera alerta.
+    @Test
+    void naoDeveAlertarQuedaInferiorAQuinzePorCento() {
+        int usuarioId = 1;
+        LocalDate mesAtual = LocalDate.now();
+
+        when(categoriaService.listarTodas()).thenReturn(List.of());
+        when(orcamentoService.listarPorUsuario(usuarioId)).thenReturn(List.of());
+        when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual.minusMonths(1)))
+                .thenReturn(new BigDecimal("2000"));
+        when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual))
+                .thenReturn(new BigDecimal("1800"));
+
+        List<InsightDTO> resultados = insightService.gerarInsights(usuarioId);
+
+        assertTrue(resultados.stream()
+                .noneMatch(insight -> "Queda de renda".equals(insight.getTipo())));
+    }
+
+    // Confirma que uma queda de exatamente 15% já gera o alerta.
+    @Test
+    void deveAlertarQuedaDeExatamenteQuinzePorCento() {
+        int usuarioId = 1;
+        LocalDate mesAtual = LocalDate.now();
+
+        when(categoriaService.listarTodas()).thenReturn(List.of());
+        when(orcamentoService.listarPorUsuario(usuarioId)).thenReturn(List.of());
+        when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual.minusMonths(1)))
+                .thenReturn(new BigDecimal("2000"));
+        when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual))
+                .thenReturn(new BigDecimal("1700"));
+
+        List<InsightDTO> resultados = insightService.gerarInsights(usuarioId);
+
+        assertEquals("Queda de renda", resultados.get(0).getTipo());
+        assertTrue(resultados.get(0).getMensagem().contains("15.00%"));
+    }
+
 }
