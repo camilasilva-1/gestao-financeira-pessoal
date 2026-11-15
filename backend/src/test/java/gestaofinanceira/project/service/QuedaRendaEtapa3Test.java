@@ -75,4 +75,57 @@ class QuedaRendaEtapa3Test {
         assertTrue(resultados.get(0).getMensagem()
                 .contains("25.00%"));
     }
+
+    @Test
+    void naoDeveAlertarQuandoRendaNaoDiminui() {
+        int usuarioId = 1;
+        LocalDate mesAtual = LocalDate.now();
+
+        when(categoriaService.listarTodas()).thenReturn(List.of());
+        when(orcamentoService.listarPorUsuario(usuarioId)).thenReturn(List.of());
+        when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual.minusMonths(1)))
+                .thenReturn(new BigDecimal("2000"));
+        when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual))
+                .thenReturn(new BigDecimal("2000"));
+
+        List<InsightDTO> resultados = insightService.gerarInsights(usuarioId);
+
+        assertEquals("Sem dados suficientes", resultados.get(0).getTipo());
+    }
+
+    @Test
+    void naoDeveAlertarQuandoRendaAnteriorForZero() {
+        int usuarioId = 1;
+        LocalDate mesAtual = LocalDate.now();
+
+        when(categoriaService.listarTodas()).thenReturn(List.of());
+        when(orcamentoService.listarPorUsuario(usuarioId)).thenReturn(List.of());
+        when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual.minusMonths(1)))
+                .thenReturn(BigDecimal.ZERO);
+        when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual))
+                .thenReturn(new BigDecimal("1500"));
+
+        List<InsightDTO> resultados = insightService.gerarInsights(usuarioId);
+
+        assertEquals("Sem dados suficientes", resultados.get(0).getTipo());
+    }
+
+    @Test
+    void deveCalcularQuedaDeDezoitoPorCento() {
+        int usuarioId = 1;
+        LocalDate mesAtual = LocalDate.now();
+
+        when(categoriaService.listarTodas()).thenReturn(List.of());
+        when(orcamentoService.listarPorUsuario(usuarioId)).thenReturn(List.of());
+        when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual.minusMonths(1)))
+                .thenReturn(new BigDecimal("2000"));
+        when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual))
+                .thenReturn(new BigDecimal("1640"));
+
+        List<InsightDTO> resultados = insightService.gerarInsights(usuarioId);
+
+        assertEquals("Queda de renda", resultados.get(0).getTipo());
+        assertTrue(resultados.get(0).getMensagem().contains("18.00%"));
+    }
+
 }
