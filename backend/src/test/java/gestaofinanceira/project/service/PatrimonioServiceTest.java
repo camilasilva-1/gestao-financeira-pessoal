@@ -79,4 +79,23 @@ class PatrimonioServiceTest {
 
         assertTrue(service.calcularEvolucao(1).isEmpty());
     }
+
+    @Test
+    void deveSepararSaldosDeUsuariosDiferentes() {
+        when(transacaoRepository.findByUsuarioIdUsuario(1)).thenReturn(List.of(
+                transacao("2026-01-10", Tipo.RECEITA, "500")
+        ));
+        when(transacaoRepository.findByUsuarioIdUsuario(2)).thenReturn(List.of(
+                transacao("2026-01-10", Tipo.RECEITA, "1200")
+        ));
+
+        List<EvolucaoPatrimonialDTO> usuarioUm = service.calcularEvolucao(1);
+        List<EvolucaoPatrimonialDTO> usuarioDois = service.calcularEvolucao(2);
+
+        assertEquals(0, new BigDecimal("500").compareTo(usuarioUm.get(0).getSaldoAcumulado()));
+        assertEquals(0, new BigDecimal("1200").compareTo(usuarioDois.get(0).getSaldoAcumulado()));
+        verify(transacaoRepository).findByUsuarioIdUsuario(1);
+        verify(transacaoRepository).findByUsuarioIdUsuario(2);
+    }
+
 }
