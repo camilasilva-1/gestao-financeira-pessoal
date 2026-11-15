@@ -1,6 +1,7 @@
 package gestaofinanceira.project.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDate;
 
 @Entity
@@ -18,6 +19,7 @@ public class MetaFinanceira {
     private Double valorMensalNecessario;
     private Long diasRestantes;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;

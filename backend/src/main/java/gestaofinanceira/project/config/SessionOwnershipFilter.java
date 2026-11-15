@@ -103,10 +103,12 @@ public class SessionOwnershipFilter extends OncePerRequestFilter {
                 .map(o -> o.getUsuario().getIdUsuario().equals(userId)).orElse(false);
         } else if ("/orcamentos".equals(path) && ("POST".equals(method) || "GET".equals(method))) {
             authorized = true; // GET e filtrado pelo usuario no controller; POST verifica o dono.
-        } else if ("/metas".equals(path) && "GET".equals(method)) {
-            authorized = true; // GET e filtrado pelo usuario no controller.
         } else if ((m = match(path, "^/metas/(?:usuario|criar|calcular)/(\\d+)$")).matches()) {
-            authorized = hasOwnId(m.group(1), userId);
+            authorized = hasOwnId(m.group(1), userId)
+                && ("GET".equals(method) || "POST".equals(method));
+        } else if ((m = match(path, "^/metas/(\\d+)/usuario/(\\d+)$")).matches()) {
+            authorized = hasOwnId(m.group(2), userId)
+                && ("PUT".equals(method) || "DELETE".equals(method));
         } else if ((m = match(path, "^/categorias/ranking/(\\d+)$")).matches()) {
             authorized = hasOwnId(m.group(1), userId);
         }

@@ -55,6 +55,28 @@ class HistoricoRelatorioMensalServiceTest {
     }
 
     @Test
+    void permiteSalvarRelatorioDeAgostoDeAnoAnterior() throws Exception {
+        Usuario usuario = new Usuario();
+        usuario.setIdUsuario(7);
+        LocalDate inicio = LocalDate.of(2025, 8, 1);
+        LocalDate fim = LocalDate.of(2025, 8, 31);
+        RelatorioMensalDTO relatorio = new RelatorioMensalDTO(
+                new BigDecimal("1200.00"), new BigDecimal("500.00"),
+                new BigDecimal("700.00"), List.of(), null);
+
+        when(usuarios.findById(7)).thenReturn(Optional.of(usuario));
+        when(relatorios.gerarRelatorioMensal(7L, inicio, fim)).thenReturn(relatorio);
+        when(historico.save(any(HistoricoRelatorioMensal.class)))
+                .thenAnswer(call -> call.getArgument(0));
+
+        HistoricoRelatorioMensal salvo = service.salvar(7, inicio, fim);
+
+        assertEquals(inicio, salvo.getInicio());
+        assertEquals(fim, salvo.getFim());
+        verify(historico).save(any(HistoricoRelatorioMensal.class));
+    }
+
+    @Test
     void rejeitaPeriodoParcialOuComMesesDiferentesSemSalvar() {
         assertThrows(IllegalArgumentException.class,
             () -> service.salvar(7, LocalDate.of(2026,11,2),LocalDate.of(2026,11,30)));

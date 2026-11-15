@@ -18,9 +18,32 @@ interface RelatorioSalvo {
   saldoFinal: number;
 }
 
+interface RelatorioConsultado {
+  receitaTotal: number;
+  despesaTotal: number;
+  saldoFinal: number;
+  distribuicao: Array<{ categoria: string; valor: number; percentual: number }>;
+}
+
 interface RelatoriosProps {
   transacoes: Transacao[];
 }
+
+// Sempre seleciona o mês completo, independentemente do dia.
+const obterDatasDoMes = (periodo: string) => {
+  const partes = /^(\d{4})-(\d{2})$/.exec(periodo);
+  if (!partes) throw new Error('Selecione um mês e ano válidos.');
+  const ano = Number(partes[1]);
+  const mes = Number(partes[2]);
+  if (ano < 1 || mes < 1 || mes > 12) {
+    throw new Error('Selecione um mês e ano válidos.');
+  }
+  const ultimoDia = new Date(ano, mes, 0).getDate();
+  return {
+    inicio: periodo + '-01',
+    fim: periodo + '-' + String(ultimoDia).padStart(2, '0')
+  };
+};
 
 export const Relatorios: React.FC<RelatoriosProps> = ({ transacoes }) => {
   const [regra, setRegra] = useState<Regra503020 | null>(null);
@@ -28,6 +51,12 @@ export const Relatorios: React.FC<RelatoriosProps> = ({ transacoes }) => {
   const [historicoRelatorios, setHistoricoRelatorios] = useState<RelatorioSalvo[]>([]);
   const [salvandoRelatorio, setSalvandoRelatorio] = useState(false);
   const [mensagemRelatorio, setMensagemRelatorio] = useState('');
+  const [periodoSelecionado, setPeriodoSelecionado] = useState(() => {
+    const data = new Date();
+    return String(data.getFullYear()) + '-' + String(data.getMonth() + 1).padStart(2, '0');
+  });
+  const [consultandoRelatorio, setConsultandoRelatorio] = useState(false);
+  const [relatorioConsultado, setRelatorioConsultado] = useState<RelatorioConsultado | null>(null);
 
   const buscarHistorico = async () => {
     const id = localStorage.getItem('usuarioId');
@@ -43,30 +72,49 @@ export const Relatorios: React.FC<RelatoriosProps> = ({ transacoes }) => {
     buscarHistorico().catch(() => setMensagemRelatorio('Histórico indisponível no momento.'));
   }, []);
 
+  // Consultar não grava nada: somente exibe o relatório do mês escolhido.
+  const consultarRelatorio = async () => {
+    const id = localStorage.getItem('usuarioId');
+    if (!id || consultandoRelatorio) return;
+    setConsultandoRelatorio(true);
+    setMensagemRelatorio('');
+    setRelatorioConsultado(null);
+    try {
+      const { inicio, fim } = obterDatasDoMes(periodoSelecionado);
+      const params = new URLSearchParams({ usuarioId: id, inicio, fim });
+      const resposta = await fetch('http://localhost:8080/api/relatorios/mensal?' + params, {
+        credentials: 'include'
+      });
+      if (!resposta.ok) throw new Error('HTTP ' + resposta.status);
+      setRelatorioConsultado((await resposta.json()) as RelatorioConsultado);
+    } catch (erro) {
+      console.error('Falha ao consultar relatório:', erro);
+      setMensagemRelatorio('Não foi possível consultar o relatório do mês selecionado.');
+    } finally {
+      setConsultandoRelatorio(false);
+    }
+  };
+
+  // Salvar é uma ação separada: mantém o histórico RN009.
   const salvarRelatorioDoMes = async () => {
     const id = localStorage.getItem('usuarioId');
     if (!id || salvandoRelatorio) return;
-    const hoje = new Date();
-    const inicio = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-01`;
-    const fim = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(new Date(hoje.getFullYear(), hoje.getMonth()+1, 0).getDate()).padStart(2,'0')}`;
     setSalvandoRelatorio(true);
     setMensagemRelatorio('');
     try {
+      const { inicio, fim } = obterDatasDoMes(periodoSelecionado);
       const params = new URLSearchParams({ usuarioId: id, inicio, fim });
-      const resposta = await fetch(`http://localhost:8080/api/relatorios/mensal/arquivar?${params}`, {
+      const resposta = await fetch('http://localhost:8080/api/relatorios/mensal/arquivar?' + params, {
         method: 'POST',
         credentials: 'include',
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
       });
-      if (!resposta.ok) {
-        throw new Error(`HTTP ${resposta.status}`);
-      }
+      if (!resposta.ok) throw new Error('HTTP ' + resposta.status);
       await buscarHistorico();
-      setMensagemRelatorio('Relatório mensal salvo no histórico.');
+      setMensagemRelatorio('Relatório do mês selecionado salvo no histórico.');
     } catch (erro) {
-      const detalhe = erro instanceof Error ? erro.message : 'falha desconhecida';
       console.error('Falha ao salvar relatório mensal:', erro);
-      setMensagemRelatorio(`Não foi possível salvar o relatório mensal (${detalhe}).`);
+      setMensagemRelatorio('Não foi possível salvar o relatório do período escolhido.');
     } finally {
       setSalvandoRelatorio(false);
     }
@@ -234,17 +282,63 @@ const despesasPorCategoria: { [cat: string]: number } = {};
         )}
       </section>
 
-      {/* RN009: histórico salvo somente sob comando da pessoa usuária. */}
+      {/* RN009: consulta por mês/ano e histórico salvo somente após escolha do usuário. */}
       <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3" aria-label="Histórico de relatórios mensais">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h2 className="text-lg font-bold text-slate-800">Histórico de Relatórios Mensais</h2>
-          <button type="button" disabled={salvandoRelatorio} onClick={salvarRelatorioDoMes}
+        <h2 className="text-lg font-bold text-slate-800">Histórico de Relatórios Mensais</h2>
+        <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+          <label className="flex flex-col gap-1 text-sm text-slate-700">
+            Selecione o mês e o ano
+            <input
+              type="month"
+              aria-label="Mês e ano do relatório"
+              value={periodoSelecionado}
+              onChange={e => {
+                setPeriodoSelecionado(e.target.value);
+                setRelatorioConsultado(null);
+                setMensagemRelatorio('');
+              }}
+              className="border border-slate-300 rounded-xl px-3 py-2 text-sm"
+            />
+          </label>
+          <button type="button" disabled={consultandoRelatorio || salvandoRelatorio}
+            onClick={consultarRelatorio}
+            className="bg-slate-200 text-slate-900 text-xs font-bold rounded-xl px-4 py-2 disabled:opacity-50">
+            {consultandoRelatorio ? 'Consultando...' : 'Consultar mês'}
+          </button>
+          <button type="button" disabled={salvandoRelatorio || consultandoRelatorio}
+            onClick={salvarRelatorioDoMes}
             className="bg-slate-900 text-white text-xs font-bold rounded-xl px-4 py-2 disabled:opacity-50">
-            {salvandoRelatorio ? 'Salvando...' : 'Salvar relatório deste mês'}
+            {salvandoRelatorio ? 'Salvando...' : 'Salvar relatório selecionado'}
           </button>
         </div>
-        <p className="text-xs text-slate-500">O relatório é registrado somente quando você seleciona Salvar.</p>
+        <p className="text-xs text-slate-500">Escolha qualquer mês e ano para consultar. O histórico só muda quando você seleciona Salvar.</p>
         {mensagemRelatorio && <p className="text-sm text-slate-600" role="status">{mensagemRelatorio}</p>}
+        {relatorioConsultado && (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1" aria-label="Resultado da consulta mensal">
+            <strong className="text-sm text-slate-800">
+              Relatório consultado: {periodoSelecionado.slice(5)}/{periodoSelecionado.slice(0, 4)}
+            </strong>
+            <p className="text-sm text-slate-600">
+              Receitas: {moeda(Number(relatorioConsultado.receitaTotal))} ·
+              Despesas: {moeda(Number(relatorioConsultado.despesaTotal))}
+            </p>
+            <p className="text-sm text-slate-700">
+              Saldo: {moeda(Number(relatorioConsultado.saldoFinal))}
+            </p>
+            {relatorioConsultado.distribuicao?.length > 0 && (
+              <div className="border-t border-slate-200 pt-2 mt-2">
+                <p className="font-semibold text-xs text-slate-700 mb-1">Gastos por categoria no mês escolhido</p>
+                {[...relatorioConsultado.distribuicao]
+                  .sort((a, b) => Number(b.valor) - Number(a.valor))
+                  .map(item => (
+                    <p key={item.categoria} className="text-xs text-slate-600">
+                      {item.categoria}: {moeda(Number(item.valor))} ({item.percentual}%)
+                    </p>
+                  ))}
+              </div>
+            )}
+          </div>
+        )}
         {historicoRelatorios.length === 0 ? (
           <p className="text-sm text-slate-500">Nenhum relatório mensal salvo.</p>
         ) : (
@@ -267,7 +361,7 @@ const despesasPorCategoria: { [cat: string]: number } = {};
       {/* #14 & #15 - Relatório Mensal e Ranking de Categorias */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
         <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-          <span>🏆</span> Ranking de Gastos por Categoria
+          <span>🏆</span> Ranking de Gastos por Categoria (mês atual)
         </h2>
 
         {rankingCategorias.length === 0 ? (
