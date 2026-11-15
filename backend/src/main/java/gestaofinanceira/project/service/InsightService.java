@@ -125,7 +125,7 @@ public class InsightService {
             }
         }
 
-        // 3. NOVO: DETECTAR QUEDA DE RENDA
+        // 3. ALERTAR APENAS QUANDO A RENDA CAIR 15% OU MAIS.
 
         BigDecimal receitaAtual =
                 transacaoService.calcularReceitaMensal(
@@ -140,24 +140,27 @@ public class InsightService {
                 && receitaAnterior.compareTo(BigDecimal.ZERO) > 0
                 && receitaAtual.compareTo(receitaAnterior) < 0) {
 
-            BigDecimal queda = receitaAnterior
-                    .subtract(receitaAtual)
-                    .multiply(BigDecimal.valueOf(100))
-                    .divide(
-                            receitaAnterior,
-                            2,
-                            RoundingMode.HALF_UP);
+            BigDecimal diferenca = receitaAnterior.subtract(receitaAtual);
 
-            insights.add(new InsightDTO(
-                    "Queda de renda",
-                    "Sua receita mensal diminuiu "
-                            + queda
-                            + "% em relação ao mês anterior.",
-                    LocalDate.now(),
-                    "Atenção"
-            ));
+            // Compara antes de arredondar para respeitar o limite exato de 15%.
+            if (diferenca.multiply(BigDecimal.valueOf(100))
+                    .compareTo(receitaAnterior.multiply(BigDecimal.valueOf(15))) >= 0) {
 
-            gerouInsight = true;
+                BigDecimal queda = diferenca
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(receitaAnterior, 2, RoundingMode.HALF_UP);
+
+                insights.add(new InsightDTO(
+                        "Queda de renda",
+                        "Sua receita mensal diminuiu "
+                                + queda
+                                + "% em relação ao mês anterior.",
+                        LocalDate.now(),
+                        "Atenção"
+                ));
+
+                gerouInsight = true;
+            }
         }
 
         // 4. QUANDO NÃO EXISTEM INSIGHTS
