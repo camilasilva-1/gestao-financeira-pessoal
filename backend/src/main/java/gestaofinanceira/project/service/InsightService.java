@@ -6,6 +6,8 @@ import gestaofinanceira.project.dto.ScoreFinanceiroDTO;
 import gestaofinanceira.project.model.Orcamento;
 import gestaofinanceira.project.model.Categoria;
 import gestaofinanceira.project.model.MetaFinanceira;
+import gestaofinanceira.project.model.Transacao;
+import gestaofinanceira.project.enums.Tipo;
 import gestaofinanceira.project.repository.MetaFinanceiraRepository;
 
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -276,81 +279,122 @@ public class InsightService {
 
     public ScoreFinanceiroDTO calcularScore(Integer usuarioId) {
 
-        int score = 0;
-
-        List<Orcamento> orcamentos =
-                orcamentoService.listarPorUsuario(usuarioId);
-
-        // Sem qualquer dado financeiro, não atribuir nota máxima.
-        if (orcamentos.isEmpty()
-                && transacaoService.listarPorUsuario(usuarioId).isEmpty()) {
+        // Calcula o score somente com dados financeiros do próprio usuário.
+        List<Transacao> transacoes = transacaoService.listarPorUsuario(usuarioId);
+        if (transacoes.isEmpty()) {
             return new ScoreFinanceiroDTO(
-                    null,
-                    "SEM_DADOS",
-                    "Cadastre transações para avaliar sua saúde financeira."
-            );
+                    null, "SEM_DADOS",
+                    "Cadastre transações para avaliar sua saúde financeira.");
         }
 
-        int estourados = 0;
+        YearMonth mesAtual = YearMonth.now();
+        YearMonth mesAnterior = mesAtual.minusMonths(1);
+        BigDecimal receitas = BigDecimal.ZERO;
+        BigDecimal despesas = BigDecimal.ZERO;
+        BigDecimal saldoAtual = BigDecimal.ZERO;
+        BigDecimal saldoAnterior = BigDecimal.ZERO;
+        boolean temAtual = false;
+        boolean temAnterior = false;
+        boolean investimentoAtual = false;
+        boolean investimentoAnterior = false;
 
-        for (Orcamento orcamento : orcamentos) {
+        for (Transacao transacao : transacoes) {
+            if (transacao.getDataTransacao() == null
+                    || transacao.getValor() == null || transacao.getTipo() == null) {
+                continue;
+            }
 
-            BigDecimal percentual =
-                    orcamentoService.calcularPercentual(
-                            orcamento.getIdOrcamento());
+            YearMonth mes = YearMonth.from(transacao.getDataTransacao());
+            BigDecimal valor = transacao.getValor();
+            boolean receita = transacao.getTipo() == Tipo.RECEITA;
+            BigDecimal saldo = receita ? valor : valor.negate();
 
-            if (percentual.compareTo(BigDecimal.valueOf(100)) > 0) {
-                estourados++;
+            // Separa receitas, despesas e saldos dos dois meses.
+            if (mes.equals(mesAtual)) {
+                temAtual = true;
+                saldoAtual = saldoAtual.add(saldo);
+                if (receita) {
+                    receitas = receitas.add(valor);
+                } else {
+                    despesas = despesas.add(valor);
+                }
+            } else if (mes.equals(mesAnterior)) {
+                temAnterior = true;
+                saldoAnterior = saldoAnterior.add(saldo);
+            }
+
+            // Investimentos são identificados pela categoria já existente.
+            if (!receita && transacao.getCategoria() != null
+                    && "Investimentos".equalsIgnoreCase(transacao.getCategoria().getNome())) {
+                if (mes.equals(mesAtual)) {
+                    investimentoAtual = true;
+                } else if (mes.equals(mesAnterior)) {
+                    investimentoAnterior = true;
+                }
             }
         }
 
-        if (estourados == 0) {
-            score += 40;
-        } else if (estourados <= 2) {
+        if (!temAtual && !temAnterior) {
+            return new ScoreFinanceiroDTO(
+                    null, "SEM_DADOS",
+                    "Não há transações recentes para avaliar sua saúde financeira.");
+        }
+
+        int score = 0;
+
+        // 1. Economia: guardar 20% ou mais da receita vale 20 pontos.
+        if (receitas.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal economia = receitas.subtract(despesas)
+                    .multiply(BigDecimal.valueOf(100))
+                    .divide(receitas, 2, RoundingMode.HALF_UP);
+            if (economia.compareTo(BigDecimal.valueOf(20)) >= 0) {
+                score += 20;
+            } else if (economia.compareTo(BigDecimal.ZERO) > 0) {
+                score += 10;
+            }
+        }
+
+        // 2. Orçamentos: avalia quantos ultrapassaram o limite.
+        List<Orcamento> orcamentos = orcamentoService.listarPorUsuario(usuarioId);
+        if (!orcamentos.isEmpty()) {
+            int estourados = 0;
+            for (Orcamento orcamento : orcamentos) {
+                if (orcamentoService.calcularPercentual(orcamento.getIdOrcamento())
+                        .compareTo(BigDecimal.valueOf(100)) > 0) {
+                    estourados++;
+                }
+            }
+            if (estourados == 0) {
+                score += 20;
+            } else if (estourados < orcamentos.size()) {
+                score += 10;
+            }
+        }
+
+        // 3. Evolução: compara o saldo do mês atual com o anterior.
+        if (temAtual && temAnterior) {
+            if (saldoAtual.compareTo(saldoAnterior) > 0) {
+                score += 20;
+            } else if (saldoAtual.compareTo(saldoAnterior) == 0) {
+                score += 10;
+            }
+        }
+
+        // 4. Constância: observa lançamentos de investimentos nos dois meses.
+        if (investimentoAtual && investimentoAnterior) {
             score += 20;
-        } else {
+        } else if (investimentoAtual || investimentoAnterior) {
             score += 10;
         }
 
-        List<InsightDTO> insights = gerarInsights(usuarioId);
-
-        long aumentos = insights.stream()
-                .filter(i -> i.getTipo()
-                        .equalsIgnoreCase("Aumento de gastos"))
-                .count();
-
-        if (aumentos == 0) {
-            score += 30;
-        } else if (aumentos <= 2) {
+        // 5. Gastos: não ultrapassar a receita no mês vale 20 pontos.
+        if (receitas.compareTo(BigDecimal.ZERO) > 0
+                && despesas.compareTo(receitas) <= 0) {
             score += 20;
-        } else {
-            score += 10;
-        }
-
-        List<InsightDTO> alertas = gerarAlertas(usuarioId);
-
-        long riscos = alertas.stream()
-                .filter(a ->
-                        a.getNivelAlerta().equalsIgnoreCase("Risco")
-                                || a.getNivelAlerta()
-                                        .equalsIgnoreCase("Estourado"))
-                .count();
-
-        if (riscos == 0) {
-            score += 30;
-        } else if (riscos <= 2) {
-            score += 20;
-        } else {
-            score += 10;
-        }
-
-        if (score > 100) {
-            score = 100;
         }
 
         String nivel;
         String descricao;
-
         if (score <= 39) {
             nivel = "CRITICO";
             descricao = "Sua saúde financeira necessita atenção imediata.";
@@ -365,11 +409,7 @@ public class InsightService {
             descricao = "Sua saúde financeira está excelente.";
         }
 
-        return new ScoreFinanceiroDTO(
-                score,
-                nivel,
-                descricao
-        );
+        return new ScoreFinanceiroDTO(score, nivel, descricao);
     }
 
     // ============================================
