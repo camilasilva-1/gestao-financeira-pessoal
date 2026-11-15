@@ -6,6 +6,8 @@ import gestaofinanceira.project.service.MetaFinanceiraService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import org.springframework.http.ResponseEntity;
 import jakarta.servlet.http.HttpSession;
 import gestaofinanceira.project.config.SessionOwnershipFilter;
 
@@ -30,9 +32,22 @@ public class MetaFinanceiraController {
         return service.listarPorUsuario(usuarioId);
     }
 
-    @GetMapping
-    public List<MetaFinanceira> listarTodas() {
-        return service.listarTodas();
+    // Guardar ou resgatar valores.
+    @PutMapping("/{metaId}/usuario/{usuarioId}")
+    public MetaFinanceira atualizarValorAcumulado(
+            @PathVariable Integer metaId,
+            @PathVariable Integer usuarioId,
+            @RequestBody Map<String, Double> dados) {
+        return service.atualizarValorAcumulado(
+                usuarioId, metaId, dados.get("valorAcumulado"));
+    }
+
+    @DeleteMapping("/{metaId}/usuario/{usuarioId}")
+    public ResponseEntity<Void> excluirMeta(
+            @PathVariable Integer metaId,
+            @PathVariable Integer usuarioId) {
+        service.excluirMeta(usuarioId, metaId);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/calcular/{usuarioId}")
