@@ -1,20 +1,17 @@
-
 package gestaofinanceira.project.service;
 
+import gestaofinanceira.project.enums.Tipo;
 import gestaofinanceira.project.model.Categoria;
 import gestaofinanceira.project.model.Orcamento;
 import gestaofinanceira.project.model.Transacao;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.ArrayList;
+import java.time.YearMonth;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,168 +26,128 @@ class ScoreFinanceiroEtapa3Test {
     @Mock
     TransacaoService transacaoService;
 
-    @Mock
-    CategoriaService categoriaService;
-
     @InjectMocks
     InsightService insightService;
 
-    // TESTE 1 - EXCELENTE
-    @Test
-    void deveClassificarScoreComoExcelente() {
-
-        // PREPARAR
-        int usuarioId = 1;
-
-        when(orcamentoService.listarPorUsuario(usuarioId))
-            .thenReturn(List.of());
-
-        when(transacaoService.listarPorUsuario(usuarioId))
-            .thenReturn(List.of(new Transacao()));
-
-        when(categoriaService.listarTodas())
-            .thenReturn(List.of());
-
-        // EXECUTAR
-        var resultado = insightService.calcularScore(usuarioId);
-
-        // VERIFICAR
-        assertEquals(100, resultado.getScore());
-        assertEquals("EXCELENTE", resultado.getNivel());
+    // Cria uma transação simples no mês informado para os testes.
+    private Transacao transacao(YearMonth mes, Tipo tipo, String valor, boolean investimento) {
+        Transacao transacao = new Transacao();
+        transacao.setDataTransacao(mes.atDay(10));
+        transacao.setTipo(tipo);
+        transacao.setValor(new BigDecimal(valor));
+        if (investimento) {
+            Categoria categoria = new Categoria();
+            categoria.setNome("Investimentos");
+            transacao.setCategoria(categoria);
+        }
+        return transacao;
     }
 
-    // Sem transações e orçamentos, não existe base para uma nota.
+    private Orcamento orcamento(int id) {
+        Orcamento orcamento = new Orcamento();
+        orcamento.setIdOrcamento(id);
+        return orcamento;
+    }
+
+    // Sem transações recentes, não deve gerar uma pontuação fictícia.
     @Test
-    void naoDeveAtribuirScoreExcelenteSemDados() {
-        int usuarioId = 1;
-
-        when(orcamentoService.listarPorUsuario(usuarioId))
-            .thenReturn(List.of());
-        when(transacaoService.listarPorUsuario(usuarioId))
-            .thenReturn(List.of());
-
-        var resultado = insightService.calcularScore(usuarioId);
-
+    void naoDeveCalcularScoreSemDados() {
+        when(transacaoService.listarPorUsuario(1)).thenReturn(List.of());
+        var resultado = insightService.calcularScore(1);
         assertEquals(null, resultado.getScore());
         assertEquals("SEM_DADOS", resultado.getNivel());
     }
 
-    // TESTE 2 - BOM
+    // Excelente: economiza, respeita orçamento, evolui e investe nos dois meses.
     @Test
-    void deveClassificarScoreComoBom() {
+    void deveClassificarComoExcelente() {
+        YearMonth atual = YearMonth.now();
+        when(transacaoService.listarPorUsuario(1)).thenReturn(List.of(
+                transacao(atual.minusMonths(1), Tipo.RECEITA, "500", false),
+                transacao(atual.minusMonths(1), Tipo.DESPESA, "100", true),
+                transacao(atual, Tipo.RECEITA, "2000", false),
+                transacao(atual, Tipo.DESPESA, "100", true),
+                transacao(atual, Tipo.DESPESA, "100", false)
+        ));
+        when(orcamentoService.listarPorUsuario(1)).thenReturn(List.of(orcamento(10)));
+        when(orcamentoService.calcularPercentual(10)).thenReturn(new BigDecimal("50"));
 
-        // PREPARAR
-        int usuarioId = 1;
+        var resultado = insightService.calcularScore(1);
 
-        Categoria categoria = new Categoria();
-        categoria.setNome("Alimentação");
+        assertEquals(100, resultado.getScore());
+        assertEquals("EXCELENTE", resultado.getNivel());
+    }
 
-        Orcamento orcamento = new Orcamento();
-        orcamento.setIdOrcamento(1);
-        orcamento.setCategoria(categoria);
+    // Bom: economiza e melhora o saldo, mesmo sem orçamento ou investimento.
+    @Test
+    void deveClassificarComoBom() {
+        YearMonth atual = YearMonth.now();
+        when(transacaoService.listarPorUsuario(1)).thenReturn(List.of(
+                transacao(atual.minusMonths(1), Tipo.RECEITA, "500", false),
+                transacao(atual, Tipo.RECEITA, "1200", false),
+                transacao(atual, Tipo.DESPESA, "200", false)
+        ));
+        when(orcamentoService.listarPorUsuario(1)).thenReturn(List.of());
 
-        when(orcamentoService.listarPorUsuario(usuarioId))
-            .thenReturn(List.of(orcamento));
+        var resultado = insightService.calcularScore(1);
 
-        when(orcamentoService.calcularPercentual(1))
-            .thenReturn(new BigDecimal("110"));
-
-        when(categoriaService.listarTodas())
-            .thenReturn(List.of());
-
-        // EXECUTAR
-        var resultado = insightService.calcularScore(usuarioId);
-
-        // VERIFICAR
-        assertEquals(70, resultado.getScore());
+        assertEquals(60, resultado.getScore());
         assertEquals("BOM", resultado.getNivel());
     }
 
-    // TESTE 3 - ATENÇÃO
+    // Atenção: economiza, mas o saldo diminuiu e há orçamento ultrapassado.
     @Test
-    void deveClassificarScoreComoAtencao() {
+    void deveClassificarComoAtencao() {
+        YearMonth atual = YearMonth.now();
+        when(transacaoService.listarPorUsuario(1)).thenReturn(List.of(
+                transacao(atual.minusMonths(1), Tipo.RECEITA, "2000", false),
+                transacao(atual, Tipo.RECEITA, "1000", false),
+                transacao(atual, Tipo.DESPESA, "100", false)
+        ));
+        when(orcamentoService.listarPorUsuario(1)).thenReturn(List.of(orcamento(11)));
+        when(orcamentoService.calcularPercentual(11)).thenReturn(new BigDecimal("110"));
 
-        // PREPARAR
-        int usuarioId = 1;
+        var resultado = insightService.calcularScore(1);
 
-        List<Orcamento> orcamentos = new ArrayList<>();
-
-        for (int i = 1; i <= 3; i++) {
-
-            Categoria categoria = new Categoria();
-            categoria.setNome("Categoria " + i);
-
-            Orcamento orcamento = new Orcamento();
-            orcamento.setIdOrcamento(i);
-            orcamento.setCategoria(categoria);
-
-            orcamentos.add(orcamento);
-
-            when(orcamentoService.calcularPercentual(i))
-                .thenReturn(new BigDecimal("110"));
-        }
-
-        when(orcamentoService.listarPorUsuario(usuarioId))
-            .thenReturn(orcamentos);
-
-        when(categoriaService.listarTodas())
-            .thenReturn(List.of());
-
-        // EXECUTAR
-        var resultado = insightService.calcularScore(usuarioId);
-
-        // VERIFICAR
-        assertEquals(50, resultado.getScore());
+        assertEquals(40, resultado.getScore());
         assertEquals("ATENCAO", resultado.getNivel());
     }
 
-    // TESTE 4 - CRÍTICO
+    // Crítico: gastos acima da receita, saldo em queda e orçamento estourado.
     @Test
-    void deveClassificarScoreComoCritico() {
+    void deveClassificarComoCritico() {
+        YearMonth atual = YearMonth.now();
+        when(transacaoService.listarPorUsuario(1)).thenReturn(List.of(
+                transacao(atual.minusMonths(1), Tipo.RECEITA, "1000", false),
+                transacao(atual, Tipo.RECEITA, "200", false),
+                transacao(atual, Tipo.DESPESA, "300", false)
+        ));
+        when(orcamentoService.listarPorUsuario(1)).thenReturn(List.of(orcamento(12)));
+        when(orcamentoService.calcularPercentual(12)).thenReturn(new BigDecimal("120"));
 
-        // PREPARAR
-        int usuarioId = 1;
-        LocalDate hoje = LocalDate.now();
+        var resultado = insightService.calcularScore(1);
 
-        List<Orcamento> orcamentos = new ArrayList<>();
-        List<Categoria> categorias = new ArrayList<>();
-
-        for (int i = 1; i <= 3; i++) {
-
-            Categoria categoria = new Categoria();
-            categoria.setNome("Categoria " + i);
-
-            categorias.add(categoria);
-
-            Orcamento orcamento = new Orcamento();
-            orcamento.setIdOrcamento(i);
-            orcamento.setCategoria(categoria);
-
-            orcamentos.add(orcamento);
-
-            when(orcamentoService.calcularPercentual(i))
-                .thenReturn(new BigDecimal("110"));
-
-            when(transacaoService.calcularGastoPorCategoria(
-                usuarioId, categoria.getNome(), hoje))
-                .thenReturn(new BigDecimal("200"));
-
-            when(transacaoService.calcularGastoPorCategoria(
-                usuarioId, categoria.getNome(), hoje.minusMonths(1)))
-                .thenReturn(new BigDecimal("100"));
-        }
-
-        when(orcamentoService.listarPorUsuario(usuarioId))
-            .thenReturn(orcamentos);
-
-        when(categoriaService.listarTodas())
-            .thenReturn(categorias);
-
-        // EXECUTAR
-        var resultado = insightService.calcularScore(usuarioId);
-
-        // VERIFICAR
-        assertEquals(30, resultado.getScore());
+        assertEquals(0, resultado.getScore());
         assertEquals("CRITICO", resultado.getNivel());
+    }
+
+    // Cada usuário deve receber um score calculado com suas próprias transações.
+    @Test
+    void deveUsarDadosSeparadosPorUsuario() {
+        YearMonth atual = YearMonth.now();
+        when(transacaoService.listarPorUsuario(1)).thenReturn(List.of(
+                transacao(atual, Tipo.RECEITA, "1000", false)
+        ));
+        when(transacaoService.listarPorUsuario(2)).thenReturn(List.of(
+                transacao(atual, Tipo.DESPESA, "1500", false)
+        ));
+        when(orcamentoService.listarPorUsuario(1)).thenReturn(List.of());
+        when(orcamentoService.listarPorUsuario(2)).thenReturn(List.of());
+
+        var usuarioUm = insightService.calcularScore(1);
+        var usuarioDois = insightService.calcularScore(2);
+
+        assertEquals(40, usuarioUm.getScore());
+        assertEquals(0, usuarioDois.getScore());
     }
 }
