@@ -22,6 +22,7 @@ interface RelatorioConsultado {
   receitaTotal: number;
   despesaTotal: number;
   saldoFinal: number;
+  distribuicao: Array<{ categoria: string; valor: number; percentual: number }>;
 }
 
 interface RelatoriosProps {
@@ -324,6 +325,18 @@ const despesasPorCategoria: { [cat: string]: number } = {};
             <p className="text-sm text-slate-700">
               Saldo: {moeda(Number(relatorioConsultado.saldoFinal))}
             </p>
+            {relatorioConsultado.distribuicao?.length > 0 && (
+              <div className="border-t border-slate-200 pt-2 mt-2">
+                <p className="font-semibold text-xs text-slate-700 mb-1">Gastos por categoria no mês escolhido</p>
+                {[...relatorioConsultado.distribuicao]
+                  .sort((a, b) => Number(b.valor) - Number(a.valor))
+                  .map(item => (
+                    <p key={item.categoria} className="text-xs text-slate-600">
+                      {item.categoria}: {moeda(Number(item.valor))} ({item.percentual}%)
+                    </p>
+                  ))}
+              </div>
+            )}
           </div>
         )}
         {historicoRelatorios.length === 0 ? (
@@ -348,7 +361,7 @@ const despesasPorCategoria: { [cat: string]: number } = {};
       {/* #14 & #15 - Relatório Mensal e Ranking de Categorias */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
         <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-          <span>🏆</span> Ranking de Gastos por Categoria
+          <span>🏆</span> Ranking de Gastos por Categoria (mês atual)
         </h2>
 
         {rankingCategorias.length === 0 ? (
