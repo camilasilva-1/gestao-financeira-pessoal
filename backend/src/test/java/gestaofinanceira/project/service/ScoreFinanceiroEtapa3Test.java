@@ -3,6 +3,7 @@ package gestaofinanceira.project.service;
 
 import gestaofinanceira.project.model.Categoria;
 import gestaofinanceira.project.model.Orcamento;
+import gestaofinanceira.project.model.Transacao;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,6 +45,9 @@ class ScoreFinanceiroEtapa3Test {
         when(orcamentoService.listarPorUsuario(usuarioId))
             .thenReturn(List.of());
 
+        when(transacaoService.listarPorUsuario(usuarioId))
+            .thenReturn(List.of(new Transacao()));
+
         when(categoriaService.listarTodas())
             .thenReturn(List.of());
 
@@ -53,6 +57,22 @@ class ScoreFinanceiroEtapa3Test {
         // VERIFICAR
         assertEquals(100, resultado.getScore());
         assertEquals("EXCELENTE", resultado.getNivel());
+    }
+
+    // Sem transações e orçamentos, não existe base para uma nota.
+    @Test
+    void naoDeveAtribuirScoreExcelenteSemDados() {
+        int usuarioId = 1;
+
+        when(orcamentoService.listarPorUsuario(usuarioId))
+            .thenReturn(List.of());
+        when(transacaoService.listarPorUsuario(usuarioId))
+            .thenReturn(List.of());
+
+        var resultado = insightService.calcularScore(usuarioId);
+
+        assertEquals(null, resultado.getScore());
+        assertEquals("SEM_DADOS", resultado.getNivel());
     }
 
     // TESTE 2 - BOM

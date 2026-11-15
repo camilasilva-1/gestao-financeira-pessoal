@@ -278,6 +278,16 @@ public class InsightService {
         List<Orcamento> orcamentos =
                 orcamentoService.listarPorUsuario(usuarioId);
 
+        // Sem qualquer dado financeiro, não atribuir nota máxima.
+        if (orcamentos.isEmpty()
+                && transacaoService.listarPorUsuario(usuarioId).isEmpty()) {
+            return new ScoreFinanceiroDTO(
+                    null,
+                    "SEM_DADOS",
+                    "Cadastre transações para avaliar sua saúde financeira."
+            );
+        }
+
         int estourados = 0;
 
         for (Orcamento orcamento : orcamentos) {
