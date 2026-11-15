@@ -10,7 +10,6 @@ import java.math.BigDecimal;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeMap;
 
 @Service
@@ -25,7 +24,7 @@ public class PatrimonioService {
     // Evolucao do saldo acumulado das transacoes, nao do patrimonio total.
     public List<EvolucaoPatrimonialDTO> calcularEvolucao(Integer usuarioId) {
         List<Transacao> transacoes = transacaoRepository.findByUsuarioIdUsuario(usuarioId);
-        Map<YearMonth, BigDecimal> saldosPorMes = new TreeMap<>();
+        TreeMap<YearMonth, BigDecimal> saldosPorMes = new TreeMap<>();
 
         for (Transacao transacao : transacoes) {
             YearMonth mes = YearMonth.from(transacao.getDataTransacao());
@@ -42,7 +41,7 @@ public class PatrimonioService {
 
         BigDecimal acumulado = BigDecimal.ZERO;
         YearMonth mes = saldosPorMes.keySet().iterator().next();
-        YearMonth ultimoMes = ((TreeMap<YearMonth, BigDecimal>) saldosPorMes).lastKey();
+        YearMonth ultimoMes = saldosPorMes.lastKey();
 
         while (!mes.isAfter(ultimoMes)) {
             BigDecimal saldoMes = saldosPorMes.getOrDefault(mes, BigDecimal.ZERO);
