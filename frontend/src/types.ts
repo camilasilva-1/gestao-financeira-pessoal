@@ -9,7 +9,27 @@ export interface Transacao {
   categoria?: string;
   establishment?: string;
   recorrente?: boolean;
+
+  usuarioId?: number;
+  categoriaId?: number;
 }
+
+  export interface TransacaoAPI {
+    idTransacao: number;
+    descricao: string;
+    valor: number;
+    dataTransacao: string;
+    tipo: 'RECEITA' | 'DESPESA';
+    estabelecimento?: string;
+    recorrencia?: boolean;
+    usuario: {
+      idUsuario: number;
+    };
+    categoria: {
+      idCategoria: number;
+      nome: string;
+    };
+  }
 
 // Lista oficial das categorias padrão exigidas no requisito 3.2
 export const CATEGORIAS_PADRAO = [
@@ -40,4 +60,25 @@ export interface Meta {
   valorAlvo: number;
   valorAtual: number;
   dataLimite: string;
+}
+
+
+export interface OrcamentoAPI {
+  idOrcamento: number;
+  limiteValor: number;
+  usuario: {
+    idUsuario: number;
+    nome: string;
+    email: string;
+    salarioLiquido: number;
+  };
+  categoria: {
+    idCategoria: number;
+    nome: string;
+  };
+}
+
+export interface CategoriaAPI {
+  idCategoria: number;
+  nome: string;
 }

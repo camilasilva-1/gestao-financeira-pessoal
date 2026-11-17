@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/relatorios")
-@CrossOrigin(origins = "*")
+
 public class Regra503020Controller {
 
     @Autowired

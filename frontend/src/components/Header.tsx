@@ -27,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({ saldoTotal, onLogout }) => {
               ByteBank <span className="font-light text-xs">finance</span>
             </h1>
           </div>
-          
+
           <div className="flex items-center gap-3">
             {/* Nome dinâmico aqui */}
             <span className="text-xs font-medium text-white/90">Olá, {nomeUsuario}</span>

@@ -36,8 +36,8 @@ public class InsightService {
 
         List<InsightDTO> insights = new ArrayList<>();
 
-        int mesAtual = LocalDate.now().getMonthValue();
-        int mesAnterior = LocalDate.now().minusMonths(1).getMonthValue();
+        LocalDate mesAtual = LocalDate.now();
+        LocalDate mesAnterior = mesAtual.minusMonths(1);
 
         List<Categoria> categorias = categoriaService.listarTodas();
         boolean gerouInsight = false;
@@ -61,14 +61,10 @@ public class InsightService {
                 BigDecimal variacao = gastoAtual
                         .subtract(gastoAnterior)
                         .divide(
-                                gastoAtual.add(gastoAnterior),
+                                gastoAnterior,
                                 2,
                                 RoundingMode.HALF_UP)
                         .multiply(BigDecimal.valueOf(100));
-
-                if (variacao.compareTo(BigDecimal.valueOf(100)) > 0) {
-                    variacao = BigDecimal.valueOf(100);
-                }
 
                 if (variacao.compareTo(BigDecimal.valueOf(30)) > 0) {
 
@@ -125,6 +121,110 @@ public class InsightService {
 
         return insights;
     }
+
+        // ============================
+    // DETECÇÃO DE QUEDA DE RENDA
+    // ============================
+    public InsightDTO detectarQuedaRenda(Integer usuarioId) {
+
+        // Identifica o último mês completo
+        LocalDate fimUltimoMes = LocalDate.now()
+                .withDayOfMonth(1)
+                .minusDays(1);
+
+        LocalDate inicioUltimoMes = fimUltimoMes
+                .withDayOfMonth(1);
+
+        // Identifica os três meses completos anteriores
+        LocalDate fimTresMeses = inicioUltimoMes.minusDays(1);
+
+        LocalDate inicioTresMeses = fimTresMeses
+                .minusMonths(2)
+                .withDayOfMonth(1);
+
+        // Consulta as receitas dos períodos
+        BigDecimal receitaUltimoMes =
+                transacaoService.calcularReceitaPorPeriodo(
+                        usuarioId,
+                        inicioUltimoMes,
+                        fimUltimoMes);
+
+        BigDecimal totalTresMeses =
+                transacaoService.calcularReceitaPorPeriodo(
+                        usuarioId,
+                        inicioTresMeses,
+                        fimTresMeses);
+
+        // Calcula a média de receita dos três meses
+        BigDecimal mediaTresMeses = totalTresMeses
+                .divide(BigDecimal.valueOf(3), 2, RoundingMode.HALF_UP);
+
+        // Verifica se existem dados suficientes
+        if (mediaTresMeses.compareTo(BigDecimal.ZERO) <= 0) {
+            return new InsightDTO(
+                    "Sem dados suficientes",
+                    "Não há receitas registradas nos três meses anteriores para comparar.",
+                    LocalDate.now(),
+                    "Informativo"
+            );
+        }
+
+        // Calcula o percentual de queda da receita
+        BigDecimal percentualQueda = mediaTresMeses
+                .subtract(receitaUltimoMes)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(mediaTresMeses, 2, RoundingMode.HALF_UP);
+
+        // Identifica queda igual ou superior a 20%
+        if (percentualQueda.compareTo(BigDecimal.valueOf(20)) >= 0) {
+
+            return new InsightDTO(
+                    "Queda de renda",
+                    "Sua receita registrada caiu "
+                            + percentualQueda
+                            + "% em relação à média dos três meses anteriores.",
+                    LocalDate.now(),
+                    "Atenção"
+            );
+        }
+
+        return new InsightDTO(
+                "Renda estável",
+                "Não foi identificada queda de receita igual ou superior a 20%.",
+                LocalDate.now(),
+                "Informativo"
+        );
+    }
+
+    private BigDecimal calcularMediaDespesas(Integer usuarioId) {
+
+    LocalDate fim = LocalDate.now()
+            .withDayOfMonth(1)
+            .minusDays(1);
+
+    LocalDate inicio = fim
+            .withDayOfMonth(1)
+            .minusMonths(5);
+
+    BigDecimal totalDespesas =
+            transacaoService.calcularDespesaPorPeriodo(
+                    usuarioId,
+                    inicio,
+                    fim);
+
+    return totalDespesas.divide(
+            BigDecimal.valueOf(6),
+            2,
+            RoundingMode.HALF_UP);
+}
+
+    private BigDecimal calcularReservaIdeal(Integer usuarioId) {
+
+    BigDecimal mediaDespesas = calcularMediaDespesas(usuarioId);
+
+    return mediaDespesas.multiply(BigDecimal.valueOf(6))
+            .setScale(2, RoundingMode.HALF_UP);
+}
 
     // ============================
     // GERAÇÃO DE ALERTAS
@@ -249,8 +349,8 @@ public class InsightService {
 
         long riscos = alertas.stream()
                 .filter(a ->
-                        a.getTipo().equalsIgnoreCase("Risco")
-                                || a.getTipo().equalsIgnoreCase("Estourado"))
+                        a.getNivelAlerta().equalsIgnoreCase("Risco")
+                                || a.getNivelAlerta().equalsIgnoreCase("Estourado"))
                 .count();
 
         if (riscos == 0) {
@@ -288,4 +388,136 @@ public class InsightService {
                 descricao
         );
     }
+
+
+        // ============================
+    // RECOMENDAÇÃO DE INVESTIMENTO
+    // ============================
+    public InsightDTO gerarRecomendacaoInvestimento(Integer usuarioId) {
+
+        int mesAtual = LocalDate.now().getMonthValue();
+
+        BigDecimal receita =
+                transacaoService.calcularReceitaMensal(usuarioId, mesAtual);
+
+        BigDecimal despesa =
+                transacaoService.calcularDespesaMensal(usuarioId, mesAtual);
+
+        if (receita == null) {
+            receita = BigDecimal.ZERO;
+        }
+
+        if (despesa == null) {
+            despesa = BigDecimal.ZERO;
+        }
+
+        if (receita.compareTo(BigDecimal.ZERO) <= 0) {
+            return new InsightDTO(
+                    "Recomendação de Investimento",
+                    "Não há receita suficiente para gerar recomendação de investimento.",
+                    LocalDate.now(),
+                    "Informativo"
+            );
+        }
+
+        BigDecimal valorRecomendado =
+                receita.multiply(BigDecimal.valueOf(0.20));
+
+        BigDecimal reservaEmergencia =
+                despesa.multiply(BigDecimal.valueOf(6));
+
+        String descricao =
+                "Com sua renda atual, recomenda-se investir pelo menos R$ "
+                        + valorRecomendado.setScale(2, RoundingMode.HALF_UP)
+                        + " por mês. Sua reserva de emergência ideal é de R$ "
+                        + reservaEmergencia.setScale(2, RoundingMode.HALF_UP)
+                        + ".";
+
+        return new InsightDTO(
+                "Recomendação de Investimento",
+                descricao,
+                LocalDate.now(),
+                "Investimento"
+        );
+    }
+
+    // ============================
+    // METAS SUGERIDAS DE INVESTIMENTO
+    // ============================
+    public List<InsightDTO> gerarMetasSugeridas(Integer usuarioId) {
+
+        List<InsightDTO> metas = new ArrayList<>();
+
+        int mesAtual = LocalDate.now().getMonthValue();
+
+        BigDecimal receita =
+                transacaoService.calcularReceitaMensal(usuarioId, mesAtual);
+
+        BigDecimal despesa =
+                transacaoService.calcularDespesaMensal(usuarioId, mesAtual);
+
+        if (receita == null) {
+            receita = BigDecimal.ZERO;
+        }
+
+        if (despesa == null) {
+            despesa = BigDecimal.ZERO;
+        }
+
+        BigDecimal reservaEmergencia =
+                despesa.multiply(BigDecimal.valueOf(6));
+
+        metas.add(new InsightDTO(
+                "Meta Sugerida",
+                "Construir uma reserva de emergência de R$ "
+                        + reservaEmergencia.setScale(2, RoundingMode.HALF_UP),
+                LocalDate.now(),
+                "Meta"
+        ));
+
+        metas.add(new InsightDTO(
+                "Meta Sugerida",
+                "Investir mensalmente pelo menos R$ "
+                        + receita.multiply(BigDecimal.valueOf(0.20))
+                        .setScale(2, RoundingMode.HALF_UP),
+                LocalDate.now(),
+                "Meta"
+        ));
+
+        metas.add(new InsightDTO(
+                "Meta Sugerida",
+                "Acumular patrimônio equivalente a 12 meses da renda atual.",
+                LocalDate.now(),
+                "Meta"
+        ));
+
+        return metas;
+    }
+
+
+    // ============================
+// ALERTA DE RESERVA INSUFICIENTE
+// ============================
+
+public InsightDTO gerarAlertaReservaInsuficiente(Integer usuarioId) {
+
+    BigDecimal reservaIdeal = calcularReservaIdeal(usuarioId);
+
+    if (reservaIdeal.compareTo(BigDecimal.ZERO) <= 0) {
+        return new InsightDTO(
+                "Dados insuficientes",
+                "Não há despesas registradas nos últimos seis meses para calcular sua reserva de emergência.",
+                LocalDate.now(),
+                "Informativo"
+        );
+    }
+
+    return new InsightDTO(
+            "Reserva de emergência",
+            "Com base na média das suas despesas dos últimos seis meses, sua reserva de emergência recomendada é de R$ "
+                    + reservaIdeal + ".",
+            LocalDate.now(),
+            "Informativo"
+    );
+}
 }

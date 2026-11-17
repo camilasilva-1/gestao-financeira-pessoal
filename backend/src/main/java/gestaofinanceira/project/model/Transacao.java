@@ -38,6 +38,6 @@ public class Transacao {
     private Usuario usuario;
 
     @ManyToOne
-    @JoinColumn(name = "id_categoria", nullable = false)
+    @JoinColumn(name = "id_categoria", nullable = true)
     private Categoria categoria;
 }
