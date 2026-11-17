@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Login } from './components/Login';
 import { Cadastro } from './components/Cadastro';
 import { EsqueciSenha } from './components/EsqueciSenha';
@@ -6,78 +6,43 @@ import { Dashboard } from './components/Dashboard';
 import { Transacoes } from './components/Transacoes';
 import { OrcamentosEMetas } from './components/OrcamentosEMetas';
 import { Header } from './components/Header';
-import type { Transacao, Orcamento, TransacaoAPI, OrcamentoAPI, CategoriaAPI} from './types';
+import type { Transacao, Orcamento } from './types';
 import { CATEGORIAS_PADRAO } from './types';
 import { Relatorios } from './components/Relatorios';
+import { ScoreCard } from './components/ScoreCard';
+import { AlertasFinanceiros } from './components/AlertasFinanceiros';
+import { EvolucaoPatrimonio } from './components/EvolucaoPatrimonio';
+
 
 function App() {
-  // Um ID salvo no navegador nao confirma que a sessao no servidor continua valida.
-  const [telaAtual, setTelaAtual] = useState<'verificando' | 'login' | 'cadastro' | 'esqueci-senha' | 'app'>(() =>
-    localStorage.getItem('usuarioId') ? 'verificando' : 'login'
-  );
+  // Inicialização inteligente: se houver 'usuarioId' no localStorage, inicia direto em 'app'
+  const [telaAtual, setTelaAtual] = useState<'login' | 'cadastro' | 'esqueci-senha' | 'app'>(() => {
+    const usuarioSalvo = localStorage.getItem('usuarioId');
+    return usuarioSalvo ? 'app' : 'login';
+  });
 
-  useEffect(() => {
-    const usuarioId = localStorage.getItem('usuarioId');
-    if (!usuarioId) return;
-    fetch(`http://localhost:8080/api/usuarios/${usuarioId}`, { credentials: 'include' })
-      .then(resposta => {
-        if (!resposta.ok) throw new Error('Sessao expirada');
-        setTelaAtual('app');
-      })
-      .catch(() => {
-        localStorage.removeItem('usuarioId');
-        localStorage.removeItem('usuarioNome');
-        localStorage.removeItem('salarioLiquido');
-        setTelaAtual('login');
-      });
-  }, []);
+  const [transacoes, setTransacoes] = useState<Transacao[]>([
+    { id: '1', descricao: 'Salário Mensal', valor: 5000, data: '2026-09-05', tipo: 'RECEITA', categoria: 'Outros' },
+    { id: '2', descricao: 'Supermercado', valor: 450, data: '2026-09-08', tipo: 'DESPESA', categoria: 'Alimentação', establishment: 'Carrefour' },
+    { id: '3', descricao: 'Cinema e Pipoca', valor: 120, data: '2026-09-10', tipo: 'DESPESA', categoria: 'Lazer' }
+  ]);
 
-  const [transacoes, setTransacoes] = useState<Transacao[]>([]);
-  const [carregandoTransacoes, setCarregandoTransacoes] = useState(true);
+  const [orcamentos, setOrcamentos] = useState<Orcamento[]>([
+    { id: '1', categoria: 'Alimentação', limite: 1000, gasto: 0 },
+    { id: '2', categoria: 'Lazer', limite: 500, gasto: 0 },
+    { id: '3', categoria: 'Transporte', limite: 600, gasto: 0 }
+  ]);
 
-useEffect(() => {
-  const buscarTransacoes = async () => {
-    setCarregandoTransacoes(true);
+  const [categorias, setCategorias] = useState<string[]>(CATEGORIAS_PADRAO);
 
-    try {
-      if (telaAtual !== 'app') return;
-      const usuarioId = localStorage.getItem('usuarioId');
-
-      if (!usuarioId) {
-        setTransacoes([]);
-        return;
-      }
-
-      const resposta = await fetch(
-        `http://localhost:8080/api/transacoes/usuario/${usuarioId}`,
-        { credentials: 'include' }
-      );
-
-      if (!resposta.ok) {
-        throw new Error('Erro ao buscar transações');
-      }
-
-      const dados: TransacaoAPI[] = await resposta.json();
-
-      const transacoesFormatadas: Transacao[] = dados.map((t) => ({
-        id: String(t.idTransacao),
-        descricao: t.descricao,
-        valor: Number(t.valor),
-        data: t.dataTransacao,
-        tipo: t.tipo,
-        categoria: t.categoria?.nome ?? '',
-        establishment: t.estabelecimento,
-        recorrente: t.recorrencia,
-      }));
-
-      setTransacoes(transacoesFormatadas);
-    } catch (erro) {
-      console.error('Erro ao carregar transações:', erro);
-    } finally {
-      setCarregandoTransacoes(false);
+  const adicionarCategoria = (novaCat: string) => {
+    if (!categorias.includes(novaCat)) {
+      setCategorias([...categorias, novaCat]);
     }
   };
 
+<<<<<<< HEAD
+=======
   buscarTransacoes();
 }, [telaAtual]);
 
@@ -164,33 +129,18 @@ const orcamentosFormatados: Orcamento[] = await Promise.all(
   buscarCategorias();
 }, []);
 
+>>>>>>> origin/main
   // Função para fazer logout e limpar a sessão salva no navegador
-  const handleLogout = async () => {
-    try {
-      await fetch('http://localhost:8080/api/usuarios/logout', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-      });
-    } finally {
-      localStorage.removeItem('usuarioId');
-      localStorage.removeItem('usuarioNome');
-      localStorage.removeItem('salarioLiquido');
-      setTransacoes([]);
-      setOrcamentos([]);
-      setTelaAtual('login');
-    }
+  const handleLogout = () => {
+    localStorage.removeItem('usuarioId');
+    localStorage.removeItem('usuarioNome');
+    setTelaAtual('login');
   };
 
   // Cálculo dinâmico do saldo para o Header em degradê
   const saldoTotal = transacoes.reduce((acc, t) => {
     return t.tipo === 'RECEITA' ? acc + t.valor : acc - t.valor;
   }, 0);
-
-  // Evita exibir dashboard vazio enquanto confirma a sessao.
-  if (telaAtual === 'verificando') {
-    return <p className="p-6 text-center">Verificando sessão...</p>;
-  }
 
   // Renderização condicional das telas de entrada
   if (telaAtual === 'login') {
@@ -206,9 +156,9 @@ const orcamentosFormatados: Orcamento[] = await Promise.all(
   if (telaAtual === 'cadastro') {
     return (
       <Cadastro
-        onCadastroSuccess={() => setTelaAtual('login')}
+        onCadastroSuccess={() => setTelaAtual('app')}
         onNavigateToLogin={() => setTelaAtual('login')}
-        />
+      />
     );
   }
 
@@ -224,46 +174,45 @@ const orcamentosFormatados: Orcamento[] = await Promise.all(
   return (
     <div className="min-h-screen bg-slate-50 pb-12">
       {/* Header em degradê com Logout que limpa a sessão */}
-      <Header
-        saldoTotal={saldoTotal}
-        onLogout={handleLogout}
+      <Header 
+        saldoTotal={saldoTotal} 
+        onLogout={handleLogout} 
       />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 -mt-6">
-        <main className="space-y-6">
+       <main className="space-y-6">
           {/* 1. Cards de Indicadores */}
           <Dashboard transacoes={transacoes} />
 
-          {/* 2. Evolução Mensal e Ranking */}
+          {/* 2. Faixa do Score Financeiro */}
+          <ScoreCard atualizarGatilho={transacoes} />
+
+          {/* 3. Diagnósticos de Queda de Renda e Reserva de Emergência */}
+          <AlertasFinanceiros atualizarGatilho={transacoes} />
+
+          {/* 4. Evolução do Patrimônio */}
+          <EvolucaoPatrimonio transacoes={transacoes} />
+
+          {/* 5. Evolução Mensal e Ranking */}
           <Relatorios transacoes={transacoes} />
 
-          {/* 3. Nova Transação e Histórico */}
-          {carregandoTransacoes ? (
-          <p className="text-center text-slate-500 py-4">
-          Carregando transações...
-          </p>
-          ) : (
-          <Transacoes
-            transacoes={transacoes}
-            setTransacoes={setTransacoes}
+          {/* 6. Nova Transação e Histórico */}
+          <Transacoes 
+            transacoes={transacoes} 
+            setTransacoes={setTransacoes} 
             categorias={categorias}
+            adicionarCategoria={adicionarCategoria}
           />
-          )}
-
-          {/* 4. Orçamentos e Metas */}
-          {carregandoOrcamentos ? (
-          <p className="text-center text-slate-500 py-4">
-          Carregando orçamentos...
-          </p>
-          ) : (
-          <OrcamentosEMetas
-              transacoes={transacoes}
-              orcamentos={orcamentos}
-              setOrcamentos={setOrcamentos}
-              categorias={categorias}
-              categoriasAPI={categoriasAPI}
+          
+         
+         {/* 7. Orçamentos e Metas */}
+          <OrcamentosEMetas 
+            transacoes={transacoes} 
+            orcamentos={orcamentos} 
+            setOrcamentos={setOrcamentos} 
+            categorias={categorias}
+            categoriasAPI={[]}
           />
-          )}
         </main>
       </div>
     </div>

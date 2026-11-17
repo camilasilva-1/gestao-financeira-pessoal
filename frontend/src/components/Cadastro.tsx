@@ -10,16 +10,14 @@ export const Cadastro: React.FC<CadastroProps> = ({ onCadastroSuccess, onNavigat
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [salarioLiquido, setSalarioLiquido] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [carregando, setCarregando] = useState(false);
-  const [erros, setErros] = useState<{
-    nome?: string;
-    email?: string;
-    senha?: string;
-    confirmarSenha?: string;
-    geral?: string
-    salarioLiquido?: string;
+  const [erros, setErros] = useState<{ 
+    nome?: string; 
+    email?: string; 
+    senha?: string; 
+    confirmarSenha?: string; 
+    geral?: string 
   }>({});
 
   const validar = () => {
@@ -28,10 +26,7 @@ export const Cadastro: React.FC<CadastroProps> = ({ onCadastroSuccess, onNavigat
     const regexSenhaForte = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
 
     if (!nome.trim()) novosErros.nome = 'O nome completo é obrigatório.';
-    if (salarioLiquido && Number(salarioLiquido) <= 0) {
-      novosErros.salarioLiquido = 'Informe um salário maior que zero.';
-  }
-
+    
     if (!email) {
       novosErros.email = 'O e-mail é obrigatório.';
     } else if (!regexEmail.test(email)) {
@@ -60,20 +55,15 @@ export const Cadastro: React.FC<CadastroProps> = ({ onCadastroSuccess, onNavigat
 
       try {
         // 1. Chamada assíncrona ao Spring Boot
-        await cadastrarUsuario({
-        nome,
-       email,
-      senha,
-      ...(salarioLiquido ? { salarioLiquido: Number(salarioLiquido) } : {})
-      });
-
+        await cadastrarUsuario({ nome, email, senha });
+        
         setCarregando(false);
         // 2. Notifica o componente pai sobre o sucesso do cadastro
         onCadastroSuccess();
       } catch (err: any) {
         setCarregando(false);
-        setErros({
-          geral: err.message || 'Erro ao cadastrar usuário. Verifique se o e-mail já está em uso.'
+        setErros({ 
+          geral: err.message || 'Erro ao cadastrar usuário. Verifique se o e-mail já está em uso.' 
         });
       }
     }
@@ -81,13 +71,13 @@ export const Cadastro: React.FC<CadastroProps> = ({ onCadastroSuccess, onNavigat
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-[#8a0047] via-[#c4003d] to-[#e60039] px-4 py-8 relative overflow-hidden">
-
+      
       {/* Efeitos sutis de iluminação no fundo */}
       <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-black/20 rounded-full blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-md space-y-6 z-10">
-
+        
         {/* Marca/Cabeçalho da tela */}
         <div className="text-center space-y-2">
           <div className="flex justify-center mb-1">
@@ -155,26 +145,6 @@ export const Cadastro: React.FC<CadastroProps> = ({ onCadastroSuccess, onNavigat
               />
               {erros.email && <p className="mt-1 text-xs text-red-500 font-medium">{erros.email}</p>}
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Salário Líquido Mensal (R$) — opcional
-              </label>
-
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={salarioLiquido}
-                onChange={(e) => setSalarioLiquido(e.target.value)}
-                placeholder="Ex: 2500.00"
-                className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d] transition"
-                />
-                  {erros.salarioLiquido && (
-                    <p className="mt-1 text-xs text-red-500 font-medium">
-                      {erros.salarioLiquido}
-                    </p>
-                  )}
-              </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">

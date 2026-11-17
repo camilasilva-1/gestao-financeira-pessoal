@@ -1,17 +1,8 @@
 const API_BASE_URL = 'http://localhost:8080/api';
 
 // 1. Função de Login
-interface UsuarioLogin {
-  idUsuario: number;
-  id?: number;
-  nome: string;
-  email: string;
-  salarioLiquido: number;
-}
-
-export const loginUsuario = async (
-  credentials: { email: string; senha: string }
-): Promise<UsuarioLogin> => {
+// 1. Função de Login
+export const loginUsuario = async (credentials: { email: string; senha: string }) => {
   const response = await fetch(`${API_BASE_URL}/usuarios/login`, {
     method: 'POST',
     credentials: 'include',
@@ -23,14 +14,14 @@ export const loginUsuario = async (
   });
 
   if (!response.ok) {
-    throw new Error('Falha na autenticação. Verifique o e-mail e a senha.');
+    throw new Error('Falha na autenticação. Verifique o e-mail e a palavra-passe.');
   }
 
   return response.json();
 };
 
 // 2. Função de Registo/Cadastro
-export const cadastrarUsuario = async (usuarioData: { nome: string; email: string; senha: string; salarioLiquido?: number }) => {
+export const cadastrarUsuario = async (usuarioData: { nome: string; email: string; senha: string }) => {
   const response = await fetch(`${API_BASE_URL}/usuarios`, {
     method: 'POST',
     credentials: 'include',
@@ -53,9 +44,7 @@ export const cadastrarTransacao = async (transacaoData: {
   descricao: string;
   valor: number;
   tipo: 'RECEITA' | 'DESPESA';
-  categoriaId?: number;
-  estabelecimento?: string;
-  recorrencia?: boolean;
+  categoriaId: number;
   usuarioId: number;
   dataTransacao: string;
 }) => {
@@ -78,55 +67,12 @@ export const cadastrarTransacao = async (transacaoData: {
 
 // 4. Listar todas as Transações do Utilizador
 export const listarTransacoes = async (usuarioId: number) => {
-  const response = await fetch(`${API_BASE_URL}/transacoes/usuario/${usuarioId}`, { credentials: 'include' });
+  const response = await fetch(`${API_BASE_URL}/transacoes/usuario/${usuarioId}`, {
+    credentials: 'include',
+  });
 
   if (!response.ok) {
     throw new Error('Erro ao procurar as transações.');
-  }
-
-  return response.json();
-};
-
-// 5. Atualizar uma Transação
-export const atualizarTransacao = async (
-  id: string,
-  usuarioId: number,
-  transacaoData: {
-    descricao: string;
-    valor: number;
-    tipo: 'RECEITA' | 'DESPESA';
-    dataTransacao: string;
-    estabelecimento?: string;
-    recorrencia?: boolean;
-    categoria?: { idCategoria: number };
-  }
-) => {
-  const response = await fetch(
-    `${API_BASE_URL}/transacoes/${id}/usuario/${usuarioId}`,
-    {
-      method: 'PUT',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      body: JSON.stringify(transacaoData),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error('Erro ao atualizar transação');
-  }
-
-  return response.json();
-};
-
-// 6. Listar categorias
-export const listarCategorias = async () => {
-  const response = await fetch(`${API_BASE_URL.replace('/api', '')}/categorias`);
-
-  if (!response.ok) {
-    throw new Error('Erro ao buscar categorias.');
   }
 
   return response.json();

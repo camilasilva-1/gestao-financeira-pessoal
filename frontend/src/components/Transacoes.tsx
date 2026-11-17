@@ -1,26 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import type { Transacao, CategoriaAPI } from '../types';
+import type { Transacao } from '../types';
 import { ModalEditarTransacao } from './ModalEditarTransacao';
-import { cadastrarTransacao,listarTransacoes,atualizarTransacao,listarCategorias } from '../Services/api';
+import { cadastrarTransacao, listarTransacoes } from '../Services/api';
 
 interface TransacoesProps {
   transacoes: Transacao[];
   setTransacoes: React.Dispatch<React.SetStateAction<Transacao[]>>;
   categorias: string[];
+  adicionarCategoria: (novaCat: string) => void;
 }
 
 export const Transacoes: React.FC<TransacoesProps> = ({
   transacoes,
   setTransacoes,
-  categorias
+  categorias,
+  adicionarCategoria
 }) => {
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
   const [data, setData] = useState('');
   const [tipo, setTipo] = useState<'RECEITA' | 'DESPESA'>('RECEITA');
-  const [categoria, setCategoria] = useState<string>('');
+  const [categoria, setCategoria] = useState<string>(
+    categorias && categorias.length > 0 ? categorias[0] : 'Alimentação'
+  );
   const [establishment, setEstablishment] = useState('');
-  const [recorrente, setRecorrente] = useState(false);
   const [carregando, setCarregando] = useState(false);
 
   // Filtros
@@ -28,22 +31,6 @@ export const Transacoes: React.FC<TransacoesProps> = ({
   const [filtroTipo, setFiltroTipo] = useState<'TODOS' | 'RECEITA' | 'DESPESA'>('TODOS');
   const [filtroCategoria, setFiltroCategoria] = useState('TODAS');
   const [filtroPeriodo, setFiltroPeriodo] = useState<'TODOS' | 'ESTE_MES' | 'MES_PASSADO' | 'ESTE_ANO'>('TODOS');
-  const [dataInicial, setDataInicial] = useState('');
-  const [dataFinal, setDataFinal] = useState('');
-  const [filtroEstabelecimento, setFiltroEstabelecimento] = useState('');
-  const [filtroRecorrencia, setFiltroRecorrencia] = useState<'TODOS' | 'SIM' | 'NAO'>('TODOS');
-
-  const [categoriasComId, setCategoriasComId] = useState<CategoriaAPI[]>([]);
-
-  useEffect(() => {
-  listarCategorias()
-    .then((dados: CategoriaAPI[]) => {
-      setCategoriasComId(dados);
-    })
-    .catch((erro) => {
-      console.error('Erro ao carregar categorias:', erro);
-    });
-}, []);
 
   // Modal de Edição
   const [transacaoParaEditar, setTransacaoParaEditar] = useState<Transacao | null>(null);
@@ -64,11 +51,8 @@ export const Transacoes: React.FC<TransacoesProps> = ({
               valor: typeof t.valor === 'number' ? t.valor : parseFloat(t.valor),
               data: t.dataTransacao || t.data,
               tipo: t.tipo,
-              categoria: t.categoria?.nome ?? '',
-              establishment: t.estabelecimento,
-              usuarioId: t.usuario?.idUsuario,
-              recorrente: t.recorrencia ?? false,
-              categoriaId: t.categoria?.idCategoria
+              categoria: typeof t.categoria === 'object' ? t.categoria.nome : t.categoria,
+              establishment: t.estabelecimento
             }));
             setTransacoes(formatadas);
           }
@@ -78,8 +62,8 @@ export const Transacoes: React.FC<TransacoesProps> = ({
   }, [setTransacoes]);
 
   useEffect(() => {
-    if (categoria && !categorias.includes(categoria)) {
-      setCategoria('');
+    if (categorias && categorias.length > 0 && !categorias.includes(categoria)) {
+      setCategoria(categorias[0]);
     }
   }, [categorias, categoria]);
 
@@ -89,21 +73,7 @@ export const Transacoes: React.FC<TransacoesProps> = ({
     if (!descricao || !valor || !data) return;
 
     const usuarioIdSalvo = localStorage.getItem('usuarioId');
-
-    if (!usuarioIdSalvo) {
-      alert('Usuário não identificado. Faça login novamente.');
-      return;
-    }
-
-    const usuarioIdNum = Number(usuarioIdSalvo);
-    const categoriaIdSelecionada = categoriasComId.find(
-      c => c.nome?.trim().toLowerCase() === categoria.trim().toLowerCase()
-      )?.idCategoria;
-
-      if (tipo === 'DESPESA' && !categoriaIdSelecionada) {
-      alert('Selecione uma categoria para a despesa.');
-      return;
-    }
+    const usuarioIdNum = usuarioIdSalvo ? parseInt(usuarioIdSalvo, 10) : 1;
 
     setCarregando(true);
 
@@ -112,27 +82,23 @@ export const Transacoes: React.FC<TransacoesProps> = ({
         descricao,
         valor: parseFloat(valor),
         tipo,
-        categoriaId: categoriaIdSelecionada, // ID da categoria padrão no banco
+        categoriaId: 1, // ID da categoria padrão no banco
         usuarioId: usuarioIdNum,
         dataTransacao: data,
-        estabelecimento: establishment.trim() ? establishment.trim() : undefined,
-        recorrencia: recorrente
+        estabelecimento: establishment.trim() ? establishment.trim() : undefined
       };
 
       const res = await cadastrarTransacao(payload);
 
       // Adiciona na lista do estado
       const nova: Transacao = {
-        id: String(res.idTransacao),
+        id: String(res.idTransacao || Date.now()),
         descricao,
         valor: parseFloat(valor),
         data,
         tipo,
         categoria,
-        recorrente,
-        establishment: establishment.trim() ? establishment.trim() : undefined,
-        usuarioId: usuarioIdNum,
-        categoriaId: payload.categoriaId
+        establishment: establishment.trim() ? establishment.trim() : undefined
       };
 
       setTransacoes([nova, ...transacoes]);
@@ -141,7 +107,6 @@ export const Transacoes: React.FC<TransacoesProps> = ({
       setDescricao('');
       setValor('');
       setEstablishment('');
-      setRecorrente(false);
       setData('');
     } catch (err) {
       console.error('Erro ao cadastrar transação:', err);
@@ -152,79 +117,25 @@ export const Transacoes: React.FC<TransacoesProps> = ({
   };
 
   // 3. Exclui transação
-const handleExcluir = async (id: string) => {
-  if (confirm('Deseja realmente excluir esta transação?')) {
-    try {
-      const usuarioId = localStorage.getItem('usuarioId');
-
-      if (!usuarioId) {
-        alert('Usuário não identificado. Faça login novamente.');
-        return;
+  const handleExcluir = async (id: string) => {
+    if (confirm('Deseja realmente excluir esta transação?')) {
+      try {
+        await fetch(`http://localhost:8080/api/transacoes/${id}`, { method: 'DELETE' });
+        setTransacoes(transacoes.filter(t => t.id !== id));
+      } catch (err) {
+        console.error('Erro ao excluir transação:', err);
       }
-
-      const resposta = await fetch(
-        `http://localhost:8080/api/transacoes/${id}/usuario/${usuarioId}`,
-        { method: 'DELETE', credentials: 'include', headers: { 'X-Requested-With': 'XMLHttpRequest' } }
-      );
-
-      if (!resposta.ok) {
-        throw new Error('Erro ao excluir transação');
-      }
-
-      setTransacoes(transacoes.filter(t => t.id !== id));
-
-    } catch (err) {
-      console.error('Erro ao excluir transação:', err);
-      alert('Não foi possível excluir a transação.');
     }
-  }
-};
+  };
 
   const handleAbrirEditar = (t: Transacao) => {
     setTransacaoParaEditar(t);
     setIsModalOpen(true);
   };
 
-  const handleSalvarEdicao = async (transacaoAtualizada: Transacao) => {
-  try {
-    const categoriaId = categoriasComId.find(
-      c => c.nome?.trim().toLowerCase() === (transacaoAtualizada.categoria ?? '').trim().toLowerCase()
-    )?.idCategoria ?? transacaoAtualizada.categoriaId;
-
-    const usuarioId = Number(localStorage.getItem('usuarioId'));
-
-    if ((transacaoAtualizada.tipo === 'DESPESA' && !categoriaId) || !usuarioId) {
-      throw new Error('ID do usuário ou da categoria não encontrado.');
-    }
-
-    const transacaoSalva = {
-      ...transacaoAtualizada,
-      categoriaId
-    };
-
-    await atualizarTransacao(
-      transacaoSalva.id,
-      usuarioId,
-      {
-        descricao: transacaoSalva.descricao,
-        valor: transacaoSalva.valor,
-        tipo: transacaoSalva.tipo,
-        dataTransacao: transacaoSalva.data,
-        estabelecimento: transacaoSalva.establishment,
-        recorrencia: transacaoSalva.recorrente,
-        categoria: categoriaId ? { idCategoria: categoriaId } : undefined
-      }
-    );
-
-    setTransacoes(transacoes.map(t =>
-      t.id === transacaoSalva.id ? transacaoSalva : t
-    ));
-
-  } catch (erro) {
-    console.error('Erro ao atualizar transação:', erro);
-    alert('Não foi possível salvar a alteração.');
-  }
-};
+  const handleSalvarEdicao = (transacaoAtualizada: Transacao) => {
+    setTransacoes(transacoes.map(t => t.id === transacaoAtualizada.id ? transacaoAtualizada : t));
+  };
 
   const ehNoPeriodo = (dataString: string) => {
     if (filtroPeriodo === 'TODOS') return true;
@@ -257,15 +168,9 @@ const handleExcluir = async (id: string) => {
     const bateTipo = filtroTipo === 'TODOS' || t.tipo === filtroTipo;
     const bateCat = filtroCategoria === 'TODAS' || (filtroCategoria === 'SEM_CATEGORIA' ? !t.categoria : t.categoria === filtroCategoria);
     const batePeriodo = ehNoPeriodo(t.data);
-    const bateInicio = !dataInicial || t.data >= dataInicial;
-    const bateFim = !dataFinal || t.data <= dataFinal;
-    const bateEstabelecimento = !filtroEstabelecimento ||
-      (t.establishment ?? '').toLowerCase().includes(filtroEstabelecimento.toLowerCase());
-    const bateRecorrencia = filtroRecorrencia === 'TODOS' ||
-      (filtroRecorrencia === 'SIM' ? t.recorrente === true : t.recorrente !== true);
 
-    return bateTexto && bateTipo && bateCat && batePeriodo && bateInicio && bateFim && bateEstabelecimento && bateRecorrencia;
-  }).sort((a, b) => b.data.localeCompare(a.data) || Number(b.id) - Number(a.id));
+    return bateTexto && bateTipo && bateCat && batePeriodo;
+  });
 
   return (
     <div className="space-y-6">
@@ -328,7 +233,6 @@ const handleExcluir = async (id: string) => {
                 onChange={(e) => setCategoria(e.target.value)}
                 className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
               >
-                <option value="">{tipo === 'RECEITA' ? 'Sem categoria' : 'Selecione uma categoria'}</option>
                 {categorias.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
@@ -346,10 +250,6 @@ const handleExcluir = async (id: string) => {
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            <input type="checkbox" checked={recorrente} onChange={e => setRecorrente(e.target.checked)} />
-            Transação recorrente
-          </label>
           <div className="flex justify-end">
             <button
               type="submit"
@@ -363,6 +263,52 @@ const handleExcluir = async (id: string) => {
       </div>
 
       {/* Histórico com Barra de Filtros */}
+<<<<<<< HEAD
+      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b pb-4">
+          <h2 className="text-lg font-bold text-slate-800">Histórico de Transações</h2>
+          
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="text"
+              placeholder="Buscar por descrição..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+
+            <select
+              value={filtroPeriodo}
+              onChange={(e) => setFiltroPeriodo(e.target.value as any)}
+              className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
+            >
+              <option value="TODOS">Todos os Períodos</option>
+              <option value="ESTE_MES">Este Mês</option>
+              <option value="MES_PASSADO">Mês Passado</option>
+              <option value="ESTE_ANO">Este Ano</option>
+            </select>
+
+            <select
+              value={filtroTipo}
+              onChange={(e) => setFiltroTipo(e.target.value as 'TODOS' | 'RECEITA' | 'DESPESA')}
+              className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
+            >
+              <option value="TODOS">Todos os Tipos</option>
+              <option value="RECEITA">Receitas</option>
+              <option value="DESPESA">Despesas</option>
+            </select>
+
+            <select
+              value={filtroCategoria}
+              onChange={(e) => setFiltroCategoria(e.target.value)}
+              className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
+            >
+              <option value="TODAS">Todas as Categorias</option>
+              {categorias.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+=======
       <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-2">
         <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] gap-3 border-b pb-3">
           <h2 className="text-lg font-bold text-slate-800 lg:pt-1 lg:whitespace-nowrap">
@@ -438,6 +384,7 @@ const handleExcluir = async (id: string) => {
                 </select>
               </div>
             </div>
+>>>>>>> origin/main
           </div>
         </div>
 
@@ -471,7 +418,7 @@ const handleExcluir = async (id: string) => {
                     </td>
                     <td className="py-3">
                       <span className="px-2.5 py-1 text-xs rounded-full bg-slate-100 text-slate-600">
-                        {t.categoria || 'Sem categoria'}
+                        {t.categoria}
                       </span>
                     </td>
                     <td className="py-3 text-slate-500 text-xs">{t.data}</td>

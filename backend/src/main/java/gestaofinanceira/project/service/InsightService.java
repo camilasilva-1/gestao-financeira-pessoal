@@ -181,7 +181,115 @@ public class InsightService {
         return insights;
     }
 
+<<<<<<< HEAD
+        // ============================
+    // DETECÇÃO DE QUEDA DE RENDA
+    // ============================
+    public InsightDTO detectarQuedaRenda(Integer usuarioId) {
+
+        // Identifica o último mês completo
+        LocalDate fimUltimoMes = LocalDate.now()
+                .withDayOfMonth(1)
+                .minusDays(1);
+
+        LocalDate inicioUltimoMes = fimUltimoMes
+                .withDayOfMonth(1);
+
+        // Identifica os três meses completos anteriores
+        LocalDate fimTresMeses = inicioUltimoMes.minusDays(1);
+
+        LocalDate inicioTresMeses = fimTresMeses
+                .minusMonths(2)
+                .withDayOfMonth(1);
+
+        // Consulta as receitas dos períodos
+        BigDecimal receitaUltimoMes =
+                transacaoService.calcularReceitaPorPeriodo(
+                        usuarioId,
+                        inicioUltimoMes,
+                        fimUltimoMes);
+
+        BigDecimal totalTresMeses =
+                transacaoService.calcularReceitaPorPeriodo(
+                        usuarioId,
+                        inicioTresMeses,
+                        fimTresMeses);
+
+        // Calcula a média de receita dos três meses
+        BigDecimal mediaTresMeses = totalTresMeses
+                .divide(BigDecimal.valueOf(3), 2, RoundingMode.HALF_UP);
+
+        // Verifica se existem dados suficientes
+        if (mediaTresMeses.compareTo(BigDecimal.ZERO) <= 0) {
+            return new InsightDTO(
+                    "Sem dados suficientes",
+                    "Não há receitas registradas nos três meses anteriores para comparar.",
+                    LocalDate.now(),
+                    "Informativo"
+            );
+        }
+
+        // Calcula o percentual de queda da receita
+        BigDecimal percentualQueda = mediaTresMeses
+                .subtract(receitaUltimoMes)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(mediaTresMeses, 2, RoundingMode.HALF_UP);
+
+        // Identifica queda igual ou superior a 20%
+        if (percentualQueda.compareTo(BigDecimal.valueOf(20)) >= 0) {
+
+            return new InsightDTO(
+                    "Queda de renda",
+                    "Sua receita registrada caiu "
+                            + percentualQueda
+                            + "% em relação à média dos três meses anteriores.",
+                    LocalDate.now(),
+                    "Atenção"
+            );
+        }
+
+        return new InsightDTO(
+                "Renda estável",
+                "Não foi identificada queda de receita igual ou superior a 20%.",
+                LocalDate.now(),
+                "Informativo"
+        );
+    }
+
+    private BigDecimal calcularMediaDespesas(Integer usuarioId) {
+
+    LocalDate fim = LocalDate.now()
+            .withDayOfMonth(1)
+            .minusDays(1);
+
+    LocalDate inicio = fim
+            .withDayOfMonth(1)
+            .minusMonths(5);
+
+    BigDecimal totalDespesas =
+            transacaoService.calcularDespesaPorPeriodo(
+                    usuarioId,
+                    inicio,
+                    fim);
+
+    return totalDespesas.divide(
+            BigDecimal.valueOf(6),
+            2,
+            RoundingMode.HALF_UP);
+}
+
+    private BigDecimal calcularReservaIdeal(Integer usuarioId) {
+
+    BigDecimal mediaDespesas = calcularMediaDespesas(usuarioId);
+
+    return mediaDespesas.multiply(BigDecimal.valueOf(6))
+            .setScale(2, RoundingMode.HALF_UP);
+}
+
+    // ============================
+=======
     // ============================================
+>>>>>>> origin/main
     // GERAÇÃO DE ALERTAS
     // ============================================
 
@@ -542,6 +650,15 @@ public class InsightService {
     // ALERTA DE RESERVA INSUFICIENTE
     // ============================================
 
+<<<<<<< HEAD
+    // ============================
+// ALERTA DE RESERVA INSUFICIENTE
+// ============================
+
+public InsightDTO gerarAlertaReservaInsuficiente(Integer usuarioId) {
+
+    BigDecimal reservaIdeal = calcularReservaIdeal(usuarioId);
+=======
     public InsightDTO gerarAlertaReservaInsuficiente(
             Integer usuarioId) {
 
@@ -599,12 +716,26 @@ public class InsightService {
                     "Atenção"
             );
         }
+>>>>>>> origin/main
 
+    if (reservaIdeal.compareTo(BigDecimal.ZERO) <= 0) {
         return new InsightDTO(
-                "Reserva adequada",
-                "Sua reserva de emergência está dentro do valor recomendado.",
+                "Dados insuficientes",
+                "Não há despesas registradas nos últimos seis meses para calcular sua reserva de emergência.",
                 LocalDate.now(),
                 "Informativo"
         );
     }
+<<<<<<< HEAD
+
+    return new InsightDTO(
+            "Reserva de emergência",
+            "Com base na média das suas despesas dos últimos seis meses, sua reserva de emergência recomendada é de R$ "
+                    + reservaIdeal + ".",
+            LocalDate.now(),
+            "Informativo"
+    );
+}
+=======
+>>>>>>> origin/main
 }

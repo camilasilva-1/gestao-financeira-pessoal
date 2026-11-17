@@ -56,12 +56,9 @@ export const Login: React.FC<LoginProps> = ({
         const usuario = await loginUsuario({ email, senha });
 
         // 2. Guarda o id do utilizador no navegador para usar nas requisições do Dashboard/Transações
-        localStorage.setItem('usuarioId', String(usuario.idUsuario));
+        localStorage.setItem('usuarioId', usuario.idUsuario || usuario.id);
         if (usuario.nome) {
           localStorage.setItem('usuarioNome', usuario.nome);
-        }
-        if (usuario.salarioLiquido !== undefined && usuario.salarioLiquido !== null) {
-          localStorage.setItem('salarioLiquido', String(usuario.salarioLiquido));
         }
 
         setCarregando(false);
@@ -78,13 +75,13 @@ export const Login: React.FC<LoginProps> = ({
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-[#8a0047] via-[#c4003d] to-[#e60039] px-4 py-8 relative overflow-hidden">
-
+      
       {/* Efeitos sutis de iluminação no fundo */}
       <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
       <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-black/20 rounded-full blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-md space-y-6 z-10">
-
+        
         {/* Marca/Cabeçalho da tela de apresentação */}
         <div className="text-center space-y-2 animate-fade-in">
           <div className="flex justify-center mb-1 transition-transform duration-300 hover:scale-105">
@@ -108,7 +105,7 @@ export const Login: React.FC<LoginProps> = ({
         </div>
 
         {/* Card do Formulário */}
-        <div
+        <div 
           className={`bg-white/95 backdrop-blur-md p-6 sm:p-8 rounded-2xl shadow-2xl space-y-5 border border-white/20 transition-all duration-300 ${
             shake ? 'animate-bounce' : ''
           }`}
