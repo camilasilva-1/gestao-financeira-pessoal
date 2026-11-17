@@ -14,14 +14,20 @@ export const ScoreCard = ({ atualizarGatilho }: ScoreCardProps) => {
   const [dadosScore, setDadosScore] = useState<ScoreFinanceiro | null>(null);
   const [carregando, setCarregando] = useState(true);
 
-  useEffect(() => {
-    const usuarioId = localStorage.getItem('usuarioId');
+ useEffect(() => {
+    const usuarioSalvo = localStorage.getItem('usuario');
+    const usuarioId =
+      localStorage.getItem('usuarioId') ||
+      (usuarioSalvo ? JSON.parse(usuarioSalvo).idUsuario : null);
+
     if (!usuarioId) {
       setCarregando(false);
       return;
     }
 
-    fetch(`http://localhost:8080/insights/${usuarioId}/score`)
+    fetch(`http://localhost:8080/insights/${usuarioId}/score`, {
+      credentials: 'include',
+    })
       .then((res) => {
         if (!res.ok) throw new Error('Erro ao buscar score');
         return res.json();

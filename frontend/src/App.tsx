@@ -10,6 +10,9 @@ import type { Transacao, Orcamento } from './types';
 import { CATEGORIAS_PADRAO } from './types';
 import { Relatorios } from './components/Relatorios';
 import { ScoreCard } from './components/ScoreCard';
+import { AlertasFinanceiros } from './components/AlertasFinanceiros';
+import { EvolucaoPatrimonio } from './components/EvolucaoPatrimonio';
+
 
 function App() {
   // Inicialização inteligente: se houver 'usuarioId' no localStorage, inicia direto em 'app'
@@ -88,17 +91,23 @@ function App() {
       />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 -mt-6">
-        <main className="space-y-6">
+       <main className="space-y-6">
           {/* 1. Cards de Indicadores */}
           <Dashboard transacoes={transacoes} />
 
           {/* 2. Faixa do Score Financeiro */}
           <ScoreCard atualizarGatilho={transacoes} />
 
-          {/* 3. Evolução Mensal e Ranking */}
+          {/* 3. Diagnósticos de Queda de Renda e Reserva de Emergência */}
+          <AlertasFinanceiros atualizarGatilho={transacoes} />
+
+          {/* 4. Evolução do Patrimônio */}
+          <EvolucaoPatrimonio transacoes={transacoes} />
+
+          {/* 5. Evolução Mensal e Ranking */}
           <Relatorios transacoes={transacoes} />
 
-          {/* 4. Nova Transação e Histórico */}
+          {/* 6. Nova Transação e Histórico */}
           <Transacoes 
             transacoes={transacoes} 
             setTransacoes={setTransacoes} 
@@ -106,12 +115,14 @@ function App() {
             adicionarCategoria={adicionarCategoria}
           />
           
-          {/* 5. Orçamentos e Metas */}
+         
+         {/* 7. Orçamentos e Metas */}
           <OrcamentosEMetas 
             transacoes={transacoes} 
             orcamentos={orcamentos} 
             setOrcamentos={setOrcamentos} 
             categorias={categorias}
+            categoriasAPI={[]}
           />
         </main>
       </div>
