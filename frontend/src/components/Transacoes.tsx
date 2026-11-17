@@ -166,7 +166,7 @@ export const Transacoes: React.FC<TransacoesProps> = ({
     const bateTexto = t.descricao.toLowerCase().includes(busca.toLowerCase()) ||
       (t.establishment && t.establishment.toLowerCase().includes(busca.toLowerCase()));
     const bateTipo = filtroTipo === 'TODOS' || t.tipo === filtroTipo;
-    const bateCat = filtroCategoria === 'TODAS' || t.categoria === filtroCategoria;
+    const bateCat = filtroCategoria === 'TODAS' || (filtroCategoria === 'SEM_CATEGORIA' ? !t.categoria : t.categoria === filtroCategoria);
     const batePeriodo = ehNoPeriodo(t.data);
 
     return bateTexto && bateTipo && bateCat && batePeriodo;
@@ -263,6 +263,7 @@ export const Transacoes: React.FC<TransacoesProps> = ({
       </div>
 
       {/* Histórico com Barra de Filtros */}
+<<<<<<< HEAD
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b pb-4">
           <h2 className="text-lg font-bold text-slate-800">Histórico de Transações</h2>
@@ -307,6 +308,83 @@ export const Transacoes: React.FC<TransacoesProps> = ({
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
+=======
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-2">
+        <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] gap-3 border-b pb-3">
+          <h2 className="text-lg font-bold text-slate-800 lg:pt-1 lg:whitespace-nowrap">
+            Histórico de Transações
+          </h2>
+
+          <div className="min-w-0 space-y-2">
+            {/* Linha 1: filtros principais alinhados */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
+              <input type="text" placeholder="Buscar por descrição..." value={busca}
+                onChange={e => setBusca(e.target.value)}
+                aria-label="Buscar por descrição"
+                className="w-full min-w-0 h-9 border border-slate-300 rounded-lg px-3 text-xs" />
+              <select value={filtroPeriodo}
+                onChange={e => setFiltroPeriodo(e.target.value as 'TODOS' | 'ESTE_MES' | 'MES_PASSADO' | 'ESTE_ANO')}
+                aria-label="Período"
+                className="w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs">
+                <option value="TODOS">Todos os Períodos</option>
+                <option value="ESTE_MES">Este Mês</option>
+                <option value="MES_PASSADO">Mês Passado</option>
+                <option value="ESTE_ANO">Este Ano</option>
+              </select>
+              <select value={filtroTipo}
+                onChange={e => setFiltroTipo(e.target.value as 'TODOS' | 'RECEITA' | 'DESPESA')}
+                aria-label="Tipo de transação"
+                className="w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs">
+                <option value="TODOS">Todos os Tipos</option>
+                <option value="RECEITA">Receitas</option>
+                <option value="DESPESA">Despesas</option>
+              </select>
+              <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)}
+                aria-label="Categoria"
+                className="w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs">
+                <option value="TODAS">Todas as Categorias</option>
+                <option value="SEM_CATEGORIA">Sem categoria</option>
+                {categorias.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+              </select>
+            </div>
+
+            {/* Linha 2: filtros adicionais com campos do mesmo tamanho */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
+              <label className="block min-w-0 text-xs text-slate-600">
+                De
+                <input type="date" value={dataInicial} onChange={e => setDataInicial(e.target.value)}
+                  className="mt-0.5 block w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs" />
+              </label>
+              <label className="block min-w-0 text-xs text-slate-600">
+                Até
+                <input type="date" min={dataInicial || undefined} value={dataFinal}
+                  onChange={e => setDataFinal(e.target.value)}
+                  className="mt-0.5 block w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs" />
+              </label>
+              <label className="block min-w-0 text-xs text-slate-600">
+                Estabelecimento
+                <input type="text" placeholder="Nome do estabelecimento" value={filtroEstabelecimento}
+                  onChange={e => setFiltroEstabelecimento(e.target.value)}
+                  className="mt-0.5 block w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs" />
+              </label>
+              <div className="block min-w-0">
+                <div className="flex items-center justify-between gap-2 text-xs text-slate-600">
+                  <label htmlFor="filtro-recorrencia">Recorrência</label>
+                  <button type="button" onClick={() => {
+                    setBusca(''); setFiltroTipo('TODOS'); setFiltroCategoria('TODAS'); setFiltroPeriodo('TODOS');
+                    setDataInicial(''); setDataFinal(''); setFiltroEstabelecimento(''); setFiltroRecorrencia('TODOS');
+                  }} className="text-blue-600 hover:underline whitespace-nowrap">Limpar filtros</button>
+                </div>
+                <select id="filtro-recorrencia" value={filtroRecorrencia}
+                  onChange={e => setFiltroRecorrencia(e.target.value as 'TODOS' | 'SIM' | 'NAO')}
+                  className="mt-0.5 block w-full min-w-0 h-9 border border-slate-300 rounded-lg px-2 text-xs">
+                  <option value="TODOS">Todas as recorrências</option>
+                  <option value="SIM">Recorrentes</option>
+                  <option value="NAO">Não recorrentes</option>
+                </select>
+              </div>
+            </div>
+>>>>>>> origin/main
           </div>
         </div>
 

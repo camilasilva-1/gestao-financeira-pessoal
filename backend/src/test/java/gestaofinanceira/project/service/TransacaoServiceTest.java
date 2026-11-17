@@ -161,4 +161,68 @@ public class TransacaoServiceTest {
         assertThrows(IllegalArgumentException.class, () -> transacaoService.adicionarDTO(dto));
     }
 
+
+    @Test
+    void rejeitaValorZero() {
+        Transacao t = new Transacao();
+        t.setDescricao("Teste");
+        t.setValor(java.math.BigDecimal.ZERO);
+        t.setTipo(Tipo.RECEITA);
+        t.setDataTransacao(LocalDate.of(2026, 11, 8));
+        assertThrows(IllegalArgumentException.class, () -> transacaoService.adicionar(t));
+    }
+
+    @Test
+    void rejeitaValorNegativo() {
+        Transacao t = new Transacao();
+        t.setDescricao("Teste");
+        t.setValor(new java.math.BigDecimal("-1"));
+        t.setTipo(Tipo.RECEITA);
+        t.setDataTransacao(LocalDate.of(2026, 11, 8));
+        assertThrows(IllegalArgumentException.class, () -> transacaoService.adicionar(t));
+    }
+
+    @Test
+    void rejeitaDescricaoEmBranco() {
+        Transacao t = new Transacao();
+        t.setDescricao("   ");
+        t.setValor(new java.math.BigDecimal("5"));
+        t.setTipo(Tipo.RECEITA);
+        t.setDataTransacao(LocalDate.of(2026, 11, 8));
+        assertThrows(IllegalArgumentException.class, () -> transacaoService.adicionar(t));
+    }
+
+    @Test
+    void rejeitaDespesaSemCategoria() {
+        Transacao t = new Transacao();
+        t.setDescricao("Despesa");
+        t.setValor(new java.math.BigDecimal("5"));
+        t.setTipo(Tipo.DESPESA);
+        t.setDataTransacao(LocalDate.of(2026, 11, 8));
+        Usuario usuario = new Usuario();
+        usuario.setIdUsuario(1);
+        t.setUsuario(usuario);
+        assertThrows(IllegalArgumentException.class, () -> transacaoService.adicionar(t));
+    }
+
+    @Test
+    void naoEditaTransacaoDeOutroUsuario() {
+        Usuario proprietario = new Usuario();
+        proprietario.setIdUsuario(1);
+        Transacao existente = new Transacao();
+        existente.setUsuario(proprietario);
+        when(transacaoRepository.findById(9)).thenReturn(Optional.of(existente));
+        assertThrows(RuntimeException.class, () -> transacaoService.editar(9, 2, new Transacao()));
+    }
+
+    @Test
+    void naoExcluiTransacaoDeOutroUsuario() {
+        Usuario proprietario = new Usuario();
+        proprietario.setIdUsuario(1);
+        Transacao existente = new Transacao();
+        existente.setUsuario(proprietario);
+        when(transacaoRepository.findById(9)).thenReturn(Optional.of(existente));
+        assertThrows(RuntimeException.class, () -> transacaoService.remover(9, 2));
+    }
+
 }

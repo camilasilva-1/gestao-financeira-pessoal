@@ -41,6 +41,95 @@ function App() {
     }
   };
 
+<<<<<<< HEAD
+=======
+  buscarTransacoes();
+}, [telaAtual]);
+
+
+  const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
+const [carregandoOrcamentos, setCarregandoOrcamentos] = useState(true);
+
+useEffect(() => {
+  const buscarOrcamentos = async () => {
+    setCarregandoOrcamentos(true);
+    try {
+      if (telaAtual !== 'app') return;
+      const usuarioId = localStorage.getItem('usuarioId');
+
+      if (!usuarioId) {
+          setOrcamentos([]);
+        return;
+      }
+      const resposta = await fetch(
+        `http://localhost:8080/orcamentos/usuario/${usuarioId}`,
+        { credentials: 'include' }
+      );
+
+      if (!resposta.ok) {
+        throw new Error('Erro ao buscar orçamentos');
+      }
+
+      const dados: OrcamentoAPI[] = await resposta.json();
+
+
+const orcamentosFormatados: Orcamento[] = await Promise.all(
+  dados.map(async (orcamento) => {
+    const respostaGasto = await fetch(
+      `http://localhost:8080/orcamentos/${orcamento.idOrcamento}/gasto`,
+      { credentials: 'include' }
+    );
+
+    if (!respostaGasto.ok) {
+      throw new Error('Erro ao buscar gasto do orçamento');
+    }
+
+    const gasto = await respostaGasto.json();
+
+    return {
+      id: String(orcamento.idOrcamento),
+      categoria: orcamento.categoria.nome,
+      limite: Number(orcamento.limiteValor),
+      gasto: Number(gasto),
+    };
+  })
+);
+
+      setOrcamentos(orcamentosFormatados);
+    } catch (erro) {
+      console.error('Erro ao carregar orçamentos:', erro);
+    } finally {
+      setCarregandoOrcamentos(false);
+    }
+  };
+
+  buscarOrcamentos();
+// Recalcular os gastos mensais quando as transacoes forem alteradas.
+}, [telaAtual, transacoes]);
+
+  const [categorias] = useState<string[]>(CATEGORIAS_PADRAO);
+  const [categoriasAPI, setCategoriasAPI] = useState<CategoriaAPI[]>([]);
+
+  useEffect(() => {
+  const buscarCategorias = async () => {
+    try {
+      const resposta = await fetch('http://localhost:8080/categorias');
+
+      if (!resposta.ok) {
+        throw new Error('Erro ao buscar categorias');
+      }
+
+      const dados: CategoriaAPI[] = await resposta.json();
+      setCategoriasAPI(dados);
+    } catch (erro) {
+      console.error('Erro ao carregar categorias:', erro);
+    }
+  };
+
+  buscarCategorias();
+}, []);
+
+>>>>>>> origin/main
   // Função para fazer logout e limpar a sessão salva no navegador
   const handleLogout = () => {
     localStorage.removeItem('usuarioId');

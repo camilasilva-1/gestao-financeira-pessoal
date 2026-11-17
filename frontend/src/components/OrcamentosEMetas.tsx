@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Transacao, Orcamento, CategoriaAPI } from '../types';
 
 export interface Meta {
@@ -7,7 +7,29 @@ export interface Meta {
   valorAlvo: number;
   valorAtual: number;
   dataLimite: string;
+  diasRestantes: number;
+  valorMensalNecessario: number;
 }
+
+interface MetaAPI {
+  idMeta: number;
+  nome: string;
+  valorObjetivo: number;
+  valorAcumulado: number | null;
+  dataDesejada: string;
+  diasRestantes: number | null;
+  valorMensalNecessario: number | null;
+}
+
+const adaptarMeta = (dados: MetaAPI): Meta => ({
+  id: String(dados.idMeta),
+  nome: dados.nome,
+  valorAlvo: Number(dados.valorObjetivo),
+  valorAtual: Number(dados.valorAcumulado ?? 0),
+  dataLimite: dados.dataDesejada,
+  diasRestantes: Number(dados.diasRestantes ?? 0),
+  valorMensalNecessario: Number(dados.valorMensalNecessario ?? 0),
+});
 
 interface OrcamentosEMetasProps {
   transacoes: Transacao[];
@@ -18,17 +40,17 @@ interface OrcamentosEMetasProps {
 }
 
 export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
-  transacoes,
   orcamentos,
   setOrcamentos,
   categorias,
   categoriasAPI,
 }) => {
   // Estados para Metas
-  const [metas, setMetas] = useState<Meta[]>([
-    { id: '1', nome: 'Reserva de Emergência', valorAlvo: 10000, valorAtual: 4500, dataLimite: '2027-12-31' },
-    { id: '2', nome: 'Viagem de Férias', valorAlvo: 3000, valorAtual: 2100, dataLimite: '2026-12-15' },
-  ]);
+  const [metas, setMetas] = useState<Meta[]>([]);
+  const [carregandoMetas, setCarregandoMetas] = useState(true);
+  const [erroMetas, setErroMetas] = useState('');
+  const [salvandoMeta, setSalvandoMeta] = useState(false);
+  const [alterandoMeta, setAlterandoMeta] = useState(false);
 
   const [nomeMeta, setNomeMeta] = useState('');
   const [valorAlvoMeta, setValorAlvoMeta] = useState('');
@@ -45,32 +67,100 @@ export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
   const [tipoAcaoModal, setTipoAcaoModal] = useState<'guardar' | 'resgatar'>('guardar');
   const [valorModal, setValorModal] = useState('');
 
-  // Adicionar Nova Meta
-  const handleAdicionarMeta = (e: React.FormEvent) => {
+  // Busca somente as metas do usuário no MySQL.
+  useEffect(() => {
+    const usuarioId = localStorage.getItem('usuarioId');
+    if (!usuarioId) {
+      setErroMetas('Faça login para consultar suas metas.');
+      setCarregandoMetas(false);
+      return;
+    }
+    let ativo = true;
+    fetch('http://localhost:8080/metas/usuario/' + usuarioId, {
+      credentials: 'include'
+    })
+      .then(async resposta => {
+        if (!resposta.ok) throw new Error('Não foi possível consultar as metas');
+        return (await resposta.json()) as MetaAPI[];
+      })
+      .then(dados => {
+        if (ativo) {
+          setMetas(dados.map(adaptarMeta));
+          setErroMetas('');
+        }
+      })
+      .catch(() => {
+        if (ativo) setErroMetas('Não foi possível carregar suas metas. Confira o backend.');
+      })
+      .finally(() => {
+        if (ativo) setCarregandoMetas(false);
+      });
+    return () => { ativo = false; };
+  }, []);
+
+  const handleAdicionarMeta = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nomeMeta || !valorAlvoMeta || !dataLimiteMeta) return;
-
-    const novaMeta: Meta = {
-      id: Date.now().toString(),
-      nome: nomeMeta,
-      valorAlvo: parseFloat(valorAlvoMeta),
-      valorAtual: valorAtualMeta ? parseFloat(valorAtualMeta) : 0,
-      dataLimite: dataLimiteMeta,
-    };
-
-    setMetas([...metas, novaMeta]);
-    setNomeMeta('');
-    setValorAlvoMeta('');
-    setValorAtualMeta('');
-    setDataLimiteMeta('');
+    if (salvandoMeta || !nomeMeta.trim() || !valorAlvoMeta || !dataLimiteMeta) return;
+    const objetivo = Number(valorAlvoMeta);
+    const acumulado = valorAtualMeta === '' ? 0 : Number(valorAtualMeta);
+    if (!Number.isFinite(objetivo) || objetivo <= 0
+        || !Number.isFinite(acumulado) || acumulado < 0) {
+      alert('Informe um objetivo maior que zero e um valor guardado válido.');
+      return;
+    }
+    const usuarioId = localStorage.getItem('usuarioId');
+    if (!usuarioId) { alert('Faça login novamente.'); return; }
+    setSalvandoMeta(true);
+    try {
+      const resposta = await fetch('http://localhost:8080/metas/criar/' + usuarioId, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          nome: nomeMeta.trim(),
+          valorObjetivo: objetivo,
+          valorAcumulado: acumulado,
+          dataDesejada: dataLimiteMeta
+        })
+      });
+      if (!resposta.ok) throw new Error('Falha ao salvar');
+      const salva = (await resposta.json()) as MetaAPI;
+      setMetas(atuais => [...atuais, adaptarMeta(salva)]);
+      setNomeMeta('');
+      setValorAlvoMeta('');
+      setValorAtualMeta('');
+      setDataLimiteMeta('');
+      setErroMetas('');
+    } catch (erro) {
+      console.error('Falha ao criar meta:', erro);
+      alert('Não foi possível salvar a meta. Confira o backend.');
+    } finally {
+      setSalvandoMeta(false);
+    }
   };
 
-  // Remover Meta
-  const handleRemoverMeta = (id: string) => {
-    setMetas(metas.filter((m) => m.id !== id));
+  const handleRemoverMeta = async (id: string) => {
+    if (!window.confirm('Deseja excluir esta meta?')) return;
+    const usuarioId = localStorage.getItem('usuarioId');
+    if (!usuarioId) return;
+    try {
+      const resposta = await fetch(
+        'http://localhost:8080/metas/' + id + '/usuario/' + usuarioId, {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+      if (!resposta.ok) throw new Error('Falha ao excluir');
+      setMetas(atuais => atuais.filter(meta => meta.id !== id));
+    } catch (erro) {
+      console.error('Falha ao excluir meta:', erro);
+      alert('Não foi possível excluir a meta.');
+    }
   };
 
-  // Abrir o Modal Personalizado
   const abrirModal = (meta: Meta, tipo: 'guardar' | 'resgatar') => {
     setMetaSelecionada(meta);
     setTipoAcaoModal(tipo);
@@ -78,28 +168,44 @@ export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
     setModalAberto(true);
   };
 
-  // Confirmar ação do Modal
-  const handleConfirmarModal = (e: React.FormEvent) => {
+  const handleConfirmarModal = async (e: React.FormEvent) => {
     e.preventDefault();
-    const val = parseFloat(valorModal);
-
-    if (isNaN(val) || val <= 0 || !metaSelecionada) return;
-
-    setMetas(
-      metas.map((meta) => {
-        if (meta.id === metaSelecionada.id) {
-          const novoValor =
-            tipoAcaoModal === 'guardar'
-              ? meta.valorAtual + val
-              : Math.max(0, meta.valorAtual - val);
-          return { ...meta, valorAtual: novoValor };
-        }
-        return meta;
-      })
-    );
-
-    setModalAberto(false);
-    setMetaSelecionada(null);
+    if (!metaSelecionada || alterandoMeta) return;
+    const val = Number(valorModal);
+    if (!Number.isFinite(val) || val <= 0) return;
+    const novoValor = tipoAcaoModal === 'guardar'
+      ? metaSelecionada.valorAtual + val
+      : metaSelecionada.valorAtual - val;
+    if (novoValor < 0) {
+      alert('Não é possível resgatar mais do que foi guardado.');
+      return;
+    }
+    const usuarioId = localStorage.getItem('usuarioId');
+    if (!usuarioId) return;
+    setAlterandoMeta(true);
+    try {
+      const resposta = await fetch(
+        'http://localhost:8080/metas/' + metaSelecionada.id + '/usuario/' + usuarioId, {
+          method: 'PUT',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ valorAcumulado: Number(novoValor.toFixed(2)) })
+        });
+      if (!resposta.ok) throw new Error('Falha ao atualizar');
+      const salva = (await resposta.json()) as MetaAPI;
+      setMetas(atuais => atuais.map(meta =>
+        meta.id === String(salva.idMeta) ? adaptarMeta(salva) : meta));
+      setModalAberto(false);
+      setMetaSelecionada(null);
+    } catch (erro) {
+      console.error('Falha ao atualizar meta:', erro);
+      alert('Não foi possível atualizar o valor guardado.');
+    } finally {
+      setAlterandoMeta(false);
+    }
   };
 
   // Definir ou atualizar Limite de Orçamento
@@ -244,24 +350,19 @@ const handleRemoverOrcamento = async (id: string) => {
 };
 
 
-  // Calcular gastos por categoria
-  const calcularGasto = (categoria: string) => {
-    return transacoes
-      .filter((t) => t.tipo === 'DESPESA' && t.categoria === categoria)
-      .reduce((acc, t) => acc + t.valor, 0);
-  };
-
+  // Gasto mensal calculado pelo backend, vinculado ao usuário e à categoria.
+  // Não somar todo o histórico de transações: o Takeoff define orçamento mensal.
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* SEÇÃO 1: ORÇAMENTOS POR CATEGORIA */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
         <h2 className="text-lg font-bold text-slate-800">Orçamentos por Categoria</h2>
 
-        <form onSubmit={handleDefinirOrcamento} className="flex gap-2">
+        <form onSubmit={handleDefinirOrcamento} className="flex flex-col sm:flex-row gap-2">
           <select
             value={categoriaSel}
             onChange={(e) => setCategoriaSel(e.target.value)}
-            className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
+            className="w-full sm:flex-1 min-w-0 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
           >
             <option value="">Selecione uma categoria...</option>
             {categorias.map((cat) => (
@@ -276,7 +377,7 @@ const handleRemoverOrcamento = async (id: string) => {
             placeholder="Limite R$"
             value={limiteOrcamento}
             onChange={(e) => setLimiteOrcamento(e.target.value)}
-            className="w-28 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
+            className="w-full sm:w-28 min-w-0 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
           />
           <button
             type="submit"
@@ -288,22 +389,28 @@ const handleRemoverOrcamento = async (id: string) => {
 
         <div className="space-y-3 pt-2">
           {orcamentos.map((orc) => {
-            const gastoAtual = calcularGasto(orc.categoria);
-            const porc = Math.min(100, Math.round((gastoAtual / orc.limite) * 100));
+            const gastoAtual = orc.gasto;
+            const percentual = orc.limite > 0 ? (gastoAtual / orc.limite) * 100 : 0;
+            const porc = Math.round(percentual);
+            const larguraBarra = Math.min(100, Math.max(0, percentual));
             const resta = orc.limite - gastoAtual;
 
             let statusColor = 'bg-emerald-100 text-emerald-700';
             let barColor = 'bg-emerald-500';
             let statusText = 'Normal';
 
-            if (porc >= 80 && porc < 100) {
+            if (percentual > 100) {
+              statusColor = 'bg-red-100 text-red-700';
+              barColor = 'bg-red-600';
+              statusText = 'Estourado';
+            } else if (percentual >= 90) {
+              statusColor = 'bg-orange-100 text-orange-700';
+              barColor = 'bg-orange-500';
+              statusText = 'Risco';
+            } else if (percentual > 70) {
               statusColor = 'bg-amber-100 text-amber-700';
               barColor = 'bg-amber-500';
               statusText = 'Atenção';
-            } else if (porc >= 100) {
-              statusColor = 'bg-red-100 text-red-700';
-              barColor = 'bg-red-600';
-              statusText = 'Excedido';
             }
 
             return (
@@ -324,7 +431,7 @@ const handleRemoverOrcamento = async (id: string) => {
                 </div>
 
                 <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                  <div className={`${barColor} h-2 rounded-full transition-all`} style={{ width: `${porc}%` }} />
+                  <div className={`${barColor} h-2 rounded-full transition-all`} style={{ width: `${larguraBarra}%` }} />
                 </div>
 
                 <div className="flex justify-between text-xs text-slate-500">
@@ -349,7 +456,7 @@ const handleRemoverOrcamento = async (id: string) => {
             onChange={(e) => setNomeMeta(e.target.value)}
             className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
           />
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <input
               type="number"
               step="0.01"
@@ -367,15 +474,16 @@ const handleRemoverOrcamento = async (id: string) => {
               className="rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="date"
               value={dataLimiteMeta}
               onChange={(e) => setDataLimiteMeta(e.target.value)}
-              className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
+              className="w-full sm:flex-1 min-w-0 rounded-xl border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#c4003d]"
             />
             <button
               type="submit"
+              disabled={salvandoMeta}
               className="bg-[#c4003d] text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#a00032] transition cursor-pointer"
             >
               Adicionar Meta
@@ -384,7 +492,13 @@ const handleRemoverOrcamento = async (id: string) => {
         </form>
 
         <div className="space-y-3 pt-2">
-          {metas.map((meta) => {
+          {carregandoMetas ? (
+            <p className="text-sm text-slate-500">Carregando suas metas...</p>
+          ) : erroMetas ? (
+            <p role="alert" className="text-sm text-red-600">{erroMetas}</p>
+          ) : metas.length === 0 ? (
+            <p className="text-sm text-slate-500">Nenhuma meta cadastrada.</p>
+          ) : metas.map((meta) => {
             const porcMeta = Math.min(100, Math.round((meta.valorAtual / meta.valorAlvo) * 100));
 
             return (
@@ -414,6 +528,9 @@ const handleRemoverOrcamento = async (id: string) => {
                   />
                 </div>
 
+                <p className="text-xs text-slate-500">
+                  Faltam {meta.diasRestantes} dias · Necessário por mês: R$ {meta.valorMensalNecessario.toFixed(2)}
+                </p>
                 <div className="flex justify-between items-center text-xs pt-1">
                   <span className="text-slate-500">
                     Guardado: <strong>R$ {meta.valorAtual.toFixed(2)}</strong> / Alvo: R${' '}

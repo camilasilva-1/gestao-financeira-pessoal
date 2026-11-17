@@ -1,16 +1,24 @@
+
 package gestaofinanceira.project.service;
 
 import gestaofinanceira.project.dto.InsightDTO;
 import gestaofinanceira.project.dto.ScoreFinanceiroDTO;
 import gestaofinanceira.project.model.Orcamento;
 import gestaofinanceira.project.model.Categoria;
+import gestaofinanceira.project.model.MetaFinanceira;
+import gestaofinanceira.project.model.Transacao;
+import gestaofinanceira.project.enums.Tipo;
+import gestaofinanceira.project.repository.MetaFinanceiraRepository;
+
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class InsightService {
@@ -18,20 +26,24 @@ public class InsightService {
     private final TransacaoService transacaoService;
     private final OrcamentoService orcamentoService;
     private final CategoriaService categoriaService;
+    private final MetaFinanceiraRepository metaFinanceiraRepository;
 
     public InsightService(
             TransacaoService transacaoService,
             OrcamentoService orcamentoService,
-            CategoriaService categoriaService) {
+            CategoriaService categoriaService,
+            MetaFinanceiraRepository metaFinanceiraRepository) {
 
         this.transacaoService = transacaoService;
         this.orcamentoService = orcamentoService;
         this.categoriaService = categoriaService;
+        this.metaFinanceiraRepository = metaFinanceiraRepository;
     }
 
-    // ============================
+    // ============================================
     // GERAÇÃO DE INSIGHTS
-    // ============================
+    // ============================================
+
     public List<InsightDTO> gerarInsights(Integer usuarioId) {
 
         List<InsightDTO> insights = new ArrayList<>();
@@ -40,7 +52,10 @@ public class InsightService {
         LocalDate mesAnterior = mesAtual.minusMonths(1);
 
         List<Categoria> categorias = categoriaService.listarTodas();
+
         boolean gerouInsight = false;
+
+        // 1. DETECTAR AUMENTO DE GASTOS
 
         for (Categoria c : categorias) {
 
@@ -73,7 +88,8 @@ public class InsightService {
                             "Seus gastos com "
                                     + c.getNome()
                                     + " aumentaram "
-                                    + variacao.setScale(2, RoundingMode.HALF_UP)
+                                    + variacao.setScale(
+                                            2, RoundingMode.HALF_UP)
                                     + "% em relação ao mês anterior.",
                             LocalDate.now(),
                             "Atenção"
@@ -83,6 +99,8 @@ public class InsightService {
                 }
             }
         }
+
+        // 2. DETECTAR ORÇAMENTOS EM RISCO
 
         List<Orcamento> orcamentos =
                 orcamentoService.listarPorUsuario(usuarioId);
@@ -98,7 +116,8 @@ public class InsightService {
                 insights.add(new InsightDTO(
                         "Orçamento",
                         "Você já utilizou "
-                                + percentual.setScale(2, RoundingMode.HALF_UP)
+                                + percentual.setScale(
+                                        2, RoundingMode.HALF_UP)
                                 + "% do orçamento da categoria "
                                 + o.getCategoria().getNome(),
                         LocalDate.now(),
@@ -108,6 +127,46 @@ public class InsightService {
                 gerouInsight = true;
             }
         }
+
+        // 3. ALERTAR APENAS QUANDO A RENDA CAIR 15% OU MAIS.
+
+        BigDecimal receitaAtual =
+                transacaoService.calcularReceitaMensal(
+                        usuarioId, mesAtual);
+
+        BigDecimal receitaAnterior =
+                transacaoService.calcularReceitaMensal(
+                        usuarioId, mesAnterior);
+
+        if (receitaAnterior != null
+                && receitaAtual != null
+                && receitaAnterior.compareTo(BigDecimal.ZERO) > 0
+                && receitaAtual.compareTo(receitaAnterior) < 0) {
+
+            BigDecimal diferenca = receitaAnterior.subtract(receitaAtual);
+
+            // Compara antes de arredondar para respeitar o limite exato de 15%.
+            if (diferenca.multiply(BigDecimal.valueOf(100))
+                    .compareTo(receitaAnterior.multiply(BigDecimal.valueOf(15))) >= 0) {
+
+                BigDecimal queda = diferenca
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(receitaAnterior, 2, RoundingMode.HALF_UP);
+
+                insights.add(new InsightDTO(
+                        "Queda de renda",
+                        "Sua receita mensal diminuiu "
+                                + queda
+                                + "% em relação ao mês anterior.",
+                        LocalDate.now(),
+                        "Atenção"
+                ));
+
+                gerouInsight = true;
+            }
+        }
+
+        // 4. QUANDO NÃO EXISTEM INSIGHTS
 
         if (!gerouInsight) {
 
@@ -122,6 +181,7 @@ public class InsightService {
         return insights;
     }
 
+<<<<<<< HEAD
         // ============================
     // DETECÇÃO DE QUEDA DE RENDA
     // ============================
@@ -227,8 +287,12 @@ public class InsightService {
 }
 
     // ============================
+=======
+    // ============================================
+>>>>>>> origin/main
     // GERAÇÃO DE ALERTAS
-    // ============================
+    // ============================================
+
     public List<InsightDTO> gerarAlertas(Integer usuarioId) {
 
         List<InsightDTO> alertas = new ArrayList<>();
@@ -257,16 +321,34 @@ public class InsightService {
 
                 gerouAlerta = true;
 
-            } else if (percentual.compareTo(BigDecimal.valueOf(90)) >= 0) {
+            } else if (percentual.compareTo(
+                    BigDecimal.valueOf(90)) >= 0) {
 
                 alertas.add(new InsightDTO(
                         "Risco de orçamento",
                         "Você já utilizou "
-                                + percentual.setScale(2, RoundingMode.HALF_UP)
+                                + percentual.setScale(
+                                        2, RoundingMode.HALF_UP)
                                 + "% do orçamento da categoria "
                                 + o.getCategoria().getNome(),
                         LocalDate.now(),
                         "Risco"
+                ));
+
+                gerouAlerta = true;
+
+            } else if (percentual.compareTo(
+                    BigDecimal.valueOf(70)) > 0) {
+
+                alertas.add(new InsightDTO(
+                        "Orçamento em atenção",
+                        "Você já utilizou "
+                                + percentual.setScale(
+                                        2, RoundingMode.HALF_UP)
+                                + "% do orçamento da categoria "
+                                + o.getCategoria().getNome(),
+                        LocalDate.now(),
+                        "Atenção"
                 ));
 
                 gerouAlerta = true;
@@ -279,7 +361,7 @@ public class InsightService {
                                 + o.getCategoria().getNome()
                                 + ".",
                         LocalDate.now(),
-                        "Informativo"
+                        "Normal"
                 ));
 
                 gerouAlerta = true;
@@ -299,75 +381,128 @@ public class InsightService {
         return alertas;
     }
 
-    // ============================
+    // ============================================
     // SCORE FINANCEIRO
-    // ============================
+    // ============================================
+
     public ScoreFinanceiroDTO calcularScore(Integer usuarioId) {
 
-        int score = 0;
+        // Calcula o score somente com dados financeiros do próprio usuário.
+        List<Transacao> transacoes = transacaoService.listarPorUsuario(usuarioId);
+        if (transacoes.isEmpty()) {
+            return new ScoreFinanceiroDTO(
+                    null, "SEM_DADOS",
+                    "Cadastre transações para avaliar sua saúde financeira.");
+        }
 
-        List<Orcamento> orcamentos =
-                orcamentoService.listarPorUsuario(usuarioId);
+        YearMonth mesAtual = YearMonth.now();
+        YearMonth mesAnterior = mesAtual.minusMonths(1);
+        BigDecimal receitas = BigDecimal.ZERO;
+        BigDecimal despesas = BigDecimal.ZERO;
+        BigDecimal saldoAtual = BigDecimal.ZERO;
+        BigDecimal saldoAnterior = BigDecimal.ZERO;
+        boolean temAtual = false;
+        boolean temAnterior = false;
+        boolean investimentoAtual = false;
+        boolean investimentoAnterior = false;
 
-        int estourados = 0;
+        for (Transacao transacao : transacoes) {
+            if (transacao.getDataTransacao() == null
+                    || transacao.getValor() == null || transacao.getTipo() == null) {
+                continue;
+            }
 
-        for (Orcamento orcamento : orcamentos) {
+            YearMonth mes = YearMonth.from(transacao.getDataTransacao());
+            BigDecimal valor = transacao.getValor();
+            boolean receita = transacao.getTipo() == Tipo.RECEITA;
+            BigDecimal saldo = receita ? valor : valor.negate();
 
-            BigDecimal percentual =
-                    orcamentoService.calcularPercentual(
-                            orcamento.getIdOrcamento());
+            // Separa receitas, despesas e saldos dos dois meses.
+            if (mes.equals(mesAtual)) {
+                temAtual = true;
+                saldoAtual = saldoAtual.add(saldo);
+                if (receita) {
+                    receitas = receitas.add(valor);
+                } else {
+                    despesas = despesas.add(valor);
+                }
+            } else if (mes.equals(mesAnterior)) {
+                temAnterior = true;
+                saldoAnterior = saldoAnterior.add(saldo);
+            }
 
-            if (percentual.compareTo(BigDecimal.valueOf(100)) > 0) {
-                estourados++;
+            // Investimentos são identificados pela categoria já existente.
+            if (!receita && transacao.getCategoria() != null
+                    && "Investimentos".equalsIgnoreCase(transacao.getCategoria().getNome())) {
+                if (mes.equals(mesAtual)) {
+                    investimentoAtual = true;
+                } else if (mes.equals(mesAnterior)) {
+                    investimentoAnterior = true;
+                }
             }
         }
 
-        if (estourados == 0) {
-            score += 40;
-        } else if (estourados <= 2) {
+        if (!temAtual && !temAnterior) {
+            return new ScoreFinanceiroDTO(
+                    null, "SEM_DADOS",
+                    "Não há transações recentes para avaliar sua saúde financeira.");
+        }
+
+        int score = 0;
+
+        // 1. Economia: guardar 20% ou mais da receita vale 20 pontos.
+        if (receitas.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal economia = receitas.subtract(despesas)
+                    .multiply(BigDecimal.valueOf(100))
+                    .divide(receitas, 2, RoundingMode.HALF_UP);
+            if (economia.compareTo(BigDecimal.valueOf(20)) >= 0) {
+                score += 20;
+            } else if (economia.compareTo(BigDecimal.ZERO) > 0) {
+                score += 10;
+            }
+        }
+
+        // 2. Orçamentos: avalia quantos ultrapassaram o limite.
+        List<Orcamento> orcamentos = orcamentoService.listarPorUsuario(usuarioId);
+        if (!orcamentos.isEmpty()) {
+            int estourados = 0;
+            for (Orcamento orcamento : orcamentos) {
+                if (orcamentoService.calcularPercentual(orcamento.getIdOrcamento())
+                        .compareTo(BigDecimal.valueOf(100)) > 0) {
+                    estourados++;
+                }
+            }
+            if (estourados == 0) {
+                score += 20;
+            } else if (estourados < orcamentos.size()) {
+                score += 10;
+            }
+        }
+
+        // 3. Evolução: compara o saldo do mês atual com o anterior.
+        if (temAtual && temAnterior) {
+            if (saldoAtual.compareTo(saldoAnterior) > 0) {
+                score += 20;
+            } else if (saldoAtual.compareTo(saldoAnterior) == 0) {
+                score += 10;
+            }
+        }
+
+        // 4. Constância: observa lançamentos de investimentos nos dois meses.
+        if (investimentoAtual && investimentoAnterior) {
             score += 20;
-        } else {
+        } else if (investimentoAtual || investimentoAnterior) {
             score += 10;
         }
 
-        List<InsightDTO> insights = gerarInsights(usuarioId);
-
-        long aumentos = insights.stream()
-                .filter(i -> i.getTipo()
-                        .equalsIgnoreCase("Aumento de gastos"))
-                .count();
-
-        if (aumentos == 0) {
-            score += 30;
-        } else if (aumentos <= 2) {
+        // 5. Gastos: não ultrapassar a receita no mês vale 20 pontos.
+        if (receitas.compareTo(BigDecimal.ZERO) > 0
+                && despesas.compareTo(receitas) <= 0) {
             score += 20;
-        } else {
-            score += 10;
-        }
-
-        List<InsightDTO> alertas = gerarAlertas(usuarioId);
-
-        long riscos = alertas.stream()
-                .filter(a ->
-                        a.getNivelAlerta().equalsIgnoreCase("Risco")
-                                || a.getNivelAlerta().equalsIgnoreCase("Estourado"))
-                .count();
-
-        if (riscos == 0) {
-            score += 30;
-        } else if (riscos <= 2) {
-            score += 20;
-        } else {
-            score += 10;
-        }
-
-        if (score > 100) {
-            score = 100;
         }
 
         String nivel;
         String descricao;
-
         if (score <= 39) {
             nivel = "CRITICO";
             descricao = "Sua saúde financeira necessita atenção imediata.";
@@ -382,26 +517,25 @@ public class InsightService {
             descricao = "Sua saúde financeira está excelente.";
         }
 
-        return new ScoreFinanceiroDTO(
-                score,
-                nivel,
-                descricao
-        );
+        return new ScoreFinanceiroDTO(score, nivel, descricao);
     }
 
-
-        // ============================
+    // ============================================
     // RECOMENDAÇÃO DE INVESTIMENTO
-    // ============================
-    public InsightDTO gerarRecomendacaoInvestimento(Integer usuarioId) {
+    // ============================================
+
+    public InsightDTO gerarRecomendacaoInvestimento(
+            Integer usuarioId) {
 
         int mesAtual = LocalDate.now().getMonthValue();
 
         BigDecimal receita =
-                transacaoService.calcularReceitaMensal(usuarioId, mesAtual);
+                transacaoService.calcularReceitaMensal(
+                        usuarioId, mesAtual);
 
         BigDecimal despesa =
-                transacaoService.calcularDespesaMensal(usuarioId, mesAtual);
+                transacaoService.calcularDespesaMensal(
+                        usuarioId, mesAtual);
 
         if (receita == null) {
             receita = BigDecimal.ZERO;
@@ -428,9 +562,11 @@ public class InsightService {
 
         String descricao =
                 "Com sua renda atual, recomenda-se investir pelo menos R$ "
-                        + valorRecomendado.setScale(2, RoundingMode.HALF_UP)
+                        + valorRecomendado.setScale(
+                                2, RoundingMode.HALF_UP)
                         + " por mês. Sua reserva de emergência ideal é de R$ "
-                        + reservaEmergencia.setScale(2, RoundingMode.HALF_UP)
+                        + reservaEmergencia.setScale(
+                                2, RoundingMode.HALF_UP)
                         + ".";
 
         return new InsightDTO(
@@ -441,10 +577,12 @@ public class InsightService {
         );
     }
 
-    // ============================
+    // ============================================
     // METAS SUGERIDAS DE INVESTIMENTO
-    // ============================
-    public List<InsightDTO> gerarMetasSugeridas(Integer usuarioId) {
+    // ============================================
+
+    public List<InsightDTO> gerarMetasSugeridas(
+            Integer usuarioId) {
 
         List<InsightDTO> metas = new ArrayList<>();
 
@@ -452,49 +590,67 @@ public class InsightService {
 
         BigDecimal receita =
                 transacaoService.calcularReceitaMensal(usuarioId, mesAtual);
-
         BigDecimal despesa =
                 transacaoService.calcularDespesaMensal(usuarioId, mesAtual);
 
         if (receita == null) {
             receita = BigDecimal.ZERO;
         }
-
         if (despesa == null) {
             despesa = BigDecimal.ZERO;
         }
 
-        BigDecimal reservaEmergencia =
-                despesa.multiply(BigDecimal.valueOf(6));
+        // RN006: não gerar metas de valor zero sem dados que sustentem o cálculo.
+        if (receita.compareTo(BigDecimal.ZERO) <= 0
+                && despesa.compareTo(BigDecimal.ZERO) <= 0) {
+            metas.add(new InsightDTO(
+                    "Dados insuficientes",
+                    "Cadastre receitas e despesas para receber metas sugeridas.",
+                    LocalDate.now(),
+                    "Informativo"
+            ));
+            return metas;
+        }
 
-        metas.add(new InsightDTO(
-                "Meta Sugerida",
-                "Construir uma reserva de emergência de R$ "
-                        + reservaEmergencia.setScale(2, RoundingMode.HALF_UP),
-                LocalDate.now(),
-                "Meta"
-        ));
+        if (despesa.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal reservaEmergencia =
+                    despesa.multiply(BigDecimal.valueOf(6));
+            metas.add(new InsightDTO(
+                    "Meta Sugerida",
+                    "Construir uma reserva de emergência de R$ "
+                            + reservaEmergencia.setScale(
+                                    2, RoundingMode.HALF_UP),
+                    LocalDate.now(),
+                    "Meta"
+            ));
+        }
 
-        metas.add(new InsightDTO(
-                "Meta Sugerida",
-                "Investir mensalmente pelo menos R$ "
-                        + receita.multiply(BigDecimal.valueOf(0.20))
-                        .setScale(2, RoundingMode.HALF_UP),
-                LocalDate.now(),
-                "Meta"
-        ));
-
-        metas.add(new InsightDTO(
-                "Meta Sugerida",
-                "Acumular patrimônio equivalente a 12 meses da renda atual.",
-                LocalDate.now(),
-                "Meta"
-        ));
+        // RN007: recomendações de investimento dependem de renda positiva.
+        if (receita.compareTo(BigDecimal.ZERO) > 0) {
+            metas.add(new InsightDTO(
+                    "Meta Sugerida",
+                    "Investir mensalmente pelo menos R$ "
+                            + receita.multiply(BigDecimal.valueOf(0.20))
+                                    .setScale(2, RoundingMode.HALF_UP),
+                    LocalDate.now(),
+                    "Meta"
+            ));
+            metas.add(new InsightDTO(
+                    "Meta Sugerida",
+                    "Acumular patrimônio equivalente a 12 meses da renda atual.",
+                    LocalDate.now(),
+                    "Meta"
+            ));
+        }
 
         return metas;
     }
 
+    // ============================================
+    // ALERTA DE RESERVA INSUFICIENTE
+    // ============================================
 
+<<<<<<< HEAD
     // ============================
 // ALERTA DE RESERVA INSUFICIENTE
 // ============================
@@ -502,6 +658,65 @@ public class InsightService {
 public InsightDTO gerarAlertaReservaInsuficiente(Integer usuarioId) {
 
     BigDecimal reservaIdeal = calcularReservaIdeal(usuarioId);
+=======
+    public InsightDTO gerarAlertaReservaInsuficiente(
+            Integer usuarioId) {
+
+        int mesAtual = LocalDate.now().getMonthValue();
+
+        BigDecimal despesa =
+                transacaoService.calcularDespesaMensal(
+                        usuarioId, mesAtual);
+
+        if (despesa == null) {
+            despesa = BigDecimal.ZERO;
+        }
+
+        // Sem despesas, não há base para calcular a reserva recomendada.
+        if (despesa.compareTo(BigDecimal.ZERO) <= 0) {
+            return new InsightDTO(
+                    "Dados insuficientes",
+                    "Cadastre despesas para calcular sua reserva de emergência ideal.",
+                    LocalDate.now(),
+                    "Informativo"
+            );
+        }
+
+        BigDecimal reservaIdeal = despesa.multiply(BigDecimal.valueOf(6));
+
+        // Dinheiro guardado não é a mesma coisa que despesa em Investimentos.
+        // Usar somente uma meta identificada pelo usuário como reserva.
+        List<MetaFinanceira> reservas = metaFinanceiraRepository
+                .findByUsuario_IdUsuario(usuarioId).stream()
+                .filter(meta -> meta.getNome() != null
+                        && meta.getNome().toLowerCase(Locale.ROOT).contains("reserva"))
+                .toList();
+
+        if (reservas.isEmpty()) {
+            return new InsightDTO(
+                    "Dados insuficientes",
+                    "Cadastre uma meta de reserva de emergência para acompanhar o valor guardado.",
+                    LocalDate.now(),
+                    "Informativo"
+            );
+        }
+
+        BigDecimal valorGuardado = reservas.stream()
+                .map(meta -> BigDecimal.valueOf(
+                        meta.getValorAcumulado() == null ? 0.0 : meta.getValorAcumulado()))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (valorGuardado.compareTo(reservaIdeal) < 0) {
+            return new InsightDTO(
+                    "Reserva insuficiente",
+                    "Sua reserva está abaixo do recomendado. O ideal é possuir pelo menos R$ "
+                            + reservaIdeal.setScale(
+                                    2, RoundingMode.HALF_UP),
+                    LocalDate.now(),
+                    "Atenção"
+            );
+        }
+>>>>>>> origin/main
 
     if (reservaIdeal.compareTo(BigDecimal.ZERO) <= 0) {
         return new InsightDTO(
@@ -511,6 +726,7 @@ public InsightDTO gerarAlertaReservaInsuficiente(Integer usuarioId) {
                 "Informativo"
         );
     }
+<<<<<<< HEAD
 
     return new InsightDTO(
             "Reserva de emergência",
@@ -520,4 +736,6 @@ public InsightDTO gerarAlertaReservaInsuficiente(Integer usuarioId) {
             "Informativo"
     );
 }
+=======
+>>>>>>> origin/main
 }

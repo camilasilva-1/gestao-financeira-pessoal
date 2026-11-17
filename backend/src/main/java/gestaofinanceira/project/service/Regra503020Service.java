@@ -2,6 +2,8 @@ package gestaofinanceira.project.service;
 
 import gestaofinanceira.project.dto.Regra503020DTO;
 import gestaofinanceira.project.repository.TransacaoRepository;
+import gestaofinanceira.project.repository.UsuarioRepository;
+import gestaofinanceira.project.model.Usuario;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,12 +17,26 @@ public class Regra503020Service {
     @Autowired
     private TransacaoRepository transacaoRepository;
 
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
     public Regra503020DTO calcularRegra(Integer usuarioId) {
         // A regra 50/30/20 acompanha a renda e os gastos do mês atual.
         LocalDate hoje = LocalDate.now();
         LocalDate inicio = hoje.withDayOfMonth(1);
         LocalDate fim = hoje.withDayOfMonth(hoje.lengthOfMonth());
         BigDecimal rendaTotal = transacaoRepository.somaReceitasPorPeriodo(usuarioId.longValue(), inicio, fim);
+        if (rendaTotal == null) rendaTotal = BigDecimal.ZERO;
+
+        // Salario cadastrado e uma informacao de renda, nao uma transacao automatica.
+        // Se ha receitas lancadas no mes, usa-las evita somar o salario duas vezes.
+        // Quando nao ha receita lancada, o salario liquido informado serve de base.
+        if (rendaTotal.compareTo(BigDecimal.ZERO) == 0) {
+            rendaTotal = usuarioRepository.findById(usuarioId)
+                    .map(Usuario::getSalarioLiquido)
+                    .filter(valor -> valor.compareTo(BigDecimal.ZERO) > 0)
+                    .orElse(BigDecimal.ZERO);
+        }
 
         // 2. Despesas com Necessidades Básicas (50%)
         BigDecimal realNecessidades = transacaoRepository.somaDespesasPorCategoriasNoPeriodo(
