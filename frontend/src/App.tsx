@@ -9,6 +9,7 @@ import { Header } from './components/Header';
 import type { Transacao, Orcamento } from './types';
 import { CATEGORIAS_PADRAO } from './types';
 import { Relatorios } from './components/Relatorios';
+import { ScoreCard } from './components/ScoreCard';
 
 function App() {
   // Inicialização inteligente: se houver 'usuarioId' no localStorage, inicia direto em 'app'
@@ -91,10 +92,13 @@ function App() {
           {/* 1. Cards de Indicadores */}
           <Dashboard transacoes={transacoes} />
 
-          {/* 2. Evolução Mensal e Ranking */}
+          {/* 2. Faixa do Score Financeiro */}
+          <ScoreCard atualizarGatilho={transacoes} />
+
+          {/* 3. Evolução Mensal e Ranking */}
           <Relatorios transacoes={transacoes} />
 
-          {/* 3. Nova Transação e Histórico */}
+          {/* 4. Nova Transação e Histórico */}
           <Transacoes 
             transacoes={transacoes} 
             setTransacoes={setTransacoes} 
@@ -102,7 +106,7 @@ function App() {
             adicionarCategoria={adicionarCategoria}
           />
           
-          {/* 4. Orçamentos e Metas */}
+          {/* 5. Orçamentos e Metas */}
           <OrcamentosEMetas 
             transacoes={transacoes} 
             orcamentos={orcamentos} 

@@ -1,3 +1,4 @@
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\config\CorsConfig.java
 C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\controller\CategoriaController.java
 C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\controller\InsightController.java
 C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\controller\MetaFinanceiraController.java
@@ -14,6 +15,7 @@ C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gesta
 C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\dto\RankingCategoriaDTO.java
 C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\dto\Regra503020DTO.java
 C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\dto\RelatorioMensalDTO.java
+C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\dto\ScoreFinanceiroDTO.java
 C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\dto\TransacaoDTO.java
 C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\enums\Categoria.java
 C:\Users\giova\OneDrive\FRONT- END\gestao-financeira\backend\src\main\java\gestaofinanceira\project\enums\Tipo.java

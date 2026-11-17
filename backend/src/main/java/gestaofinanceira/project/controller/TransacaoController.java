@@ -1,15 +1,20 @@
 package gestaofinanceira.project.controller;
 
-import gestaofinanceira.project.dto.TransacaoDTO;
+import gestaofinanceira.project.enums.Tipo;
+import gestaofinanceira.project.model.Categoria;
 import gestaofinanceira.project.model.Transacao;
+import gestaofinanceira.project.model.Usuario;
 import gestaofinanceira.project.service.TransacaoService;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/transacoes")
-@CrossOrigin(origins = "*")
 public class TransacaoController {
 
     private final TransacaoService service;
@@ -24,10 +29,12 @@ public class TransacaoController {
         return service.listar();
     }
 
-    // Rota esperada pelo api.ts para buscar transações do usuário logado
+    // Listar transações de um usuário específico (chamado pelo api.ts)
     @GetMapping("/usuario/{usuarioId}")
-    public List<Transacao> listarPorUsuario(@PathVariable int usuarioId) {
-        return service.listarPorUsuario(usuarioId);
+    public List<Transacao> listarPorUsuario(@PathVariable Integer usuarioId) {
+        return service.listar().stream()
+                .filter(t -> t.getUsuario() != null && usuarioId.equals(t.getUsuario().getIdUsuario()))
+                .collect(Collectors.toList());
     }
 
     // Buscar transação por ID
@@ -36,10 +43,38 @@ public class TransacaoController {
         return service.buscar(id);
     }
 
-    // Adicionar nova transação recebendo o DTO do React
+    // Adicionar nova transação (aceita o JSON enviado pelo api.ts)
     @PostMapping
-    public Transacao adicionar(@RequestBody TransacaoDTO dto) {
-        return service.adicionarDTO(dto);
+    public Transacao adicionar(@RequestBody Map<String, Object> payload) {
+        Transacao t = new Transacao();
+        t.setDescricao((String) payload.get("descricao"));
+        t.setValor(new BigDecimal(payload.get("valor").toString()));
+        t.setTipo(Tipo.valueOf(payload.get("tipo").toString().toUpperCase()));
+
+        if (payload.get("dataTransacao") != null) {
+            t.setDataTransacao(LocalDate.parse(payload.get("dataTransacao").toString()));
+        } else {
+            t.setDataTransacao(LocalDate.now());
+        }
+
+        if (payload.get("estabelecimento") != null) {
+            t.setEstabelecimento(payload.get("estabelecimento").toString());
+        }
+
+        // Vincula o Usuário pelo ID
+        Usuario usuario = new Usuario();
+        usuario.setIdUsuario(Integer.parseInt(payload.get("usuarioId").toString()));
+        t.setUsuario(usuario);
+
+        // Vincula a Categoria pelo ID
+        Categoria categoria = new Categoria();
+        int catId = payload.get("categoriaId") != null
+                ? Integer.parseInt(payload.get("categoriaId").toString())
+                : 1;
+        categoria.setIdCategoria(catId);
+        t.setCategoria(categoria);
+
+        return service.adicionar(t);
     }
 
     // Editar transação existente
