@@ -14,7 +14,6 @@ export const Transacoes: React.FC<TransacoesProps> = ({
   transacoes,
   setTransacoes,
   categorias,
-  adicionarCategoria
 }) => {
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
@@ -31,6 +30,10 @@ export const Transacoes: React.FC<TransacoesProps> = ({
   const [filtroTipo, setFiltroTipo] = useState<'TODOS' | 'RECEITA' | 'DESPESA'>('TODOS');
   const [filtroCategoria, setFiltroCategoria] = useState('TODAS');
   const [filtroPeriodo, setFiltroPeriodo] = useState<'TODOS' | 'ESTE_MES' | 'MES_PASSADO' | 'ESTE_ANO'>('TODOS');
+  const [dataInicial, setDataInicial] = useState('');
+  const [dataFinal, setDataFinal] = useState('');
+  const [filtroEstabelecimento, setFiltroEstabelecimento] = useState('');
+  const [filtroRecorrencia, setFiltroRecorrencia] = useState<'TODOS' | 'SIM' | 'NAO'>('TODOS');
 
   // Modal de Edição
   const [transacaoParaEditar, setTransacaoParaEditar] = useState<Transacao | null>(null);
@@ -117,25 +120,32 @@ export const Transacoes: React.FC<TransacoesProps> = ({
   };
 
   // 3. Exclui transação
-  const handleExcluir = async (id: string) => {
-    if (confirm('Deseja realmente excluir esta transação?')) {
-      try {
-        await fetch(`http://localhost:8080/api/transacoes/${id}`, { method: 'DELETE' });
-        setTransacoes(transacoes.filter(t => t.id !== id));
-      } catch (err) {
-        console.error('Erro ao excluir transação:', err);
-      }
+const handleExcluir = async (id: string) => {
+  if (confirm('Deseja realmente excluir esta transação?')) {
+    try {
+      await fetch(`http://localhost:8080/api/transacoes/${id}`, {
+        method: 'DELETE'
+      });
+      setTransacoes(transacoes.filter(t => t.id !== id));
+    } catch (err) {
+      console.error('Erro ao excluir transação:', err);
     }
-  };
+  }
+};
+
 
   const handleAbrirEditar = (t: Transacao) => {
-    setTransacaoParaEditar(t);
-    setIsModalOpen(true);
-  };
+  setTransacaoParaEditar(t);
+  setIsModalOpen(true);
+};
 
-  const handleSalvarEdicao = (transacaoAtualizada: Transacao) => {
-    setTransacoes(transacoes.map(t => t.id === transacaoAtualizada.id ? transacaoAtualizada : t));
-  };
+  
+const handleSalvarEdicao = (transacaoAtualizada: Transacao) => {
+  setTransacoes(transacoes.map(t =>
+    t.id === transacaoAtualizada.id ? transacaoAtualizada : t
+  ));
+};
+
 
   const ehNoPeriodo = (dataString: string) => {
     if (filtroPeriodo === 'TODOS') return true;
@@ -162,15 +172,31 @@ export const Transacoes: React.FC<TransacoesProps> = ({
     return true;
   };
 
-  const transacoesFiltradas = transacoes.filter(t => {
-    const bateTexto = t.descricao.toLowerCase().includes(busca.toLowerCase()) ||
-      (t.establishment && t.establishment.toLowerCase().includes(busca.toLowerCase()));
-    const bateTipo = filtroTipo === 'TODOS' || t.tipo === filtroTipo;
-    const bateCat = filtroCategoria === 'TODAS' || (filtroCategoria === 'SEM_CATEGORIA' ? !t.categoria : t.categoria === filtroCategoria);
-    const batePeriodo = ehNoPeriodo(t.data);
+ 
+const transacoesFiltradas = transacoes.filter(t => {
+  const bateTexto = t.descricao.toLowerCase().includes(busca.toLowerCase()) ||
+    (t.establishment && t.establishment.toLowerCase().includes(busca.toLowerCase()));
 
-    return bateTexto && bateTipo && bateCat && batePeriodo;
-  });
+  const bateTipo = filtroTipo === 'TODOS' || t.tipo === filtroTipo;
+
+  const bateCat = filtroCategoria === 'TODAS' ||
+    (filtroCategoria === 'SEM_CATEGORIA' ? !t.categoria : t.categoria === filtroCategoria);
+
+  const batePeriodo = ehNoPeriodo(t.data);
+
+  const bateDataInicial = !dataInicial || t.data >= dataInicial;
+  const bateDataFinal = !dataFinal || t.data <= dataFinal;
+
+  const bateEstabelecimento = !filtroEstabelecimento ||
+    (t.establishment || '').toLowerCase().includes(filtroEstabelecimento.toLowerCase());
+
+  const bateRecorrencia = filtroRecorrencia === 'TODOS' ||
+    (filtroRecorrencia === 'SIM' ? t.recorrente === true : t.recorrente !== true);
+
+  return bateTexto && bateTipo && bateCat && batePeriodo &&
+    bateDataInicial && bateDataFinal && bateEstabelecimento && bateRecorrencia;
+});
+
 
   return (
     <div className="space-y-6">
@@ -263,52 +289,7 @@ export const Transacoes: React.FC<TransacoesProps> = ({
       </div>
 
       {/* Histórico com Barra de Filtros */}
-<<<<<<< HEAD
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b pb-4">
-          <h2 className="text-lg font-bold text-slate-800">Histórico de Transações</h2>
-          
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              type="text"
-              placeholder="Buscar por descrição..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
-            />
 
-            <select
-              value={filtroPeriodo}
-              onChange={(e) => setFiltroPeriodo(e.target.value as any)}
-              className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              <option value="TODOS">Todos os Períodos</option>
-              <option value="ESTE_MES">Este Mês</option>
-              <option value="MES_PASSADO">Mês Passado</option>
-              <option value="ESTE_ANO">Este Ano</option>
-            </select>
-
-            <select
-              value={filtroTipo}
-              onChange={(e) => setFiltroTipo(e.target.value as 'TODOS' | 'RECEITA' | 'DESPESA')}
-              className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              <option value="TODOS">Todos os Tipos</option>
-              <option value="RECEITA">Receitas</option>
-              <option value="DESPESA">Despesas</option>
-            </select>
-
-            <select
-              value={filtroCategoria}
-              onChange={(e) => setFiltroCategoria(e.target.value)}
-              className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              <option value="TODAS">Todas as Categorias</option>
-              {categorias.map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-=======
       <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-2">
         <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] gap-3 border-b pb-3">
           <h2 className="text-lg font-bold text-slate-800 lg:pt-1 lg:whitespace-nowrap">
@@ -384,7 +365,7 @@ export const Transacoes: React.FC<TransacoesProps> = ({
                 </select>
               </div>
             </div>
->>>>>>> origin/main
+
           </div>
         </div>
 

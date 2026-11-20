@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { TrendingUp, TrendingDown, Landmark } from 'lucide-react';
 import type { Transacao } from '../types';
 
@@ -15,6 +15,12 @@ interface PontoPatrimonio {
   patrimonioAcumulado: number;
 }
 
+interface EvolucaoPatrimonialAPI {
+  mes: string;
+  saldoMes: number;
+  saldoAcumulado: number;
+}
+
 const MESES_CURTOS = [
   'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
   'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
@@ -28,47 +34,49 @@ function formatarMoeda(valor: number) {
 }
 
 export function EvolucaoPatrimonio({ transacoes }: EvolucaoPatrimonioProps) {
-  const seriePatrimonio = useMemo<PontoPatrimonio[]>(() => {
-    if (!transacoes || transacoes.length === 0) return [];
+  const [seriePatrimonio, setSeriePatrimonio] = useState<PontoPatrimonio[]>([]);
 
-    const mapaMensal = new Map<string, { receitas: number; despesas: number }>();
+useEffect(() => {
+  const buscarEvolucao = async () => {
+    const usuarioId = localStorage.getItem('usuarioId');
 
-    for (const t of transacoes) {
-      if (!t.data) continue;
-      const chaveMes = t.data.slice(0, 7); // YYYY-MM
-      const atual = mapaMensal.get(chaveMes) || { receitas: 0, despesas: 0 };
+    if (!usuarioId) return;
 
-      if (t.tipo === 'RECEITA') {
-        atual.receitas += Number(t.valor) || 0;
-      } else {
-        atual.despesas += Number(t.valor) || 0;
+    try {
+      const resposta = await fetch(
+        `http://localhost:8080/insights/${usuarioId}/evolucao-patrimonial`,
+        { credentials: 'include' }
+      );
+
+      if (!resposta.ok) {
+        throw new Error('Erro ao buscar evolução patrimonial');
       }
 
-      mapaMensal.set(chaveMes, atual);
+      const dados: EvolucaoPatrimonialAPI[] = await resposta.json();
+
+      const evolucaoFormatada: PontoPatrimonio[] = dados.map(item => {
+        const [ano, mesStr] = item.mes.split('-');
+        const indiceMes = Number(mesStr) - 1;
+
+        return {
+          chaveMes: item.mes,
+          labelMes: `${MESES_CURTOS[indiceMes]}/${ano.slice(2)}`,
+          receitas: 0,
+          despesas: 0,
+          saldoMes: Number(item.saldoMes),
+          patrimonioAcumulado: Number(item.saldoAcumulado)
+        };
+      });
+
+      setSeriePatrimonio(evolucaoFormatada);
+
+    } catch (erro) {
+      console.error('Erro ao carregar evolução patrimonial:', erro);
     }
+  };
 
-    const chavesOrdenadas = Array.from(mapaMensal.keys()).sort();
-    let acumulado = 0;
-
-    return chavesOrdenadas.map((chave) => {
-      const { receitas, despesas } = mapaMensal.get(chave)!;
-      const saldoMes = receitas - despesas;
-      acumulado += saldoMes;
-
-      const [ano, mesStr] = chave.split('-');
-      const indiceMes = Math.max(0, Math.min(11, Number(mesStr) - 1));
-      const labelMes = `${MESES_CURTOS[indiceMes]}/${ano.slice(2)}`;
-
-      return {
-        chaveMes: chave,
-        labelMes,
-        receitas,
-        despesas,
-        saldoMes,
-        patrimonioAcumulado: acumulado,
-      };
-    });
-  }, [transacoes]);
+  buscarEvolucao();
+}, [transacoes]);
 
   const patrimonioAtual =
     seriePatrimonio.length > 0

@@ -20,6 +20,12 @@ interface MetaAPI {
   diasRestantes: number | null;
   valorMensalNecessario: number | null;
 }
+interface SugestaoMeta {
+  tipo: string;
+  mensagem: string;
+  dataGeracao: string;
+  nivelAlerta: string;
+}
 
 const adaptarMeta = (dados: MetaAPI): Meta => ({
   id: String(dados.idMeta),
@@ -51,6 +57,8 @@ export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
   const [erroMetas, setErroMetas] = useState('');
   const [salvandoMeta, setSalvandoMeta] = useState(false);
   const [alterandoMeta, setAlterandoMeta] = useState(false);
+  const [sugestoes, setSugestoes] = useState<SugestaoMeta[]>([]);
+  const [carregandoSugestoes, setCarregandoSugestoes] = useState(true);
 
   const [nomeMeta, setNomeMeta] = useState('');
   const [valorAlvoMeta, setValorAlvoMeta] = useState('');
@@ -97,6 +105,35 @@ export const OrcamentosEMetas: React.FC<OrcamentosEMetasProps> = ({
       });
     return () => { ativo = false; };
   }, []);
+  // Busca sugestões de metas e investimentos geradas pelo backend.
+useEffect(() => {
+  const usuarioId = localStorage.getItem('usuarioId');
+
+  if (!usuarioId) {
+    setCarregandoSugestoes(false);
+    return;
+  }
+
+  fetch(`http://localhost:8080/insights/${usuarioId}/metas-sugeridas`, {
+    credentials: 'include'
+  })
+    .then(async resposta => {
+      if (!resposta.ok) {
+        throw new Error('Não foi possível buscar as sugestões');
+      }
+
+      return (await resposta.json()) as SugestaoMeta[];
+    })
+    .then(dados => {
+      setSugestoes(dados);
+    })
+    .catch(erro => {
+      console.error('Erro ao carregar sugestões:', erro);
+    })
+    .finally(() => {
+      setCarregandoSugestoes(false);
+    });
+}, []);
 
   const handleAdicionarMeta = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -444,6 +481,43 @@ const handleRemoverOrcamento = async (id: string) => {
         </div>
       </div>
 
+          {/* SEÇÃO: SUGESTÕES DE INVESTIMENTO */}
+<div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 md:col-span-2">
+  <h2 className="text-lg font-bold text-slate-800">
+    Sugestões de Investimento e Patrimônio
+  </h2>
+
+  {carregandoSugestoes ? (
+    <p className="text-sm text-slate-500">
+      Carregando sugestões...
+    </p>
+  ) : sugestoes.length === 0 ? (
+    <p className="text-sm text-slate-500">
+      Nenhuma sugestão disponível no momento.
+    </p>
+  ) : (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {sugestoes.map((sugestao, indice) => (
+        <div
+          key={indice}
+          className="p-4 bg-slate-50 rounded-xl border border-slate-200"
+        >
+          <span className="text-xs font-bold text-[#c4003d]">
+            {sugestao.nivelAlerta}
+          </span>
+
+          <p className="text-sm font-semibold text-slate-800 mt-2">
+            {sugestao.tipo}
+          </p>
+
+          <p className="text-sm text-slate-600 mt-1">
+            {sugestao.mensagem}
+          </p>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
       {/* SEÇÃO 2: METAS FINANCEIRAS */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
         <h2 className="text-lg font-bold text-slate-800">Metas Financeiras</h2>

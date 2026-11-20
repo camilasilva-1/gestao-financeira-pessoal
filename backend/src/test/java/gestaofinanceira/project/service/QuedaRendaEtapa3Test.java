@@ -16,6 +16,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,9 +41,6 @@ class QuedaRendaEtapa3Test {
         // 1. PREPARAR
         int usuarioId = 1;
 
-        LocalDate mesAtual = LocalDate.now();
-        LocalDate mesAnterior = mesAtual.minusMonths(1);
-
         // Simular nenhuma outra ocorrência financeira
         when(categoriaService.listarTodas())
                 .thenReturn(List.of());
@@ -49,16 +48,14 @@ class QuedaRendaEtapa3Test {
         when(orcamentoService.listarPorUsuario(usuarioId))
                 .thenReturn(List.of());
 
-        // Receita anterior: R$ 2.000
-        when(transacaoService.calcularReceitaMensal(
-                usuarioId, mesAnterior))
-                .thenReturn(new BigDecimal("2000"));
-
-        // Receita atual: R$ 1.500
-        when(transacaoService.calcularReceitaMensal(
-                usuarioId, mesAtual))
-                .thenReturn(new BigDecimal("1500"));
-
+        // Receita do último mês completo: R$ 1.500
+        // Total dos três meses anteriores: R$ 6.000
+        when(transacaoService.calcularReceitaPorPeriodo(
+        eq(usuarioId),
+        any(LocalDate.class),
+        any(LocalDate.class)))
+        .thenReturn(new BigDecimal("1500"))
+        .thenReturn(new BigDecimal("2000"));
         // 2. EXECUTAR
         List<InsightDTO> resultados =
                 insightService.gerarInsights(usuarioId);
@@ -71,7 +68,8 @@ class QuedaRendaEtapa3Test {
 
         assertEquals("Atenção",
                 resultados.get(0).getNivelAlerta());
-
+                
+        System.out.println("Mensagem retornada: " + resultados.get(0).getMensagem());
         assertTrue(resultados.get(0).getMensagem()
                 .contains("25.00%"));
     }
@@ -79,11 +77,12 @@ class QuedaRendaEtapa3Test {
     @Test
     void naoDeveAlertarQuandoRendaNaoDiminui() {
         int usuarioId = 1;
-        LocalDate mesAtual = LocalDate.now();
+        int mesAtual = LocalDate.now().getMonthValue();
+        int mesAnterior = mesAtual == 1 ? 12 : mesAtual - 1;
 
         when(categoriaService.listarTodas()).thenReturn(List.of());
         when(orcamentoService.listarPorUsuario(usuarioId)).thenReturn(List.of());
-        when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual.minusMonths(1)))
+        when(transacaoService.calcularReceitaMensal(usuarioId, mesAnterior))
                 .thenReturn(new BigDecimal("2000"));
         when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual))
                 .thenReturn(new BigDecimal("2000"));
@@ -96,11 +95,12 @@ class QuedaRendaEtapa3Test {
     @Test
     void naoDeveAlertarQuandoRendaAnteriorForZero() {
         int usuarioId = 1;
-        LocalDate mesAtual = LocalDate.now();
+        int mesAtual = LocalDate.now().getMonthValue();
+        int mesAnterior = mesAtual == 1 ? 12 : mesAtual - 1;
 
         when(categoriaService.listarTodas()).thenReturn(List.of());
         when(orcamentoService.listarPorUsuario(usuarioId)).thenReturn(List.of());
-        when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual.minusMonths(1)))
+        when(transacaoService.calcularReceitaMensal(usuarioId, mesAnterior))
                 .thenReturn(BigDecimal.ZERO);
         when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual))
                 .thenReturn(new BigDecimal("1500"));
@@ -113,11 +113,12 @@ class QuedaRendaEtapa3Test {
     @Test
     void deveCalcularQuedaDeDezoitoPorCento() {
         int usuarioId = 1;
-        LocalDate mesAtual = LocalDate.now();
+        int mesAtual = LocalDate.now().getMonthValue();
+        int mesAnterior = mesAtual == 1 ? 12 : mesAtual - 1;
 
         when(categoriaService.listarTodas()).thenReturn(List.of());
         when(orcamentoService.listarPorUsuario(usuarioId)).thenReturn(List.of());
-        when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual.minusMonths(1)))
+        when(transacaoService.calcularReceitaMensal(usuarioId, mesAnterior))
                 .thenReturn(new BigDecimal("2000"));
         when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual))
                 .thenReturn(new BigDecimal("1640"));
@@ -133,11 +134,12 @@ class QuedaRendaEtapa3Test {
     @Test
     void naoDeveAlertarQuedaInferiorAQuinzePorCento() {
         int usuarioId = 1;
-        LocalDate mesAtual = LocalDate.now();
+        int mesAtual = LocalDate.now().getMonthValue();
+        int mesAnterior = mesAtual == 1 ? 12 : mesAtual - 1;
 
         when(categoriaService.listarTodas()).thenReturn(List.of());
         when(orcamentoService.listarPorUsuario(usuarioId)).thenReturn(List.of());
-        when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual.minusMonths(1)))
+        when(transacaoService.calcularReceitaMensal(usuarioId, mesAnterior))
                 .thenReturn(new BigDecimal("2000"));
         when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual))
                 .thenReturn(new BigDecimal("1800"));
@@ -152,11 +154,12 @@ class QuedaRendaEtapa3Test {
     @Test
     void deveAlertarQuedaDeExatamenteQuinzePorCento() {
         int usuarioId = 1;
-        LocalDate mesAtual = LocalDate.now();
+        int mesAtual = LocalDate.now().getMonthValue();
+        int mesAnterior = mesAtual == 1 ? 12 : mesAtual - 1;
 
         when(categoriaService.listarTodas()).thenReturn(List.of());
         when(orcamentoService.listarPorUsuario(usuarioId)).thenReturn(List.of());
-        when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual.minusMonths(1)))
+        when(transacaoService.calcularReceitaMensal(usuarioId, mesAnterior))
                 .thenReturn(new BigDecimal("2000"));
         when(transacaoService.calcularReceitaMensal(usuarioId, mesAtual))
                 .thenReturn(new BigDecimal("1700"));

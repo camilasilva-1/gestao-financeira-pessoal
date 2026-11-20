@@ -136,22 +136,16 @@ public class SessionOwnershipFilter extends OncePerRequestFilter {
         } else if ("/orcamentos".equals(path)
                 && ("POST".equals(method) || "GET".equals(method))) {
             authorized = true; // GET e filtrado pelo usuario no controller; POST verifica o dono.
-<<<<<<< HEAD
-
         } else if ("/metas".equals(path) && "GET".equals(method)) {
             authorized = true; // GET e filtrado pelo usuario no controller.
 
         } else if ((m = match(path, "^/metas/(?:usuario|criar|calcular)/(\\d+)$")).matches()) {
-            authorized = hasOwnId(m.group(1), userId);
-
-=======
-        } else if ((m = match(path, "^/metas/(?:usuario|criar|calcular)/(\\d+)$")).matches()) {
             authorized = hasOwnId(m.group(1), userId)
-                && ("GET".equals(method) || "POST".equals(method));
+                    && ("GET".equals(method) || "POST".equals(method));
+
         } else if ((m = match(path, "^/metas/(\\d+)/usuario/(\\d+)$")).matches()) {
             authorized = hasOwnId(m.group(2), userId)
-                && ("PUT".equals(method) || "DELETE".equals(method));
->>>>>>> origin/main
+                    && ("PUT".equals(method) || "DELETE".equals(method));
         } else if ((m = match(path, "^/categorias/ranking/(\\d+)$")).matches()) {
             authorized = hasOwnId(m.group(1), userId);
 
@@ -160,15 +154,11 @@ public class SessionOwnershipFilter extends OncePerRequestFilter {
 
         } else if ((m = match(path, "^/api/relatorios/regra-50-30-20/(\\d+)$")).matches()) {
             authorized = "GET".equals(method) && hasOwnId(m.group(1), userId);
-<<<<<<< HEAD
-
-=======
         } else if (path.matches("^/api/relatorios/(historico|mensal/arquivar)$")) {
             authorized = ("GET".equals(method) && "/api/relatorios/historico".equals(path)
-                      || "POST".equals(method) && "/api/relatorios/mensal/arquivar".equals(path))
-                && req.getParameter("usuarioId") != null
-                && hasOwnId(req.getParameter("usuarioId"), userId);
->>>>>>> origin/main
+                    || "POST".equals(method) && "/api/relatorios/mensal/arquivar".equals(path))
+                    && req.getParameter("usuarioId") != null
+                    && hasOwnId(req.getParameter("usuarioId"), userId);
         } else if (path.matches("^/api/relatorios/(mensal|distribuicao|evolucao|ranking)$")) {
             authorized = "GET".equals(method)
                     && req.getParameter("usuarioId") != null

@@ -14,65 +14,80 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 class AlertaReservaEtapa3Test {
 
-    @Mock TransacaoService transacaoService;
-    @Mock OrcamentoService orcamentoService;
-    @Mock CategoriaService categoriaService;
-    @Mock MetaFinanceiraRepository metaFinanceiraRepository;
-    @InjectMocks InsightService insightService;
+        @Mock
+        TransacaoService transacaoService;
+        @Mock
+        OrcamentoService orcamentoService;
+        @Mock
+        CategoriaService categoriaService;
+        @Mock
+        MetaFinanceiraRepository metaFinanceiraRepository;
+        @InjectMocks
+        InsightService insightService;
 
-    private MetaFinanceira reserva(double valor) {
-        MetaFinanceira meta = new MetaFinanceira();
-        meta.setNome("Reserva de Emergência");
-        meta.setValorAcumulado(valor);
-        return meta;
-    }
+        private MetaFinanceira reserva(double valor) {
+                MetaFinanceira meta = new MetaFinanceira();
+                meta.setNome("Reserva de Emergência");
+                meta.setValorAcumulado(valor);
+                return meta;
+        }
 
-    @Test
-    void deveAlertarQuandoReservaGuardadaForInsuficiente() {
-        int usuarioId = 1;
-        int mes = LocalDate.now().getMonthValue();
-        when(transacaoService.calcularDespesaMensal(usuarioId, mes))
-                .thenReturn(new BigDecimal("500"));
-        when(metaFinanceiraRepository.findByUsuario_IdUsuario(usuarioId))
-                .thenReturn(List.of(reserva(1000)));
+        @Test
+        void deveAlertarQuandoReservaGuardadaForInsuficiente() {
+                int usuarioId = 1;
 
-        InsightDTO resultado = insightService.gerarAlertaReservaInsuficiente(usuarioId);
+                when(transacaoService.calcularDespesaPorPeriodo(
+                                eq(usuarioId),
+                                any(LocalDate.class),
+                                any(LocalDate.class)))
+                                .thenReturn(new BigDecimal("3000"));
 
-        assertEquals("Reserva insuficiente", resultado.getTipo());
-        assertEquals("Atenção", resultado.getNivelAlerta());
-        assertTrue(resultado.getMensagem().contains("R$ 3000.00"));
-    }
+                when(metaFinanceiraRepository.findByUsuario_IdUsuario(usuarioId))
+                                .thenReturn(List.of(reserva(1000)));
 
-    @Test
-    void deveReconhecerReservaAdequada() {
-        int usuarioId = 1;
-        int mes = LocalDate.now().getMonthValue();
-        when(transacaoService.calcularDespesaMensal(usuarioId, mes))
-                .thenReturn(new BigDecimal("500"));
-        when(metaFinanceiraRepository.findByUsuario_IdUsuario(usuarioId))
-                .thenReturn(List.of(reserva(3000)));
+                InsightDTO resultado = insightService.gerarAlertaReservaInsuficiente(usuarioId);
 
-        InsightDTO resultado = insightService.gerarAlertaReservaInsuficiente(usuarioId);
+                assertEquals("Reserva insuficiente", resultado.getTipo());
+                assertEquals("Atenção", resultado.getNivelAlerta());
+                assertTrue(resultado.getMensagem().contains("R$ 3000.00"));
+        }
 
-        assertEquals("Reserva adequada", resultado.getTipo());
-    }
+        @Test
+        void deveReconhecerReservaAdequada() {
+                int usuarioId = 1;
+                when(transacaoService.calcularDespesaPorPeriodo(
+                                eq(usuarioId),
+                                any(LocalDate.class),
+                                any(LocalDate.class)))
+                                .thenReturn(new BigDecimal("3000"));
+                when(metaFinanceiraRepository.findByUsuario_IdUsuario(usuarioId))
+                                .thenReturn(List.of(reserva(3000)));
 
-    @Test
-    void naoDeveInventarReservaQuandoNaoHaMetaCadastrada() {
-        int usuarioId = 1;
-        int mes = LocalDate.now().getMonthValue();
-        when(transacaoService.calcularDespesaMensal(usuarioId, mes))
-                .thenReturn(new BigDecimal("500"));
-        when(metaFinanceiraRepository.findByUsuario_IdUsuario(usuarioId))
-                .thenReturn(List.of());
+                InsightDTO resultado = insightService.gerarAlertaReservaInsuficiente(usuarioId);
 
-        InsightDTO resultado = insightService.gerarAlertaReservaInsuficiente(usuarioId);
+                assertEquals("Reserva adequada", resultado.getTipo());
+        }
 
-        assertEquals("Dados insuficientes", resultado.getTipo());
-        assertEquals("Informativo", resultado.getNivelAlerta());
-    }
+        @Test
+        void naoDeveInventarReservaQuandoNaoHaMetaCadastrada() {
+                int usuarioId = 1;
+                when(transacaoService.calcularDespesaPorPeriodo(
+                                eq(usuarioId),
+                                any(LocalDate.class),
+                                any(LocalDate.class)))
+                                .thenReturn(new BigDecimal("3000"));
+                when(metaFinanceiraRepository.findByUsuario_IdUsuario(usuarioId))
+                                .thenReturn(List.of());
+
+                InsightDTO resultado = insightService.gerarAlertaReservaInsuficiente(usuarioId);
+
+                assertEquals("Dados insuficientes", resultado.getTipo());
+                assertEquals("Informativo", resultado.getNivelAlerta());
+        }
 }
