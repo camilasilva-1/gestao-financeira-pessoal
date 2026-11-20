@@ -131,12 +131,16 @@ public class InsightService {
         // 3. ALERTAR APENAS QUANDO A RENDA CAIR 15% OU MAIS.
 
         BigDecimal receitaAtual =
-                transacaoService.calcularReceitaMensal(
-                        usuarioId, mesAtual);
+        transacaoService.calcularReceitaPorPeriodo(
+                usuarioId,
+                mesAtual.withDayOfMonth(1),
+                mesAtual.withDayOfMonth(mesAtual.lengthOfMonth()));
 
         BigDecimal receitaAnterior =
-                transacaoService.calcularReceitaMensal(
-                        usuarioId, mesAnterior);
+        transacaoService.calcularReceitaPorPeriodo(
+                usuarioId,
+                mesAnterior.withDayOfMonth(1),
+                mesAnterior.withDayOfMonth(mesAnterior.lengthOfMonth()));
 
         if (receitaAnterior != null
                 && receitaAtual != null
@@ -181,7 +185,7 @@ public class InsightService {
         return insights;
     }
 
-<<<<<<< HEAD
+
         // ============================
     // DETECÇÃO DE QUEDA DE RENDA
     // ============================
@@ -287,9 +291,9 @@ public class InsightService {
 }
 
     // ============================
-=======
+
     // ============================================
->>>>>>> origin/main
+
     // GERAÇÃO DE ALERTAS
     // ============================================
 
@@ -646,46 +650,27 @@ public class InsightService {
         return metas;
     }
 
+    
     // ============================================
     // ALERTA DE RESERVA INSUFICIENTE
     // ============================================
 
-<<<<<<< HEAD
-    // ============================
-// ALERTA DE RESERVA INSUFICIENTE
-// ============================
+    public InsightDTO gerarAlertaReservaInsuficiente(Integer usuarioId) {
 
-public InsightDTO gerarAlertaReservaInsuficiente(Integer usuarioId) {
+        // Calcula a reserva ideal com base na média das despesas
+        // dos últimos seis meses.
+        BigDecimal reservaIdeal = calcularReservaIdeal(usuarioId);
 
-    BigDecimal reservaIdeal = calcularReservaIdeal(usuarioId);
-=======
-    public InsightDTO gerarAlertaReservaInsuficiente(
-            Integer usuarioId) {
-
-        int mesAtual = LocalDate.now().getMonthValue();
-
-        BigDecimal despesa =
-                transacaoService.calcularDespesaMensal(
-                        usuarioId, mesAtual);
-
-        if (despesa == null) {
-            despesa = BigDecimal.ZERO;
-        }
-
-        // Sem despesas, não há base para calcular a reserva recomendada.
-        if (despesa.compareTo(BigDecimal.ZERO) <= 0) {
+        if (reservaIdeal.compareTo(BigDecimal.ZERO) <= 0) {
             return new InsightDTO(
                     "Dados insuficientes",
-                    "Cadastre despesas para calcular sua reserva de emergência ideal.",
+                    "Não há despesas registradas nos últimos seis meses para calcular sua reserva de emergência.",
                     LocalDate.now(),
                     "Informativo"
             );
         }
 
-        BigDecimal reservaIdeal = despesa.multiply(BigDecimal.valueOf(6));
-
-        // Dinheiro guardado não é a mesma coisa que despesa em Investimentos.
-        // Usar somente uma meta identificada pelo usuário como reserva.
+        // Busca as metas financeiras identificadas como reserva.
         List<MetaFinanceira> reservas = metaFinanceiraRepository
                 .findByUsuario_IdUsuario(usuarioId).stream()
                 .filter(meta -> meta.getNome() != null
@@ -701,41 +686,30 @@ public InsightDTO gerarAlertaReservaInsuficiente(Integer usuarioId) {
             );
         }
 
+        // Soma o valor acumulado nas metas de reserva.
         BigDecimal valorGuardado = reservas.stream()
                 .map(meta -> BigDecimal.valueOf(
-                        meta.getValorAcumulado() == null ? 0.0 : meta.getValorAcumulado()))
+                        meta.getValorAcumulado() == null
+                                ? 0.0
+                                : meta.getValorAcumulado()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        // Verifica se o valor acumulado está abaixo do recomendado.
         if (valorGuardado.compareTo(reservaIdeal) < 0) {
             return new InsightDTO(
                     "Reserva insuficiente",
                     "Sua reserva está abaixo do recomendado. O ideal é possuir pelo menos R$ "
-                            + reservaIdeal.setScale(
-                                    2, RoundingMode.HALF_UP),
+                            + reservaIdeal.setScale(2, RoundingMode.HALF_UP),
                     LocalDate.now(),
                     "Atenção"
             );
-        }
->>>>>>> origin/main
-
-    if (reservaIdeal.compareTo(BigDecimal.ZERO) <= 0) {
+ }
         return new InsightDTO(
-                "Dados insuficientes",
-                "Não há despesas registradas nos últimos seis meses para calcular sua reserva de emergência.",
+                "Reserva adequada",
+                "Sua reserva de emergência atingiu o valor recomendado de R$ "
+                        + reservaIdeal.setScale(2, RoundingMode.HALF_UP) + ".",
                 LocalDate.now(),
                 "Informativo"
         );
-    }
-<<<<<<< HEAD
-
-    return new InsightDTO(
-            "Reserva de emergência",
-            "Com base na média das suas despesas dos últimos seis meses, sua reserva de emergência recomendada é de R$ "
-                    + reservaIdeal + ".",
-            LocalDate.now(),
-            "Informativo"
-    );
-}
-=======
->>>>>>> origin/main
+   }
 }

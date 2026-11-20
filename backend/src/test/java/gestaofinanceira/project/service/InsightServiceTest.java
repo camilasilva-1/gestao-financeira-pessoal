@@ -9,6 +9,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import gestaofinanceira.project.repository.MetaFinanceiraRepository;
+import gestaofinanceira.project.model.MetaFinanceira;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -20,95 +22,109 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class InsightServiceTest {
-    @Mock TransacaoService transacaoService;
-    @Mock OrcamentoService orcamentoService;
-    @Mock CategoriaService categoriaService;
-    @InjectMocks InsightService service;
+        @Mock
+        TransacaoService transacaoService;
+        @Mock
+        OrcamentoService orcamentoService;
+        @Mock
+        CategoriaService categoriaService;
+        @InjectMocks
+        InsightService service;
+        @Mock
+        MetaFinanceiraRepository metaFinanceiraRepository;
 
-    @Test
-    void faixaDeConsumoDeveSinalizarRiscoEEstouro() {
-        Usuario usuario = new Usuario();
-        usuario.setIdUsuario(1);
-        Categoria categoria = new Categoria();
-        categoria.setNome("Alimentação");
+        @Test
+        void faixaDeConsumoDeveSinalizarRiscoEEstouro() {
+                Usuario usuario = new Usuario();
+                usuario.setIdUsuario(1);
+                Categoria categoria = new Categoria();
+                categoria.setNome("Alimentação");
 
-        Orcamento risco = new Orcamento();
-        risco.setIdOrcamento(10);
-        risco.setUsuario(usuario);
-        risco.setCategoria(categoria);
+                Orcamento risco = new Orcamento();
+                risco.setIdOrcamento(10);
+                risco.setUsuario(usuario);
+                risco.setCategoria(categoria);
 
-        Orcamento estourado = new Orcamento();
-        estourado.setIdOrcamento(11);
-        estourado.setUsuario(usuario);
-        estourado.setCategoria(categoria);
+                Orcamento estourado = new Orcamento();
+                estourado.setIdOrcamento(11);
+                estourado.setUsuario(usuario);
+                estourado.setCategoria(categoria);
 
-        when(orcamentoService.listarPorUsuario(1))
-                .thenReturn(List.of(risco, estourado));
-        when(orcamentoService.calcularPercentual(10))
-                .thenReturn(new BigDecimal("90.00"));
-        when(orcamentoService.calcularPercentual(11))
-                .thenReturn(new BigDecimal("110.00"));
+                when(orcamentoService.listarPorUsuario(1))
+                                .thenReturn(List.of(risco, estourado));
+                when(orcamentoService.calcularPercentual(10))
+                                .thenReturn(new BigDecimal("90.00"));
+                when(orcamentoService.calcularPercentual(11))
+                                .thenReturn(new BigDecimal("110.00"));
 
-        List<InsightDTO> alertas = service.gerarAlertas(1);
-        assertEquals(2, alertas.size());
-        assertEquals("Risco", alertas.get(0).getNivelAlerta());
-        assertEquals("Estourado", alertas.get(1).getNivelAlerta());
-    }
+                List<InsightDTO> alertas = service.gerarAlertas(1);
+                assertEquals(2, alertas.size());
+                assertEquals("Risco", alertas.get(0).getNivelAlerta());
+                assertEquals("Estourado", alertas.get(1).getNivelAlerta());
+        }
 
-    @Test
-    void aumentoDeGastosDeveUsarMesAnteriorComoBase() {
-        Categoria categoria = new Categoria();
-        categoria.setNome("Alimentação");
-        LocalDate agora = LocalDate.now();
-        when(categoriaService.listarTodas()).thenReturn(List.of(categoria));
-        when(transacaoService.calcularGastoPorCategoria(
-                eq(1), eq("Alimentação"), eq(agora)))
-                .thenReturn(new BigDecimal("200.00"));
-        when(transacaoService.calcularGastoPorCategoria(
-                eq(1), eq("Alimentação"), eq(agora.minusMonths(1))))
-                .thenReturn(new BigDecimal("100.00"));
-        when(orcamentoService.listarPorUsuario(1)).thenReturn(List.of());
+        @Test
+        void aumentoDeGastosDeveUsarMesAnteriorComoBase() {
+                Categoria categoria = new Categoria();
+                categoria.setNome("Alimentação");
+                LocalDate agora = LocalDate.now();
+                when(categoriaService.listarTodas()).thenReturn(List.of(categoria));
+                when(transacaoService.calcularGastoPorCategoria(
+                                eq(1), eq("Alimentação"), eq(agora)))
+                                .thenReturn(new BigDecimal("200.00"));
+                when(transacaoService.calcularGastoPorCategoria(
+                                eq(1), eq("Alimentação"), eq(agora.minusMonths(1))))
+                                .thenReturn(new BigDecimal("100.00"));
+                when(orcamentoService.listarPorUsuario(1)).thenReturn(List.of());
 
-        List<InsightDTO> insights = service.gerarInsights(1);
-        assertTrue(insights.stream().anyMatch(i -> i.getMensagem().contains("100.00%")));
-    }
+                List<InsightDTO> insights = service.gerarInsights(1);
+                assertTrue(insights.stream().anyMatch(i -> i.getMensagem().contains("100.00%")));
+        }
 
-    @Test
-void reservaDeEmergenciaDeveSerCalculadaComBaseNasDespesas() {
-    LocalDate fim = LocalDate.now()
-            .withDayOfMonth(1)
-            .minusDays(1);
+        @Test
+        void reservaDeEmergenciaDeveSerCalculadaComBaseNasDespesas() {
+                LocalDate fim = LocalDate.now()
+                                .withDayOfMonth(1)
+                                .minusDays(1);
 
-    LocalDate inicio = fim
-            .withDayOfMonth(1)
-            .minusMonths(5);
+                LocalDate inicio = fim
+                                .withDayOfMonth(1)
+                                .minusMonths(5);
 
-    when(transacaoService.calcularDespesaPorPeriodo(
-            1, inicio, fim))
-            .thenReturn(new BigDecimal("7200.00"));
+                when (transacaoService.calcularDespesaPorPeriodo(
+                        
+                                1, inicio, fim))
+                                .thenReturn(new BigDecimal("7200.00"));
+                MetaFinanceira metaReserva = org.mockito.Mockito.mock(MetaFinanceira.class);
 
-    InsightDTO resultado = service.gerarAlertaReservaInsuficiente(1);
+                when(metaReserva.getNome()).thenReturn("Reserva de emergência");
+                when(metaReserva.getValorAcumulado()).thenReturn(1000.0);
 
-    assertTrue(resultado.getMensagem().contains("7200.00"));
-}
+                when(metaFinanceiraRepository.findByUsuario_IdUsuario(1))
+                        .thenReturn(List.of(metaReserva));
 
-@Test
-void reservaDeEmergenciaDeveInformarQuandoNaoExistiremDespesas() {
-    LocalDate fim = LocalDate.now()
-            .withDayOfMonth(1)
-            .minusDays(1);
+                InsightDTO resultado = service.gerarAlertaReservaInsuficiente(1);
 
-    LocalDate inicio = fim
-            .withDayOfMonth(1)
-            .minusMonths(5);
+                assertTrue(resultado.getMensagem().contains("7200.00"));
+        }
 
-    when(transacaoService.calcularDespesaPorPeriodo(
-            1, inicio, fim))
-            .thenReturn(BigDecimal.ZERO);
+        @Test
+        void reservaDeEmergenciaDeveInformarQuandoNaoExistiremDespesas() {
+                LocalDate fim = LocalDate.now()
+                                .withDayOfMonth(1)
+                                .minusDays(1);
 
-    InsightDTO resultado = service.gerarAlertaReservaInsuficiente(1);
+                LocalDate inicio = fim
+                                .withDayOfMonth(1)
+                                .minusMonths(5);
 
-    assertTrue(resultado.getMensagem().contains("Não há despesas registradas"));
-}
+                when(transacaoService.calcularDespesaPorPeriodo(
+                                1, inicio, fim))
+                                .thenReturn(BigDecimal.ZERO);
+
+                InsightDTO resultado = service.gerarAlertaReservaInsuficiente(1);
+
+                assertTrue(resultado.getMensagem().contains("Não há despesas registradas"));
+        }
 
 }

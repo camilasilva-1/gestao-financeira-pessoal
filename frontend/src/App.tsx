@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Login } from './components/Login';
 import { Cadastro } from './components/Cadastro';
 import { EsqueciSenha } from './components/EsqueciSenha';
@@ -6,7 +6,7 @@ import { Dashboard } from './components/Dashboard';
 import { Transacoes } from './components/Transacoes';
 import { OrcamentosEMetas } from './components/OrcamentosEMetas';
 import { Header } from './components/Header';
-import type { Transacao, Orcamento } from './types';
+import type { Transacao, Orcamento, OrcamentoAPI, CategoriaAPI } from './types';
 import { CATEGORIAS_PADRAO } from './types';
 import { Relatorios } from './components/Relatorios';
 import { ScoreCard } from './components/ScoreCard';
@@ -21,11 +21,7 @@ function App() {
     return usuarioSalvo ? 'app' : 'login';
   });
 
-  const [transacoes, setTransacoes] = useState<Transacao[]>([
-    { id: '1', descricao: 'Salário Mensal', valor: 5000, data: '2026-09-05', tipo: 'RECEITA', categoria: 'Outros' },
-    { id: '2', descricao: 'Supermercado', valor: 450, data: '2026-09-08', tipo: 'DESPESA', categoria: 'Alimentação', establishment: 'Carrefour' },
-    { id: '3', descricao: 'Cinema e Pipoca', valor: 120, data: '2026-09-10', tipo: 'DESPESA', categoria: 'Lazer' }
-  ]);
+  const [transacoes, setTransacoes] = useState<Transacao[]>([]);
 
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>([
     { id: '1', categoria: 'Alimentação', limite: 1000, gasto: 0 },
@@ -41,14 +37,45 @@ function App() {
     }
   };
 
-<<<<<<< HEAD
-=======
+useEffect(() => {
+  const buscarTransacoes = async () => {
+    if (telaAtual !== 'app') return;
+
+    try {
+      const resposta = await fetch(
+        'http://localhost:8080/api/transacoes',
+        { credentials: 'include' }
+      );
+
+      if (!resposta.ok) {
+        throw new Error('Erro ao buscar transações');
+      }
+
+      const dados = await resposta.json();
+
+      const transacoesFormatadas: Transacao[] = dados.map((item: any) => ({
+        id: String(item.idTransacao),
+        descricao: item.descricao,
+        valor: Number(item.valor),
+        data: item.dataTransacao,
+        tipo: item.tipo,
+        categoria: item.categoria?.nome,
+        establishment: item.estabelecimento,
+        recorrente: item.recorrencia ?? false,
+        usuarioId: item.usuario?.idUsuario,
+        categoriaId: item.categoria?.idCategoria
+      }));
+
+      setTransacoes(transacoesFormatadas);
+    } catch (erro) {
+      console.error('Erro ao carregar transações:', erro);
+    }
+  };
+
   buscarTransacoes();
 }, [telaAtual]);
 
-
-  const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
-const [carregandoOrcamentos, setCarregandoOrcamentos] = useState(true);
+const [, setCarregandoOrcamentos] = useState(true);
 
 useEffect(() => {
   const buscarOrcamentos = async () => {
@@ -107,7 +134,6 @@ const orcamentosFormatados: Orcamento[] = await Promise.all(
 // Recalcular os gastos mensais quando as transacoes forem alteradas.
 }, [telaAtual, transacoes]);
 
-  const [categorias] = useState<string[]>(CATEGORIAS_PADRAO);
   const [categoriasAPI, setCategoriasAPI] = useState<CategoriaAPI[]>([]);
 
   useEffect(() => {
@@ -128,8 +154,6 @@ const orcamentosFormatados: Orcamento[] = await Promise.all(
 
   buscarCategorias();
 }, []);
-
->>>>>>> origin/main
   // Função para fazer logout e limpar a sessão salva no navegador
   const handleLogout = () => {
     localStorage.removeItem('usuarioId');
@@ -211,7 +235,7 @@ const orcamentosFormatados: Orcamento[] = await Promise.all(
             orcamentos={orcamentos} 
             setOrcamentos={setOrcamentos} 
             categorias={categorias}
-            categoriasAPI={[]}
+            categoriasAPI={categoriasAPI}
           />
         </main>
       </div>
