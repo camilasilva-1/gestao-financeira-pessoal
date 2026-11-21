@@ -57,7 +57,8 @@ export const Transacoes: React.FC<TransacoesProps> = ({
               data: t.dataTransacao || t.data,
               tipo: t.tipo,
               categoria: typeof t.categoria === 'object' ? t.categoria.nome : t.categoria,
-              establishment: t.estabelecimento
+              establishment: t.estabelecimento,
+              recorrente: Boolean(t.recorrencia)
             }));
             setTransacoes(formatadas);
           }
