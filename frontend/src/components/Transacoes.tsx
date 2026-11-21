@@ -32,6 +32,11 @@ export const Transacoes: React.FC<TransacoesProps> = ({
   const [filtroCategoria, setFiltroCategoria] = useState('TODAS');
   const [filtroPeriodo, setFiltroPeriodo] = useState<'TODOS' | 'ESTE_MES' | 'MES_PASSADO' | 'ESTE_ANO'>('TODOS');
 
+  const [dataInicial, setDataInicial] = useState('');
+  const [dataFinal, setDataFinal] = useState('');
+  const [filtroEstabelecimento, setFiltroEstabelecimento] = useState('');
+  const [filtroRecorrencia, setFiltroRecorrencia] = useState<'TODOS' | 'SIM' | 'NAO'>('TODOS');
+
   // Modal de Edição
   const [transacaoParaEditar, setTransacaoParaEditar] = useState<Transacao | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -168,8 +173,12 @@ export const Transacoes: React.FC<TransacoesProps> = ({
     const bateTipo = filtroTipo === 'TODOS' || t.tipo === filtroTipo;
     const bateCat = filtroCategoria === 'TODAS' || (filtroCategoria === 'SEM_CATEGORIA' ? !t.categoria : t.categoria === filtroCategoria);
     const batePeriodo = ehNoPeriodo(t.data);
+    const bateDataInicial = !dataInicial || t.data >= dataInicial;
+    const bateDataFinal = !dataFinal || t.data <= dataFinal;
+    const bateEstabelecimento = !filtroEstabelecimento || (t.establishment || '').toLowerCase().includes(filtroEstabelecimento.toLowerCase());
+    const bateRecorrencia = filtroRecorrencia === 'TODOS' || (filtroRecorrencia === 'SIM' ? Boolean(t.recorrente) : !t.recorrente);
 
-    return bateTexto && bateTipo && bateCat && batePeriodo;
+    return bateTexto && bateTipo && bateCat && batePeriodo && bateDataInicial && bateDataFinal && bateEstabelecimento && bateRecorrencia;
   });
 
   return (
@@ -263,52 +272,6 @@ export const Transacoes: React.FC<TransacoesProps> = ({
       </div>
 
       {/* Histórico com Barra de Filtros */}
-<<<<<<< HEAD
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b pb-4">
-          <h2 className="text-lg font-bold text-slate-800">Histórico de Transações</h2>
-          
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              type="text"
-              placeholder="Buscar por descrição..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="border border-slate-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
-            />
-
-            <select
-              value={filtroPeriodo}
-              onChange={(e) => setFiltroPeriodo(e.target.value as any)}
-              className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              <option value="TODOS">Todos os Períodos</option>
-              <option value="ESTE_MES">Este Mês</option>
-              <option value="MES_PASSADO">Mês Passado</option>
-              <option value="ESTE_ANO">Este Ano</option>
-            </select>
-
-            <select
-              value={filtroTipo}
-              onChange={(e) => setFiltroTipo(e.target.value as 'TODOS' | 'RECEITA' | 'DESPESA')}
-              className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              <option value="TODOS">Todos os Tipos</option>
-              <option value="RECEITA">Receitas</option>
-              <option value="DESPESA">Despesas</option>
-            </select>
-
-            <select
-              value={filtroCategoria}
-              onChange={(e) => setFiltroCategoria(e.target.value)}
-              className="border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
-            >
-              <option value="TODAS">Todas as Categorias</option>
-              {categorias.map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-=======
       <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-2">
         <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] gap-3 border-b pb-3">
           <h2 className="text-lg font-bold text-slate-800 lg:pt-1 lg:whitespace-nowrap">
@@ -384,7 +347,6 @@ export const Transacoes: React.FC<TransacoesProps> = ({
                 </select>
               </div>
             </div>
->>>>>>> origin/main
           </div>
         </div>
 
