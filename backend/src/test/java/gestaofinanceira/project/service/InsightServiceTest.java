@@ -4,6 +4,8 @@ import gestaofinanceira.project.dto.InsightDTO;
 import gestaofinanceira.project.model.Categoria;
 import gestaofinanceira.project.model.Orcamento;
 import gestaofinanceira.project.model.Usuario;
+import gestaofinanceira.project.model.MetaFinanceira;
+import gestaofinanceira.project.repository.MetaFinanceiraRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,6 +25,7 @@ class InsightServiceTest {
     @Mock TransacaoService transacaoService;
     @Mock OrcamentoService orcamentoService;
     @Mock CategoriaService categoriaService;
+    @Mock MetaFinanceiraRepository metaFinanceiraRepository;
     @InjectMocks InsightService service;
 
     @Test
@@ -74,41 +77,34 @@ class InsightServiceTest {
     }
 
     @Test
-void reservaDeEmergenciaDeveSerCalculadaComBaseNasDespesas() {
-    LocalDate fim = LocalDate.now()
-            .withDayOfMonth(1)
-            .minusDays(1);
+    void reservaDeEmergenciaDeveSerCalculadaComBaseNasDespesas() {
+        int usuarioId = 1;
+        int mesAtual = LocalDate.now().getMonthValue();
+        when(transacaoService.calcularDespesaMensal(usuarioId, mesAtual))
+                .thenReturn(new BigDecimal("1200.00"));
 
-    LocalDate inicio = fim
-            .withDayOfMonth(1)
-            .minusMonths(5);
+        MetaFinanceira reserva = new MetaFinanceira();
+        reserva.setNome("Reserva de Emergência");
+        reserva.setValorAcumulado(1000.00);
+        when(metaFinanceiraRepository.findByUsuario_IdUsuario(usuarioId))
+                .thenReturn(List.of(reserva));
 
-    when(transacaoService.calcularDespesaPorPeriodo(
-            1, inicio, fim))
-            .thenReturn(new BigDecimal("7200.00"));
+        InsightDTO resultado = service.gerarAlertaReservaInsuficiente(usuarioId);
 
-    InsightDTO resultado = service.gerarAlertaReservaInsuficiente(1);
+        assertEquals("Reserva insuficiente", resultado.getTipo());
+        assertTrue(resultado.getMensagem().contains("7200.00"));
+    }
 
-    assertTrue(resultado.getMensagem().contains("7200.00"));
-}
+    @Test
+    void reservaDeEmergenciaDeveInformarQuandoNaoExistiremDespesas() {
+        int usuarioId = 1;
+        int mesAtual = LocalDate.now().getMonthValue();
+        when(transacaoService.calcularDespesaMensal(usuarioId, mesAtual))
+                .thenReturn(BigDecimal.ZERO);
 
-@Test
-void reservaDeEmergenciaDeveInformarQuandoNaoExistiremDespesas() {
-    LocalDate fim = LocalDate.now()
-            .withDayOfMonth(1)
-            .minusDays(1);
+        InsightDTO resultado = service.gerarAlertaReservaInsuficiente(usuarioId);
 
-    LocalDate inicio = fim
-            .withDayOfMonth(1)
-            .minusMonths(5);
-
-    when(transacaoService.calcularDespesaPorPeriodo(
-            1, inicio, fim))
-            .thenReturn(BigDecimal.ZERO);
-
-    InsightDTO resultado = service.gerarAlertaReservaInsuficiente(1);
-
-    assertTrue(resultado.getMensagem().contains("Não há despesas registradas"));
-}
-
+        assertEquals("Dados insuficientes", resultado.getTipo());
+        assertTrue(resultado.getMensagem().contains("Cadastre despesas"));
+    }
 }
