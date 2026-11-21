@@ -181,7 +181,6 @@ public class InsightService {
         return insights;
     }
 
-<<<<<<< HEAD
         // ============================
     // DETECÇÃO DE QUEDA DE RENDA
     // ============================
@@ -287,9 +286,6 @@ public class InsightService {
 }
 
     // ============================
-=======
-    // ============================================
->>>>>>> origin/main
     // GERAÇÃO DE ALERTAS
     // ============================================
 
@@ -650,15 +646,6 @@ public class InsightService {
     // ALERTA DE RESERVA INSUFICIENTE
     // ============================================
 
-<<<<<<< HEAD
-    // ============================
-// ALERTA DE RESERVA INSUFICIENTE
-// ============================
-
-public InsightDTO gerarAlertaReservaInsuficiente(Integer usuarioId) {
-
-    BigDecimal reservaIdeal = calcularReservaIdeal(usuarioId);
-=======
     public InsightDTO gerarAlertaReservaInsuficiente(
             Integer usuarioId) {
 
@@ -716,26 +703,12 @@ public InsightDTO gerarAlertaReservaInsuficiente(Integer usuarioId) {
                     "Atenção"
             );
         }
->>>>>>> origin/main
-
-    if (reservaIdeal.compareTo(BigDecimal.ZERO) <= 0) {
-        return new InsightDTO(
-                "Dados insuficientes",
-                "Não há despesas registradas nos últimos seis meses para calcular sua reserva de emergência.",
-                LocalDate.now(),
-                "Informativo"
-        );
-    }
-<<<<<<< HEAD
 
     return new InsightDTO(
-            "Reserva de emergência",
-            "Com base na média das suas despesas dos últimos seis meses, sua reserva de emergência recomendada é de R$ "
-                    + reservaIdeal + ".",
+            "Reserva adequada",
+            "Sua reserva de emergência está dentro do valor recomendado.",
             LocalDate.now(),
             "Informativo"
     );
 }
-=======
->>>>>>> origin/main
 }
