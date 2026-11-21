@@ -13,8 +13,7 @@ interface TransacoesProps {
 export const Transacoes: React.FC<TransacoesProps> = ({
   transacoes,
   setTransacoes,
-  categorias,
-  adicionarCategoria
+  categorias
 }) => {
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
@@ -126,10 +125,25 @@ export const Transacoes: React.FC<TransacoesProps> = ({
   const handleExcluir = async (id: string) => {
     if (confirm('Deseja realmente excluir esta transação?')) {
       try {
-        await fetch(`http://localhost:8080/api/transacoes/${id}`, { method: 'DELETE' });
-        setTransacoes(transacoes.filter(t => t.id !== id));
+        const usuarioId = localStorage.getItem('usuarioId');
+        if (!usuarioId) {
+          alert('Faça login novamente para excluir uma transação.');
+          return;
+        }
+
+        const resposta = await fetch(`http://localhost:8080/api/transacoes/${id}/usuario/${usuarioId}`, {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+
+        if (!resposta.ok) {
+          throw new Error(`Falha ao excluir transação (HTTP ${resposta.status})`);
+        }
+        setTransacoes(atuais => atuais.filter(t => t.id !== id));
       } catch (err) {
         console.error('Erro ao excluir transação:', err);
+        alert('Não foi possível excluir a transação.');
       }
     }
   };
