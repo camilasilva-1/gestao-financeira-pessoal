@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Login } from './components/Login';
 import { Cadastro } from './components/Cadastro';
 import { EsqueciSenha } from './components/EsqueciSenha';
@@ -6,12 +6,13 @@ import { Dashboard } from './components/Dashboard';
 import { Transacoes } from './components/Transacoes';
 import { OrcamentosEMetas } from './components/OrcamentosEMetas';
 import { Header } from './components/Header';
-import type { Transacao, Orcamento } from './types';
+import type { Transacao, Orcamento, OrcamentoAPI, CategoriaAPI } from './types';
 import { CATEGORIAS_PADRAO } from './types';
 import { Relatorios } from './components/Relatorios';
 import { ScoreCard } from './components/ScoreCard';
 import { AlertasFinanceiros } from './components/AlertasFinanceiros';
 import { EvolucaoPatrimonio } from './components/EvolucaoPatrimonio';
+import { listarTransacoes } from './Services/api';
 
 
 function App() {
@@ -21,17 +22,9 @@ function App() {
     return usuarioSalvo ? 'app' : 'login';
   });
 
-  const [transacoes, setTransacoes] = useState<Transacao[]>([
-    { id: '1', descricao: 'Salário Mensal', valor: 5000, data: '2026-09-05', tipo: 'RECEITA', categoria: 'Outros' },
-    { id: '2', descricao: 'Supermercado', valor: 450, data: '2026-09-08', tipo: 'DESPESA', categoria: 'Alimentação', establishment: 'Carrefour' },
-    { id: '3', descricao: 'Cinema e Pipoca', valor: 120, data: '2026-09-10', tipo: 'DESPESA', categoria: 'Lazer' }
-  ]);
+  const [transacoes, setTransacoes] = useState<Transacao[]>([]);
 
-  const [orcamentos, setOrcamentos] = useState<Orcamento[]>([
-    { id: '1', categoria: 'Alimentação', limite: 1000, gasto: 0 },
-    { id: '2', categoria: 'Lazer', limite: 500, gasto: 0 },
-    { id: '3', categoria: 'Transporte', limite: 600, gasto: 0 }
-  ]);
+  const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
 
   const [categorias, setCategorias] = useState<string[]>(CATEGORIAS_PADRAO);
 
@@ -41,95 +34,62 @@ function App() {
     }
   };
 
-<<<<<<< HEAD
-=======
-  buscarTransacoes();
-}, [telaAtual]);
 
-
-  const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
-const [carregandoOrcamentos, setCarregandoOrcamentos] = useState(true);
-
-useEffect(() => {
-  const buscarOrcamentos = async () => {
-    setCarregandoOrcamentos(true);
-    try {
-      if (telaAtual !== 'app') return;
-      const usuarioId = localStorage.getItem('usuarioId');
-
-      if (!usuarioId) {
-          setOrcamentos([]);
-        return;
-      }
-      const resposta = await fetch(
-        `http://localhost:8080/orcamentos/usuario/${usuarioId}`,
-        { credentials: 'include' }
-      );
-
-      if (!resposta.ok) {
-        throw new Error('Erro ao buscar orçamentos');
-      }
-
-      const dados: OrcamentoAPI[] = await resposta.json();
-
-
-const orcamentosFormatados: Orcamento[] = await Promise.all(
-  dados.map(async (orcamento) => {
-    const respostaGasto = await fetch(
-      `http://localhost:8080/orcamentos/${orcamento.idOrcamento}/gasto`,
-      { credentials: 'include' }
-    );
-
-    if (!respostaGasto.ok) {
-      throw new Error('Erro ao buscar gasto do orçamento');
-    }
-
-    const gasto = await respostaGasto.json();
-
-    return {
-      id: String(orcamento.idOrcamento),
-      categoria: orcamento.categoria.nome,
-      limite: Number(orcamento.limiteValor),
-      gasto: Number(gasto),
-    };
-  })
-);
-
-      setOrcamentos(orcamentosFormatados);
-    } catch (erro) {
-      console.error('Erro ao carregar orçamentos:', erro);
-    } finally {
-      setCarregandoOrcamentos(false);
-    }
-  };
-
-  buscarOrcamentos();
-// Recalcular os gastos mensais quando as transacoes forem alteradas.
-}, [telaAtual, transacoes]);
-
-  const [categorias] = useState<string[]>(CATEGORIAS_PADRAO);
   const [categoriasAPI, setCategoriasAPI] = useState<CategoriaAPI[]>([]);
 
   useEffect(() => {
-  const buscarCategorias = async () => {
-    try {
-      const resposta = await fetch('http://localhost:8080/categorias');
+    if (telaAtual !== 'app') return;
+    const usuarioId = localStorage.getItem('usuarioId');
+    if (!usuarioId) return;
 
-      if (!resposta.ok) {
-        throw new Error('Erro ao buscar categorias');
-      }
+    listarTransacoes(Number(usuarioId)).then((dados) => {
+      if (!Array.isArray(dados)) return;
+      setTransacoes(dados.map((t) => ({
+        id: String(t.idTransacao ?? t.id),
+        descricao: t.descricao,
+        valor: Number(t.valor),
+        data: t.dataTransacao ?? t.data,
+        tipo: t.tipo,
+        categoria: typeof t.categoria === 'object' ? t.categoria?.nome : t.categoria,
+        establishment: t.estabelecimento,
+        recorrente: t.recorrencia
+      })));
+    }).catch((erro) => console.error('Erro ao carregar transações:', erro));
 
-      const dados: CategoriaAPI[] = await resposta.json();
-      setCategoriasAPI(dados);
-    } catch (erro) {
-      console.error('Erro ao carregar categorias:', erro);
-    }
-  };
+    fetch('http://localhost:8080/categorias', { credentials: 'include' })
+      .then((r) => { if (!r.ok) throw new Error('Categorias'); return r.json(); })
+      .then((dados: CategoriaAPI[]) => setCategoriasAPI(dados))
+      .catch((erro) => console.error('Erro ao carregar categorias:', erro));
+  }, [telaAtual]);
 
-  buscarCategorias();
-}, []);
+  useEffect(() => {
+    if (telaAtual !== 'app') return;
+    const usuarioId = localStorage.getItem('usuarioId');
+    if (!usuarioId) return;
 
->>>>>>> origin/main
+    fetch(`http://localhost:8080/orcamentos/usuario/${usuarioId}`, { credentials: 'include' })
+      .then(async (r) => {
+        if (!r.ok) throw new Error('Orçamentos');
+        const dados: OrcamentoAPI[] = await r.json();
+        return Promise.all(dados.map(async (orcamento) => {
+          const gastoResp = await fetch(
+            `http://localhost:8080/orcamentos/${orcamento.idOrcamento}/gasto`,
+            { credentials: 'include' }
+          );
+          if (!gastoResp.ok) throw new Error('Gasto do orçamento');
+          const gasto = await gastoResp.json();
+          return {
+            id: String(orcamento.idOrcamento),
+            categoria: orcamento.categoria.nome,
+            limite: Number(orcamento.limiteValor),
+            gasto: Number(gasto)
+          };
+        }));
+      })
+      .then(setOrcamentos)
+      .catch((erro) => console.error('Erro ao carregar orçamentos:', erro));
+  }, [telaAtual, transacoes]);
+
   // Função para fazer logout e limpar a sessão salva no navegador
   const handleLogout = () => {
     localStorage.removeItem('usuarioId');
@@ -211,7 +171,7 @@ const orcamentosFormatados: Orcamento[] = await Promise.all(
             orcamentos={orcamentos} 
             setOrcamentos={setOrcamentos} 
             categorias={categorias}
-            categoriasAPI={[]}
+            categoriasAPI={categoriasAPI}
           />
         </main>
       </div>
