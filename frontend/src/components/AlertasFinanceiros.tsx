@@ -32,7 +32,7 @@ export function AlertasFinanceiros({ atualizarGatilho }: AlertasFinanceirosProps
           fetch(`http://localhost:8080/insights/${usuarioId}/queda-renda`, {
             credentials: 'include',
           }),
-          fetch(`http://localhost:8080/insights/${usuarioId}/reserva`, {
+          fetch(`http://localhost:8080/insights/${usuarioId}/reserva-insuficiente`, {
             credentials: 'include',
           }),
         ]);
@@ -133,7 +133,7 @@ export function AlertasFinanceiros({ atualizarGatilho }: AlertasFinanceirosProps
             </div>
             <p className="text-sm text-slate-600 leading-relaxed">
               {carregando
-                ? 'Calculando reserva ideal com base nas despesas dos últimos 6 meses...'
+                ? 'Calculando reserva recomendada a partir das despesas mensais...'
                 : reserva?.mensagem ||
                   'Não foi possível carregar o cálculo da reserva de emergência.'}
             </p>
