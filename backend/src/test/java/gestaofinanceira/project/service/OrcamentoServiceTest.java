@@ -56,6 +56,7 @@ class OrcamentoServiceTest {
 
         assertEquals(new BigDecimal("120.00"), service.calcularGasto(9));
     }
+
     @Test
     void deveSomarApenasDespesasDoMesDoUsuarioECategoria() {
         Usuario usuario = new Usuario();
@@ -85,7 +86,7 @@ class OrcamentoServiceTest {
         assertEquals(0, new BigDecimal("750.00").compareTo(service.calcularGasto(5)));
         assertEquals(0, new BigDecimal("250.00").compareTo(service.calcularSaldoRestante(5)));
         assertEquals(0, new BigDecimal("75.00").compareTo(service.calcularPercentual(5)));
-        verify(transacoes, atLeastOnce())
+        verify(transacaoRepository, atLeastOnce())
                 .findByCategoriaAndTipoAndDataTransacaoBetweenAndUsuarioIdUsuario(
                         categoria, Tipo.DESPESA, inicio, fim, 3);
     }
