@@ -159,6 +159,10 @@ public class SessionOwnershipFilter extends OncePerRequestFilter {
                       || "POST".equals(method) && "/api/relatorios/mensal/arquivar".equals(path))
                 && req.getParameter("usuarioId") != null
                 && hasOwnId(req.getParameter("usuarioId"), userId);
+        } else if ("DELETE".equals(method)
+                && path.matches("^/api/relatorios/historico/\\d+$")) {
+            authorized = req.getParameter("usuarioId") != null
+                    && hasOwnId(req.getParameter("usuarioId"), userId);
         } else if (path.matches("^/api/relatorios/(mensal|distribuicao|evolucao|ranking)$")) {
             authorized = "GET".equals(method)
                     && req.getParameter("usuarioId") != null
