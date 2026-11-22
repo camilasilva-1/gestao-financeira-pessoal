@@ -42,6 +42,20 @@ public class RelatorioController {
         }
     }
 
+    @DeleteMapping("/historico/{relatorioId}")
+    public ResponseEntity<Void> excluirRelatorio(
+            @PathVariable Integer relatorioId,
+            @RequestParam Integer usuarioId,
+            HttpSession session) {
+        if (!usuarioId.equals(session.getAttribute(SessionOwnershipFilter.USER_ID))) {
+            return ResponseEntity.status(403).build();
+        }
+        if (!historicoService.excluir(usuarioId, relatorioId)) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/historico")
     public ResponseEntity<List<HistoricoRelatorioMensal>> listarHistorico(
             @RequestParam Integer usuarioId,
