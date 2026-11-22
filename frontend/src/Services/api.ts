@@ -44,9 +44,11 @@ export const cadastrarTransacao = async (transacaoData: {
   descricao: string;
   valor: number;
   tipo: 'RECEITA' | 'DESPESA';
-  categoriaId: number;
+  categoriaId: number | null;
   usuarioId: number;
   dataTransacao: string;
+  estabelecimento?: string;
+  recorrencia?: boolean;
 }) => {
   const response = await fetch(`${API_BASE_URL}/transacoes`, {
     method: 'POST',
