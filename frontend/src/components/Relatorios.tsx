@@ -50,6 +50,7 @@ export const Relatorios: React.FC<RelatoriosProps> = ({ transacoes }) => {
   const [erroRegra, setErroRegra] = useState(false);
   const [historicoRelatorios, setHistoricoRelatorios] = useState<RelatorioSalvo[]>([]);
   const [salvandoRelatorio, setSalvandoRelatorio] = useState(false);
+  const [excluindoRelatorioId, setExcluindoRelatorioId] = useState<number | null>(null);
   const [mensagemRelatorio, setMensagemRelatorio] = useState('');
   const [periodoSelecionado, setPeriodoSelecionado] = useState(() => {
     const data = new Date();
@@ -117,6 +118,37 @@ export const Relatorios: React.FC<RelatoriosProps> = ({ transacoes }) => {
       setMensagemRelatorio('Não foi possível salvar o relatório do período escolhido.');
     } finally {
       setSalvandoRelatorio(false);
+    }
+  };
+
+  const excluirRelatorio = async (item: RelatorioSalvo) => {
+    const usuarioId = localStorage.getItem('usuarioId');
+    if (!usuarioId || excluindoRelatorioId !== null) return;
+    const mes = item.inicio.slice(5, 7) + '/' + item.inicio.slice(0, 4);
+    if (!window.confirm('Excluir o relatório salvo de ' + mes + '? Esta ação não exclui transações, orçamentos nem metas.')) return;
+
+    setExcluindoRelatorioId(item.idHistorico);
+    setMensagemRelatorio('');
+    try {
+      const resposta = await fetch(
+        'http://localhost:8080/api/relatorios/historico/' + item.idHistorico +
+        '?usuarioId=' + encodeURIComponent(usuarioId),
+        {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }
+      );
+      if (!resposta.ok) throw new Error('HTTP ' + resposta.status);
+      setHistoricoRelatorios(anteriores =>
+        anteriores.filter(relatorio => relatorio.idHistorico !== item.idHistorico)
+      );
+      setMensagemRelatorio('Relatório excluído do histórico.');
+    } catch (erro) {
+      console.error('Falha ao excluir relatório:', erro);
+      setMensagemRelatorio('Não foi possível excluir o relatório. Tente novamente.');
+    } finally {
+      setExcluindoRelatorioId(null);
     }
   };
 
@@ -352,6 +384,15 @@ const despesasPorCategoria: { [cat: string]: number } = {};
                 <p className="text-xs text-slate-500">
                   Receitas: {moeda(Number(item.receitaTotal))} · Despesas: {moeda(Number(item.despesaTotal))}
                 </p>
+                <button
+                  type="button"
+                  onClick={() => excluirRelatorio(item)}
+                  disabled={excluindoRelatorioId !== null}
+                  aria-label={'Excluir relatório salvo de ' + item.inicio.slice(5, 7) + '/' + item.inicio.slice(0, 4)}
+                  className="mt-2 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700 disabled:opacity-50"
+                >
+                  {excluindoRelatorioId === item.idHistorico ? 'Excluindo...' : 'Excluir relatório'}
+                </button>
               </div>
             ))}
           </div>
