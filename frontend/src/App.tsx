@@ -161,6 +161,7 @@ function App() {
             transacoes={transacoes} 
             setTransacoes={setTransacoes} 
             categorias={categorias}
+            categoriasAPI={categoriasAPI}
             adicionarCategoria={adicionarCategoria}
           />
           
