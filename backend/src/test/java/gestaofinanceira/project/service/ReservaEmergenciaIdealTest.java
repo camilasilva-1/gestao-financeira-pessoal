@@ -1,4 +1,3 @@
-
 package gestaofinanceira.project.service;
 
 import gestaofinanceira.project.dto.InsightDTO;
@@ -11,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import static assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -31,8 +31,6 @@ class ReservaEmergenciaIdealTest {
 
     @Test
     void deveCalcularReservaDeSeisMeses() {
-
-        // 1. PREPARAR
         int usuarioId = 1;
         int mes = LocalDate.now().getMonthValue();
 
@@ -41,66 +39,50 @@ class ReservaEmergenciaIdealTest {
 
         when(transacaoService.calcularDespesaMensal(usuarioId, mes))
             .thenReturn(new BigDecimal("500"));
-
-        // 2. EXECUTAR
         InsightDTO resultado =
             insightService.gerarRecomendacaoInvestimento(usuarioId);
-
-        // 3. VERIFICAR
         assertTrue(resultado.getMensagem().contains("R$ 3000.00"));
     }
 
 
-@Test
-void deveRecomendarVintePorCentoDaReceita() {
+    @Test
+    void deveRecomendarVintePorCentoDaReceita() {
+        int usuarioId = 1;
+        int mes = LocalDate.now().getMonthValue();
 
-    // 1. PREPARAR
-    int usuarioId = 1;
-    int mes = LocalDate.now().getMonthValue();
+        when(transacaoService.calcularReceitaMensal(usuarioId, mes))
+            .thenReturn(new BigDecimal("2000"));
 
-    when(transacaoService.calcularReceitaMensal(usuarioId, mes))
-        .thenReturn(new BigDecimal("2000"));
-
-    when(transacaoService.calcularDespesaMensal(usuarioId, mes))
-        .thenReturn(new BigDecimal("500"));
-
-    // 2. EXECUTAR
-    InsightDTO resultado =
-        insightService.gerarRecomendacaoInvestimento(usuarioId);
-
-    // 3. VERIFICAR
-    assertTrue(resultado.getMensagem().contains("R$ 400.00 por mês"));
-}
+        when(transacaoService.calcularDespesaMensal(usuarioId, mes))
+            .thenReturn(new BigDecimal("500"));
+        InsightDTO resultado =
+            insightService.gerarRecomendacaoInvestimento(usuarioId);
+        assertTrue(resultado.getMensagem().contains("R$ 400.00 por mês"));
+    }
 
 
-@Test
-void deveGerarMetasSugeridas() {
+    @Test
+    void deveGerarMetasSugeridas() {
+        int usuarioId = 1;
+        int mes = LocalDate.now().getMonthValue();
 
-    // 1. PREPARAR
-    int usuarioId = 1;
-    int mes = LocalDate.now().getMonthValue();
+        when(transacaoService.calcularReceitaMensal(usuarioId, mes))
+            .thenReturn(new BigDecimal("2000"));
 
-    when(transacaoService.calcularReceitaMensal(usuarioId, mes))
-        .thenReturn(new BigDecimal("2000"));
+        when(transacaoService.calcularDespesaMensal(usuarioId, mes))
+            .thenReturn(new BigDecimal("500"));
+        var metas = insightService.gerarMetasSugeridas(usuarioId);
+        assertEquals(3, metas.size());
 
-    when(transacaoService.calcularDespesaMensal(usuarioId, mes))
-        .thenReturn(new BigDecimal("500"));
+        assertTrue(metas.get(0).getMensagem()
+            .contains("R$ 3000.00"));
 
-    // 2. EXECUTAR
-    var metas = insightService.gerarMetasSugeridas(usuarioId);
+        assertTrue(metas.get(1).getMensagem()
+            .contains("R$ 400.00"));
 
-    // 3. VERIFICAR
-    assertTrue(metas.size() == 3);
-
-    assertTrue(metas.get(0).getMensagem()
-        .contains("R$ 3000.00"));
-
-    assertTrue(metas.get(1).getMensagem()
-        .contains("R$ 400.00"));
-
-    assertTrue(metas.get(2).getMensagem()
-        .contains("12 meses da renda"));
-}
+        assertTrue(metas.get(2).getMensagem()
+            .contains("12 meses da renda"));
+    }
 
     @Test
     void naoDeveSugerirMetasZeradasSemDadosFinanceiros() {
@@ -114,9 +96,9 @@ void deveGerarMetasSugeridas() {
 
         var metas = insightService.gerarMetasSugeridas(usuarioId);
 
-        org.junit.jupiter.api.Assertions.assertEquals(1, metas.size());
-        org.junit.jupiter.api.Assertions.assertEquals("Dados insuficientes", metas.get(0).getTipo());
-        org.junit.jupiter.api.Assertions.assertEquals("Informativo", metas.get(0).getNivelAlerta());
+        assertEquals(1, metas.size());
+        assertEquals("Dados insuficientes", metas.get(0).getTipo());
+        assertEquals("Informativo", metas.get(0).getNivelAlerta());
     }
 
     @Test
@@ -131,7 +113,7 @@ void deveGerarMetasSugeridas() {
 
         var metas = insightService.gerarMetasSugeridas(usuarioId);
 
-        org.junit.jupiter.api.Assertions.assertEquals(1, metas.size());
+        assertEquals(1, metas.size());
         assertTrue(metas.get(0).getMensagem().contains("R$ 3000.00"));
     }
 
