@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import type { Transacao } from '../types';
 
 interface DashboardProps {
@@ -6,7 +6,18 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ transacoes }) => {
-  const salarioLiquido = Number(localStorage.getItem('salarioLiquido') || 0);
+  const [salarioLiquido, setSalarioLiquido] = useState(0);
+  useEffect(() => {
+    const usuarioId = localStorage.getItem('usuarioId');
+    if (!usuarioId) return;
+    fetch(`http://localhost:8080/api/usuarios/${usuarioId}`, { credentials: 'include' })
+      .then(res => {
+        if (!res.ok) throw new Error('Não foi possível consultar o salário');
+        return res.json();
+      })
+      .then(usuario => setSalarioLiquido(Number(usuario.salarioLiquido ?? 0)))
+      .catch(erro => console.error('Erro ao carregar salário:', erro));
+  }, []);
   const totalReceitas = transacoes
     .filter(t => t.tipo === 'RECEITA')
     .reduce((acc, t) => acc + t.valor, 0);
