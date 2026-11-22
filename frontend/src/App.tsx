@@ -22,6 +22,26 @@ function App() {
     return usuarioSalvo ? 'app' : 'login';
   });
 
+  const [verificandoSessao, setVerificandoSessao] = useState(
+    Boolean(localStorage.getItem('usuarioId'))
+  );
+
+  useEffect(() => {
+    const usuarioId = localStorage.getItem('usuarioId');
+    if (!usuarioId) return;
+
+    fetch(`http://localhost:8080/api/usuarios/${usuarioId}`, { credentials: 'include' })
+      .then(resposta => {
+        if (resposta.status === 401 || resposta.status === 403) {
+          localStorage.removeItem('usuarioId');
+          localStorage.removeItem('usuarioNome');
+          setTelaAtual('login');
+        }
+      })
+      .catch(erro => console.error('Não foi possível verificar a sessão:', erro))
+      .finally(() => setVerificandoSessao(false));
+  }, []);
+
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
 
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
@@ -94,13 +114,21 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('usuarioId');
     localStorage.removeItem('usuarioNome');
+    setTransacoes([]);
     setTelaAtual('login');
+    fetch('http://localhost:8080/api/usuarios/logout', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    }).catch(erro => console.error('Erro ao encerrar sessão:', erro));
   };
 
   // Cálculo dinâmico do saldo para o Header em degradê
   const saldoTotal = transacoes.reduce((acc, t) => {
     return t.tipo === 'RECEITA' ? acc + t.valor : acc - t.valor;
   }, 0);
+
+  if (verificandoSessao) return <div className="min-h-screen flex items-center justify-center">Verificando sessão...</div>;
 
   // Renderização condicional das telas de entrada
   if (telaAtual === 'login') {
@@ -116,7 +144,7 @@ function App() {
   if (telaAtual === 'cadastro') {
     return (
       <Cadastro
-        onCadastroSuccess={() => setTelaAtual('app')}
+        onCadastroSuccess={() => setTelaAtual('login')}
         onNavigateToLogin={() => setTelaAtual('login')}
       />
     );
