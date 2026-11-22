@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { Transacao } from '../types';
+import type { Transacao, CategoriaAPI } from '../types';
 import { ModalEditarTransacao } from './ModalEditarTransacao';
 import { cadastrarTransacao, listarTransacoes } from '../Services/api';
 
@@ -8,12 +8,14 @@ interface TransacoesProps {
   setTransacoes: React.Dispatch<React.SetStateAction<Transacao[]>>;
   categorias: string[];
   adicionarCategoria: (novaCat: string) => void;
+  categoriasAPI: CategoriaAPI[];
 }
 
 export const Transacoes: React.FC<TransacoesProps> = ({
   transacoes,
   setTransacoes,
-  categorias
+  categorias,
+  categoriasAPI
 }) => {
   const [descricao, setDescricao] = useState('');
   const [valor, setValor] = useState('');
@@ -23,6 +25,7 @@ export const Transacoes: React.FC<TransacoesProps> = ({
     categorias && categorias.length > 0 ? categorias[0] : 'Alimentação'
   );
   const [establishment, setEstablishment] = useState('');
+  const [recorrente, setRecorrente] = useState(false);
   const [carregando, setCarregando] = useState(false);
 
   // Filtros
@@ -78,7 +81,16 @@ export const Transacoes: React.FC<TransacoesProps> = ({
     if (!descricao || !valor || !data) return;
 
     const usuarioIdSalvo = localStorage.getItem('usuarioId');
-    const usuarioIdNum = usuarioIdSalvo ? parseInt(usuarioIdSalvo, 10) : 1;
+    if (!usuarioIdSalvo) {
+      alert('Faça login novamente.');
+      return;
+    }
+    const usuarioIdNum = parseInt(usuarioIdSalvo, 10);
+    const categoriaSelecionada = categoriasAPI.find(c => c.nome === categoria);
+    if (tipo === 'DESPESA' && !categoriaSelecionada) {
+      alert('Selecione uma categoria válida.');
+      return;
+    }
 
     setCarregando(true);
 
@@ -87,23 +99,25 @@ export const Transacoes: React.FC<TransacoesProps> = ({
         descricao,
         valor: parseFloat(valor),
         tipo,
-        categoriaId: 1, // ID da categoria padrão no banco
+        categoriaId: categoriaSelecionada?.idCategoria ?? null,
         usuarioId: usuarioIdNum,
         dataTransacao: data,
-        estabelecimento: establishment.trim() ? establishment.trim() : undefined
+        estabelecimento: establishment.trim() ? establishment.trim() : undefined,
+        recorrencia: recorrente
       };
 
       const res = await cadastrarTransacao(payload);
 
       // Adiciona na lista do estado
       const nova: Transacao = {
-        id: String(res.idTransacao || Date.now()),
+        id: String(res.idTransacao),
         descricao,
         valor: parseFloat(valor),
         data,
         tipo,
-        categoria,
-        establishment: establishment.trim() ? establishment.trim() : undefined
+        categoria: res.categoria?.nome ?? undefined,
+        establishment: res.estabelecimento ?? undefined,
+        recorrente: Boolean(res.recorrencia)
       };
 
       setTransacoes([nova, ...transacoes]);
@@ -112,6 +126,7 @@ export const Transacoes: React.FC<TransacoesProps> = ({
       setDescricao('');
       setValor('');
       setEstablishment('');
+      setRecorrente(false);
       setData('');
     } catch (err) {
       console.error('Erro ao cadastrar transação:', err);
@@ -153,8 +168,50 @@ export const Transacoes: React.FC<TransacoesProps> = ({
     setIsModalOpen(true);
   };
 
-  const handleSalvarEdicao = (transacaoAtualizada: Transacao) => {
-    setTransacoes(transacoes.map(t => t.id === transacaoAtualizada.id ? transacaoAtualizada : t));
+  const handleSalvarEdicao = async (transacaoAtualizada: Transacao) => {
+    const usuarioId = localStorage.getItem('usuarioId');
+    if (!usuarioId) {
+      alert('Faça login novamente.');
+      return;
+    }
+    const categoriaSelecionada = categoriasAPI.find(c => c.nome === transacaoAtualizada.categoria);
+    if (transacaoAtualizada.tipo === 'DESPESA' && !categoriaSelecionada) {
+      alert('Selecione uma categoria válida.');
+      return;
+    }
+    try {
+      const resposta = await fetch(`http://localhost:8080/api/transacoes/${transacaoAtualizada.id}/usuario/${usuarioId}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({
+          descricao: transacaoAtualizada.descricao,
+          valor: transacaoAtualizada.valor,
+          dataTransacao: transacaoAtualizada.data,
+          tipo: transacaoAtualizada.tipo,
+          estabelecimento: transacaoAtualizada.establishment ?? null,
+          recorrencia: Boolean(transacaoAtualizada.recorrente),
+          categoria: categoriaSelecionada ? { idCategoria: categoriaSelecionada.idCategoria } : null
+        })
+      });
+      if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+      const salva = await resposta.json();
+      setTransacoes(atuais => atuais.map(t => t.id === transacaoAtualizada.id ? {
+        id: String(salva.idTransacao),
+        descricao: salva.descricao,
+        valor: Number(salva.valor),
+        data: salva.dataTransacao,
+        tipo: salva.tipo,
+        categoria: salva.categoria?.nome,
+        establishment: salva.estabelecimento,
+        recorrente: Boolean(salva.recorrencia)
+      } : t));
+      setIsModalOpen(false);
+      setTransacaoParaEditar(null);
+    } catch (erro) {
+      console.error('Erro ao editar transação:', erro);
+      alert('Não foi possível salvar a edição.');
+    }
   };
 
   const ehNoPeriodo = (dataString: string) => {
@@ -274,6 +331,10 @@ export const Transacoes: React.FC<TransacoesProps> = ({
             </div>
           </div>
 
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <input type="checkbox" checked={recorrente} onChange={e => setRecorrente(e.target.checked)} />
+            Transação recorrente
+          </label>
           <div className="flex justify-end">
             <button
               type="submit"
