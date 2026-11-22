@@ -122,8 +122,7 @@ export const Relatorios: React.FC<RelatoriosProps> = ({ transacoes }) => {
   };
 
   // Abre um documento pronto para imprimir ou salvar como PDF no navegador.
-  const exportarPdf = () => {
-    if (!relatorioConsultado) return;
+  const exportarPdf = (relatorio: RelatorioSalvo) => {
 
     const escapar = (valor: string) => valor.replace(/[&<>"']/g, caractere => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -132,7 +131,7 @@ export const Relatorios: React.FC<RelatoriosProps> = ({ transacoes }) => {
       style: 'currency', currency: 'BRL'
     });
     const transacoesDoMes = transacoes
-      .filter(t => t.data.slice(0, 7) === periodoSelecionado)
+      .filter(t => t.data.slice(0, 7) === relatorio.inicio.slice(0, 7))
       .sort((a, b) => a.data.localeCompare(b.data));
     const linhas = transacoesDoMes.map(t => `
       <tr>
@@ -149,7 +148,8 @@ export const Relatorios: React.FC<RelatoriosProps> = ({ transacoes }) => {
       return;
     }
     const dataEmissao = new Date().toLocaleString('pt-BR');
-    const mes = periodoSelecionado.slice(5, 7) + '/' + periodoSelecionado.slice(0, 4);
+    const mes = relatorio.inicio.slice(5, 7) + '/' + relatorio.inicio.slice(0, 4);
+    const dataSalvamento = new Date(relatorio.geradoEm).toLocaleString('pt-BR');
     janela.document.write(`<!doctype html><html lang="pt-BR"><head>
       <meta charset="UTF-8"><title>ByteBank Finance - ${mes}</title>
       <style>
@@ -164,12 +164,13 @@ export const Relatorios: React.FC<RelatoriosProps> = ({ transacoes }) => {
         @media print { body { margin: 12mm; } thead { display: table-header-group; } }
       </style></head><body>
       <h1>ByteBank Finance</h1>
-      <p>Relatório financeiro mensal — ${mes}<br>Emitido em: ${dataEmissao}</p>
+      <p>Relatório financeiro mensal — ${mes}<br>Salvo em: ${dataSalvamento}<br>Emitido em: ${dataEmissao}</p>
       <h2>Resumo financeiro</h2>
-      <p>Receitas: ${moedaPdf(Number(relatorioConsultado.receitaTotal))}<br>
-      Despesas: ${moedaPdf(Number(relatorioConsultado.despesaTotal))}<br>
-      Saldo do mês: ${moedaPdf(Number(relatorioConsultado.saldoFinal))}</p>
+      <p>Receitas: ${moedaPdf(Number(relatorio.receitaTotal))}<br>
+      Despesas: ${moedaPdf(Number(relatorio.despesaTotal))}<br>
+      Saldo do mês: ${moedaPdf(Number(relatorio.saldoFinal))}</p>
       <h2>Transações do mês</h2>
+      <p>Transações conforme cadastro atual. O resumo acima preserva os valores do relatório salvo.</p>
       <table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Valor</th></tr></thead>
       <tbody>${linhas || '<tr><td colspan="5">Nenhuma transação neste mês.</td></tr>'}</tbody></table>
       <footer>ByteBank Finance — Relatório gerado automaticamente.</footer>
@@ -402,12 +403,6 @@ const despesasPorCategoria: { [cat: string]: number } = {};
           </button>
         </div>
         <p className="text-xs text-slate-500">Escolha qualquer mês e ano para consultar. O histórico só muda quando você seleciona Salvar.</p>
-        {relatorioConsultado && (
-          <button type="button" onClick={exportarPdf}
-            className="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-800 hover:bg-slate-50">
-            Exportar PDF
-          </button>
-        )}
         {mensagemRelatorio && <p className="text-sm text-slate-600" role="status">{mensagemRelatorio}</p>}
         {relatorioConsultado && (
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1" aria-label="Resultado da consulta mensal">
@@ -448,15 +443,22 @@ const despesasPorCategoria: { [cat: string]: number } = {};
                 <p className="text-xs text-slate-500">
                   Receitas: {moeda(Number(item.receitaTotal))} · Despesas: {moeda(Number(item.despesaTotal))}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => excluirRelatorio(item)}
-                  disabled={excluindoRelatorioId !== null}
-                  aria-label={'Excluir relatório salvo de ' + item.inicio.slice(5, 7) + '/' + item.inicio.slice(0, 4)}
-                  className="mt-2 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700 disabled:opacity-50"
-                >
-                  {excluindoRelatorioId === item.idHistorico ? 'Excluindo...' : 'Excluir relatório'}
-                </button>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button type="button" onClick={() => exportarPdf(item)}
+                    aria-label={'Exportar PDF do relatório salvo de ' + item.inicio.slice(5, 7) + '/' + item.inicio.slice(0, 4)}
+                    className="rounded-lg bg-[#c4003d] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#a50033] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c4003d]">
+                    Exportar PDF
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => excluirRelatorio(item)}
+                    disabled={excluindoRelatorioId !== null}
+                    aria-label={'Excluir relatório salvo de ' + item.inicio.slice(5, 7) + '/' + item.inicio.slice(0, 4)}
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-600 disabled:opacity-50"
+                  >
+                    {excluindoRelatorioId === item.idHistorico ? 'Excluindo...' : 'Excluir relatório'}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
