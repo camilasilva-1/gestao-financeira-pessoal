@@ -60,6 +60,15 @@ public class HistoricoRelatorioMensalService {
         return historico.save(registro);
     }
 
+    // Exclui somente um relatorio pertencente ao usuario autenticado.
+    public boolean excluir(Integer usuarioId, Integer relatorioId) {
+        return historico.findByIdHistoricoAndUsuarioIdUsuario(relatorioId, usuarioId)
+                .map(registro -> {
+                    historico.delete(registro);
+                    return true;
+                }).orElse(false);
+    }
+
     public List<HistoricoRelatorioMensal> listar(Integer usuarioId) {
         return historico.findByUsuarioIdUsuarioOrderByGeradoEmDesc(usuarioId);
     }
