@@ -121,6 +121,64 @@ export const Relatorios: React.FC<RelatoriosProps> = ({ transacoes }) => {
     }
   };
 
+  // Abre um documento pronto para imprimir ou salvar como PDF no navegador.
+  const exportarPdf = () => {
+    if (!relatorioConsultado) return;
+
+    const escapar = (valor: string) => valor.replace(/[&<>"']/g, caractere => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[caractere] || caractere);
+    const moedaPdf = (valor: number) => Number(valor).toLocaleString('pt-BR', {
+      style: 'currency', currency: 'BRL'
+    });
+    const transacoesDoMes = transacoes
+      .filter(t => t.data.slice(0, 7) === periodoSelecionado)
+      .sort((a, b) => a.data.localeCompare(b.data));
+    const linhas = transacoesDoMes.map(t => `
+      <tr>
+        <td>${escapar(t.data.split('-').reverse().join('/'))}</td>
+        <td>${escapar(t.descricao)}</td>
+        <td>${escapar(t.categoria || 'Sem categoria')}</td>
+        <td>${t.tipo === 'RECEITA' ? 'Receita' : 'Despesa'}</td>
+        <td>${moedaPdf(Number(t.valor))}</td>
+      </tr>`).join('');
+
+    const janela = window.open('', '_blank');
+    if (!janela) {
+      setMensagemRelatorio('Permita a abertura de pop-ups para exportar o PDF.');
+      return;
+    }
+    const dataEmissao = new Date().toLocaleString('pt-BR');
+    const mes = periodoSelecionado.slice(5, 7) + '/' + periodoSelecionado.slice(0, 4);
+    janela.document.write(`<!doctype html><html lang="pt-BR"><head>
+      <meta charset="UTF-8"><title>ByteBank Finance - ${mes}</title>
+      <style>
+        body { font-family: Arial, sans-serif; color: #222; margin: 32px; }
+        h1 { font-size: 22px; margin-bottom: 4px; }
+        h2 { font-size: 16px; margin-top: 24px; }
+        p { font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background: #f1f5f9; }
+        footer { margin-top: 30px; font-size: 11px; color: #666; }
+        @media print { body { margin: 12mm; } thead { display: table-header-group; } }
+      </style></head><body>
+      <h1>ByteBank Finance</h1>
+      <p>Relatório financeiro mensal — ${mes}<br>Emitido em: ${dataEmissao}</p>
+      <h2>Resumo financeiro</h2>
+      <p>Receitas: ${moedaPdf(Number(relatorioConsultado.receitaTotal))}<br>
+      Despesas: ${moedaPdf(Number(relatorioConsultado.despesaTotal))}<br>
+      Saldo do mês: ${moedaPdf(Number(relatorioConsultado.saldoFinal))}</p>
+      <h2>Transações do mês</h2>
+      <table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Valor</th></tr></thead>
+      <tbody>${linhas || '<tr><td colspan="5">Nenhuma transação neste mês.</td></tr>'}</tbody></table>
+      <footer>ByteBank Finance — Relatório gerado automaticamente.</footer>
+      </body></html>`);
+    janela.document.close();
+    janela.focus();
+    janela.print(); // Na janela de impressão, escolha "Salvar como PDF".
+  };
+
   const excluirRelatorio = async (item: RelatorioSalvo) => {
     const usuarioId = localStorage.getItem('usuarioId');
     if (!usuarioId || excluindoRelatorioId !== null) return;
@@ -344,6 +402,12 @@ const despesasPorCategoria: { [cat: string]: number } = {};
           </button>
         </div>
         <p className="text-xs text-slate-500">Escolha qualquer mês e ano para consultar. O histórico só muda quando você seleciona Salvar.</p>
+        {relatorioConsultado && (
+          <button type="button" onClick={exportarPdf}
+            className="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-800 hover:bg-slate-50">
+            Exportar PDF
+          </button>
+        )}
         {mensagemRelatorio && <p className="text-sm text-slate-600" role="status">{mensagemRelatorio}</p>}
         {relatorioConsultado && (
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-1" aria-label="Resultado da consulta mensal">
