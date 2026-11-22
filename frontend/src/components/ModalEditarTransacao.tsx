@@ -52,7 +52,6 @@ export const ModalEditarTransacao: React.FC<ModalEditarTransacaoProps> = ({
       establishment: establishment.trim() ? establishment.trim() : undefined,
       recorrente
     });
-    onClose();
   };
 
   return (
