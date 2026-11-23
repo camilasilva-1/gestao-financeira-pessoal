@@ -314,7 +314,7 @@ const despesasPorCategoria: { [cat: string]: number } = {};
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
             <span className="text-xs font-semibold uppercase text-slate-500">Gastos do Mês Atual</span>
             <div className="flex items-baseline justify-between mt-1">
-              <span className="text-2xl font-bold text-slate-800">R$ {despesasMesAtual.toFixed(2)}</span>
+              <span className="text-2xl font-bold text-slate-800">R$ {despesasMesAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               {despesasMesAnterior > 0 && (
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                   diferencaDespesas <= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
@@ -324,7 +324,7 @@ const despesasPorCategoria: { [cat: string]: number } = {};
               )}
             </div>
             <p className="text-xs text-slate-400 mt-2">
-              Mês anterior: R$ {despesasMesAnterior.toFixed(2)}
+              Mês anterior: R$ {despesasMesAnterior.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
 
@@ -332,11 +332,11 @@ const despesasPorCategoria: { [cat: string]: number } = {};
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
             <span className="text-xs font-semibold uppercase text-slate-500">Entradas do Mês Atual</span>
             <div className="flex items-baseline justify-between mt-1">
-              <span className="text-2xl font-bold text-emerald-600">R$ {receitasMesAtual.toFixed(2)}</span>
+              <span className="text-2xl font-bold text-emerald-600">R$ {receitasMesAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               <span className="text-xs text-slate-500 font-medium">Balanço do Período</span>
             </div>
             <p className="text-xs text-slate-400 mt-2">
-              Saldo líquido do mês: R$ {(receitasMesAtual - despesasMesAtual).toFixed(2)}
+              Saldo líquido do mês: R$ {(receitasMesAtual - despesasMesAtual).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
         </div>
@@ -344,7 +344,7 @@ const despesasPorCategoria: { [cat: string]: number } = {};
 
       {/* Regra 50/30/20 — seção 3.7 do Takeoff, dados da API */}
       <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3" aria-label="Planejamento pela regra 50/30/20">
-        <h2 className="text-lg font-bold text-slate-800">Planejamento 50/30/20</h2>
+        <h2 id="planejamento" className="scroll-mt-6 text-lg font-bold text-slate-800">Planejamento 50/30/20</h2>
         {regra ? (
           <>
             <p className="text-sm text-slate-600">
@@ -375,7 +375,7 @@ const despesasPorCategoria: { [cat: string]: number } = {};
 
       {/* RN009: consulta por mês/ano e histórico salvo somente após escolha do usuário. */}
       <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3" aria-label="Histórico de relatórios mensais">
-        <h2 className="text-lg font-bold text-slate-800">Histórico de Relatórios Mensais</h2>
+        <h2 id="relatorios-salvos" className="scroll-mt-6 text-lg font-bold text-slate-800">Histórico de Relatórios Mensais</h2>
         <div className="flex flex-col sm:flex-row sm:items-end gap-3">
           <label className="flex flex-col gap-1 text-sm text-slate-700">
             Selecione o mês e o ano
@@ -483,7 +483,7 @@ const despesasPorCategoria: { [cat: string]: number } = {};
                     {item.categoria}
                   </span>
                   <span className="text-slate-900 font-bold">
-                    R$ {item.valor.toFixed(2)} ({item.porcentagem}%)
+                    R$ {item.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({item.porcentagem}%)
                   </span>
                 </div>
                 {/* Barra de Progresso do Ranking */}
