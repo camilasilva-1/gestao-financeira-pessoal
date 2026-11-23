@@ -86,18 +86,36 @@ function RecomendacoesFinanceiras({ transacoes }: { transacoes: Transacao[] }) {
           ) : (
             <p className="rounded-xl bg-white p-4 text-sm text-slate-700">{moedaNaMensagem(recomendacao.mensagem)}</p>
           )}
-          {metas.length > 0 && (
-            <div className="space-y-3 border-t border-rose-200 pt-4">
-              <h3 className="text-sm font-semibold text-slate-800">Metas sugeridas</h3>
-              <ul className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                {metas.map((meta, indice) => (
-                  <li key={indice} className="rounded-xl border border-rose-100 bg-white p-4 text-sm leading-relaxed text-slate-700">
-                    {moedaNaMensagem(meta.mensagem)}
-                  </li>
-                ))}
-              </ul>
+          <div className="space-y-3 border-t border-rose-200 pt-4">
+            <h3 className="text-sm font-semibold text-slate-800">Próximos passos</h3>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div className="rounded-xl border border-rose-100 bg-white p-4">
+                <p className="text-sm font-semibold text-slate-800">Defina uma meta de longo prazo</p>
+                <p className="mt-2 text-sm text-slate-600">
+                  {metas.find(meta => meta.mensagem.toLowerCase().includes('12 meses'))?.mensagem
+                    ?? 'Organize suas metas financeiras de acordo com sua renda.'}
+                </p>
+                <button type="button" onClick={() => {
+                  const destino = document.getElementById('metas');
+                  if (destino) { destino.style.scrollMarginTop = '88px'; destino.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+                }} className="mt-3 text-sm font-semibold text-[#b20b42] hover:underline">
+                  Ir para metas financeiras
+                </button>
+              </div>
+              <div className="rounded-xl border border-rose-100 bg-white p-4">
+                <p className="text-sm font-semibold text-slate-800">Acompanhe seu orçamento</p>
+                <p className="mt-2 text-sm text-slate-600">
+                  Confira os gastos por categoria e ajuste seus limites quando necessário.
+                </p>
+                <button type="button" onClick={() => {
+                  const destino = document.getElementById('orcamentos');
+                  if (destino) { destino.style.scrollMarginTop = '88px'; destino.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+                }} className="mt-3 text-sm font-semibold text-[#b20b42] hover:underline">
+                  Ver orçamentos por categoria
+                </button>
+              </div>
             </div>
-          )}
+          </div>
         </>
       )}
     </section>
