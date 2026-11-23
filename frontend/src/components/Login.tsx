@@ -12,10 +12,11 @@ export const Login: React.FC<LoginProps> = ({
   onNavigateToCadastro,
   onNavigateToEsqueciSenha,
 }) => {
-  const [email, setEmail] = useState('');
+  // Guarda somente o e-mail quando o usuário optar por lembrar.
+  const [email, setEmail] = useState(() => localStorage.getItem('emailLembrado') ?? '');
   const [senha, setSenha] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
-  const [lembrarMe, setLembrarMe] = useState(false);
+  const [lembrarMe, setLembrarMe] = useState(() => Boolean(localStorage.getItem('emailLembrado')));
   const [carregando, setCarregando] = useState(false);
   const [shake, setShake] = useState(false);
   const [erros, setErros] = useState<{ email?: string; senha?: string; geral?: string }>({});
@@ -59,6 +60,12 @@ export const Login: React.FC<LoginProps> = ({
         localStorage.setItem('usuarioId', usuario.idUsuario || usuario.id);
         if (usuario.nome) {
           localStorage.setItem('usuarioNome', usuario.nome);
+        }
+
+        if (lembrarMe) {
+          localStorage.setItem('emailLembrado', email.trim());
+        } else {
+          localStorage.removeItem('emailLembrado');
         }
 
         setCarregando(false);
@@ -178,10 +185,13 @@ export const Login: React.FC<LoginProps> = ({
                 <input
                   type="checkbox"
                   checked={lembrarMe}
-                  onChange={(e) => setLembrarMe(e.target.value ? e.target.checked : false)}
+                  onChange={(e) => {
+                    setLembrarMe(e.target.checked);
+                    if (!e.target.checked) localStorage.removeItem('emailLembrado');
+                  }}
                   className="w-4 h-4 rounded text-[#c4003d] focus:ring-[#c4003d] border-slate-300 transition"
                 />
-                <span>Lembrar-me</span>
+                <span>Lembrar meu e-mail</span>
               </label>
 
               <button
