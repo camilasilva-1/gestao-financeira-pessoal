@@ -16,7 +16,7 @@ import { listarTransacoes } from './Services/api';
 
 
 // Formata os valores presentes nas mensagens do backend sem mudar os cálculos.
-const moedaNaMensagem = (texto: string) => texto.replace(/R\\$\\s*(\\d+(?:\\.\\d{1,2})?)/g, (_trecho, valor: string) =>
+const moedaNaMensagem = (texto: string) => texto.replace(/R\$\s*(\d+(?:\.\d{1,2})?)/g, (_trecho, valor: string) =>
   Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 );
 
@@ -58,7 +58,7 @@ function RecomendacoesFinanceiras({ transacoes }: { transacoes: Transacao[] }) {
     return () => { ativo = false; };
   }, [transacoes]);
 
-  const valoresRecomendados = recomendacao?.mensagem.match(/R\\$\\s*\\d+(?:\\.\\d{1,2})?/g) ?? [];
+  const valoresRecomendados = recomendacao?.mensagem.match(/R\$\s*\d+(?:\.\d{1,2})?/g) ?? [];
   const recomendacaoTemValores = valoresRecomendados.length >= 2;
 
   return (
