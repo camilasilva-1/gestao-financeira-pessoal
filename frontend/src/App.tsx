@@ -15,6 +15,69 @@ import { EvolucaoPatrimonio } from './components/EvolucaoPatrimonio';
 import { listarTransacoes } from './Services/api';
 
 
+interface RecomendacaoFinanceira {
+  tipo: string;
+  mensagem: string;
+}
+
+// Usa somente as recomendações calculadas pelo backend.
+function RecomendacoesFinanceiras({ transacoes }: { transacoes: Transacao[] }) {
+  const [recomendacao, setRecomendacao] = useState<RecomendacaoFinanceira | null>(null);
+  const [metas, setMetas] = useState<RecomendacaoFinanceira[]>([]);
+  const [erro, setErro] = useState(false);
+
+  useEffect(() => {
+    const usuarioId = localStorage.getItem('usuarioId');
+    if (!usuarioId) return;
+    let ativo = true;
+
+    Promise.all([
+      fetch(`http://localhost:8080/insights/${usuarioId}/recomendacao-investimento`, { credentials: 'include' }),
+      fetch(`http://localhost:8080/insights/${usuarioId}/metas-sugeridas`, { credentials: 'include' })
+    ])
+      .then(async ([resposta, respostaMetas]) => {
+        if (!resposta.ok || !respostaMetas.ok) throw new Error('Falha ao consultar recomendações');
+        return Promise.all([
+          resposta.json() as Promise<RecomendacaoFinanceira>,
+          respostaMetas.json() as Promise<RecomendacaoFinanceira[]>
+        ]);
+      })
+      .then(([dados, lista]) => {
+        if (!ativo) return;
+        setRecomendacao(dados);
+        setMetas(lista);
+        setErro(false);
+      })
+      .catch(() => { if (ativo) setErro(true); });
+
+    return () => { ativo = false; };
+  }, [transacoes]);
+
+  return (
+    <section className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-3">
+      <h2 className="text-lg font-bold text-slate-800">Recomendações Financeiras</h2>
+      {erro ? (
+        <p className="text-sm text-slate-500">Não foi possível carregar as recomendações.</p>
+      ) : !recomendacao ? (
+        <p className="text-sm text-slate-500">Carregando recomendações...</p>
+      ) : (
+        <>
+          <p className="text-sm text-slate-700">{recomendacao.mensagem}</p>
+          {metas.length > 0 && (
+            <div className="border-t border-slate-100 pt-3 space-y-2">
+              <h3 className="text-sm font-semibold text-slate-800">Metas sugeridas</h3>
+              {metas.map((meta, indice) => (
+                <p key={indice} className="text-sm text-slate-600">• {meta.mensagem}</p>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+
 function App() {
   // Inicialização inteligente: se houver 'usuarioId' no localStorage, inicia direto em 'app'
   const [telaAtual, setTelaAtual] = useState<'login' | 'cadastro' | 'esqueci-senha' | 'app'>(() => {
@@ -180,6 +243,9 @@ function App() {
 
           {/* 4. Evolução do Patrimônio */}
           <EvolucaoPatrimonio transacoes={transacoes} />
+
+          {/* Recomendações e metas sugeridas do TakeOff 3.8 */}
+          <RecomendacoesFinanceiras transacoes={transacoes} />
 
           {/* 5. Evolução Mensal e Ranking */}
           <Relatorios transacoes={transacoes} />
