@@ -54,8 +54,8 @@ function RecomendacoesFinanceiras({ transacoes }: { transacoes: Transacao[] }) {
   }, [transacoes]);
 
   return (
-    <section className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-3">
-      <h2 className="text-lg font-bold text-slate-800">Recomendações Financeiras</h2>
+    <section id="recomendacoes" className="scroll-mt-6 rounded-2xl border border-rose-200 bg-rose-50/70 p-6 shadow-sm space-y-3">
+      <h2 className="text-lg font-bold text-[#c4003d]">Recomendações Financeiras</h2>
       {erro ? (
         <p className="text-sm text-slate-500">Não foi possível carregar as recomendações.</p>
       ) : !recomendacao ? (
@@ -64,7 +64,7 @@ function RecomendacoesFinanceiras({ transacoes }: { transacoes: Transacao[] }) {
         <>
           <p className="text-sm text-slate-700">{recomendacao.mensagem}</p>
           {metas.length > 0 && (
-            <div className="border-t border-slate-100 pt-3 space-y-2">
+            <div className="border-t border-rose-200 pt-3 space-y-2">
               <h3 className="text-sm font-semibold text-slate-800">Metas sugeridas</h3>
               {metas.map((meta, indice) => (
                 <p key={indice} className="text-sm text-slate-600">• {meta.mensagem}</p>
@@ -233,16 +233,16 @@ function App() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 -mt-6">
        <main className="space-y-6">
           {/* 1. Cards de Indicadores */}
-          <Dashboard transacoes={transacoes} />
+          <div id="visao-geral" className="scroll-mt-6"><Dashboard transacoes={transacoes} /></div>
 
           {/* 2. Faixa do Score Financeiro */}
-          <ScoreCard atualizarGatilho={transacoes} />
+          <div id="score" className="scroll-mt-6"><ScoreCard atualizarGatilho={transacoes} /></div>
 
           {/* 3. Diagnósticos de Queda de Renda e Reserva de Emergência */}
-          <AlertasFinanceiros atualizarGatilho={transacoes} />
+          <div id="alertas" className="scroll-mt-6"><AlertasFinanceiros atualizarGatilho={transacoes} /></div>
 
           {/* 4. Evolução do Patrimônio */}
-          <EvolucaoPatrimonio transacoes={transacoes} />
+          <div id="patrimonio" className="scroll-mt-6"><EvolucaoPatrimonio transacoes={transacoes} /></div>
 
           {/* Recomendações e metas sugeridas do TakeOff 3.8 */}
           <RecomendacoesFinanceiras transacoes={transacoes} />
