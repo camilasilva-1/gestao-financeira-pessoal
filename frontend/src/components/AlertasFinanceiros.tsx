@@ -9,6 +9,12 @@ interface InsightResponse {
   nivelAlerta: string;
 }
 
+// Formata somente a exibição de valores das mensagens, sem alterar o cálculo.
+const formatarMoedaNaMensagem = (mensagem: string) =>
+  mensagem.replace(/R\$\s*(\d+(?:\.\d{1,2})?)/g, (_trecho, numero: string) =>
+    Number(numero).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  );
+
 interface AlertasFinanceirosProps {
   atualizarGatilho?: Transacao[];
 }
@@ -134,8 +140,9 @@ export function AlertasFinanceiros({ atualizarGatilho }: AlertasFinanceirosProps
             <p className="text-sm text-slate-600 leading-relaxed">
               {carregando
                 ? 'Calculando reserva recomendada a partir das despesas mensais...'
-                : reserva?.mensagem ||
-                  'Não foi possível carregar o cálculo da reserva de emergência.'}
+                : reserva?.mensagem
+                  ? formatarMoedaNaMensagem(reserva.mensagem)
+                  : 'Não foi possível carregar o cálculo da reserva de emergência.'}
             </p>
           </div>
         </div>
