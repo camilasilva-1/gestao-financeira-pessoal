@@ -356,7 +356,7 @@ const handleRemoverOrcamento = async (id: string) => {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* SEÇÃO 1: ORÇAMENTOS POR CATEGORIA */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-slate-800">Orçamentos por Categoria</h2>
+        <h2 id="orcamentos" className="scroll-mt-6 text-lg font-bold text-slate-800">Orçamentos por Categoria</h2>
 
         <form onSubmit={handleDefinirOrcamento} className="flex flex-col sm:flex-row gap-2">
           <select
@@ -435,8 +435,8 @@ const handleRemoverOrcamento = async (id: string) => {
                 </div>
 
                 <div className="flex justify-between text-xs text-slate-500">
-                  <span>Gasto: R$ {gastoAtual.toFixed(2)} / R$ {orc.limite.toFixed(2)}</span>
-                  <span>Resta: R$ {resta > 0 ? resta.toFixed(2) : '0.00'}</span>
+                  <span>Gasto: R$ {gastoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / R$ {orc.limite.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>Resta: R$ {Math.max(0, resta).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
             );
@@ -446,7 +446,7 @@ const handleRemoverOrcamento = async (id: string) => {
 
       {/* SEÇÃO 2: METAS FINANCEIRAS */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-slate-800">Metas Financeiras</h2>
+        <h2 id="metas" className="scroll-mt-6 text-lg font-bold text-slate-800">Metas Financeiras</h2>
 
         <form onSubmit={handleAdicionarMeta} className="space-y-2">
           <input
@@ -529,12 +529,12 @@ const handleRemoverOrcamento = async (id: string) => {
                 </div>
 
                 <p className="text-xs text-slate-500">
-                  Faltam {meta.diasRestantes} dias · Necessário por mês: R$ {meta.valorMensalNecessario.toFixed(2)}
+                  Faltam {meta.diasRestantes} dias · Necessário por mês: R$ {meta.valorMensalNecessario.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
                 <div className="flex justify-between items-center text-xs pt-1">
                   <span className="text-slate-500">
-                    Guardado: <strong>R$ {meta.valorAtual.toFixed(2)}</strong> / Alvo: R${' '}
-                    {meta.valorAlvo.toFixed(2)}
+                    Guardado: <strong>R$ {meta.valorAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> / Alvo: R${' '}
+                    {meta.valorAlvo.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                   <div className="flex gap-1">
                     <button
