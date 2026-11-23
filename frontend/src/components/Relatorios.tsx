@@ -305,7 +305,7 @@ const despesasPorCategoria: { [cat: string]: number } = {};
     <div className="space-y-6">
       {/* #12 - Evolução Mensal e Comparativo */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+        <h2 id="relatorios" className="scroll-mt-6 text-lg font-bold text-slate-800 flex items-center gap-2">
           <span>📊</span> Evolução Mensal (Mês Atual vs Anterior)
         </h2>
 
@@ -467,7 +467,7 @@ const despesasPorCategoria: { [cat: string]: number } = {};
 
       {/* #14 & #15 - Relatório Mensal e Ranking de Categorias */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+        <h2 id="ranking" className="scroll-mt-6 text-lg font-bold text-slate-800 flex items-center gap-2">
           <span>🏆</span> Ranking de Gastos por Categoria (mês atual)
         </h2>
 
