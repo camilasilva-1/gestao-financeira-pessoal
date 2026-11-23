@@ -98,4 +98,4 @@ npm run build
 
 Mais detalhes sobre as partes do projeto estão nos arquivos `backend/README.md`, `frontend/README.md` e `database/README.md`.
 
-> **Observação:** projeto acadêmico de demonstração, não vinculado a um serviço bancário oficial. A recuperação de senha por e-mail ainda não está disponível.
+> **Observação:** projeto acadêmico de demonstração, não vinculado a um serviço bancário oficial. 
