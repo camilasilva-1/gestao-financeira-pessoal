@@ -18,6 +18,36 @@ export const Header: React.FC<HeaderProps> = ({ saldoTotal, onLogout }) => {
     }
   }, []);
 
+  const [menuAberto, setMenuAberto] = useState(false);
+  const secoes = [
+    ['visao-geral', 'Visão geral'],
+    ['score', 'Score financeiro'],
+    ['alertas', 'Alertas financeiros'],
+    ['patrimonio', 'Evolução do patrimônio'],
+    ['recomendacoes', 'Recomendações financeiras'],
+    ['relatorios', 'Relatórios mensais'],
+    ['planejamento', 'Planejamento 50/30/20'],
+    ['relatorios-salvos', 'Relatórios salvos'],
+    ['ranking', 'Ranking por categoria'],
+    ['nova-transacao', 'Nova transação'],
+    ['historico-transacoes', 'Histórico de transações'],
+    ['orcamentos', 'Orçamentos'],
+    ['metas', 'Metas financeiras']
+  ] as const;
+
+  const irPara = (id: string) => {
+    setMenuAberto(false);
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  useEffect(() => {
+    const aoPressionarTecla = (evento: KeyboardEvent) => {
+      if (evento.key === 'Escape') setMenuAberto(false);
+    };
+    document.addEventListener('keydown', aoPressionarTecla);
+    return () => document.removeEventListener('keydown', aoPressionarTecla);
+  }, []);
+
   return (
     <header className="bg-gradient-to-r from-[#f0005c] via-[#e6004c] to-[#cc092f] text-white pt-6 pb-10 px-6 rounded-b-[2.5rem] shadow-md mb-10">
       <div className="max-w-5xl mx-auto space-y-4">
@@ -29,6 +59,33 @@ export const Header: React.FC<HeaderProps> = ({ saldoTotal, onLogout }) => {
           </div>
 
           <div className="flex items-center gap-3">
+            <div className="relative">
+              <button
+                type="button"
+                aria-label="Abrir menu de navegação"
+                aria-expanded={menuAberto}
+                aria-controls="menu-secoes"
+                onClick={() => setMenuAberto(!menuAberto)}
+                className="rounded-lg border border-white/30 p-2 text-white hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                <span aria-hidden="true" className="text-xl leading-none">☰</span>
+              </button>
+              {menuAberto && (
+                <div id="menu-secoes" className="absolute right-0 top-full z-50 mt-2 w-64 max-h-[70vh] overflow-y-auto rounded-xl border border-slate-200 bg-white py-2 text-slate-800 shadow-xl">
+                  <div className="px-4 py-2 text-xs font-bold uppercase tracking-wide text-[#c4003d]">Navegar pelo ByteBank</div>
+                  {secoes.map(([id, titulo]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => irPara(id)}
+                      className="block w-full px-4 py-2 text-left text-sm hover:bg-rose-50 focus-visible:bg-rose-50 focus-visible:outline-none"
+                    >
+                      {titulo}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             {/* Nome dinâmico aqui */}
             <span className="text-xs font-medium text-white/90">Olá, {nomeUsuario}</span>
             <button
