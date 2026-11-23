@@ -10,7 +10,9 @@ const secoes = [
   { id: 'visao-geral', titulo: 'Visão geral', icone: '⌂' },
   { id: 'patrimonio', titulo: 'Evolução do patrimônio', icone: '↗' },
   { id: 'recomendacoes', titulo: 'Recomendações financeiras', icone: '✦' },
-  { id: 'relatorios-salvos', titulo: 'Histórico de relatórios mensais', icone: '▤' }
+  { id: 'relatorios-salvos', titulo: 'Histórico de relatórios mensais', icone: '▤' },
+  { id: 'orcamentos', titulo: 'Orçamentos por categoria', icone: '▦' },
+  { id: 'metas', titulo: 'Metas financeiras', icone: '◎' }
 ] as const;
 
 export const Header: React.FC<HeaderProps> = ({ saldoTotal, onLogout }) => {
@@ -53,13 +55,15 @@ export const Header: React.FC<HeaderProps> = ({ saldoTotal, onLogout }) => {
     if (!destino) return;
     setMenuAberto(false);
     setPerfilAberto(false);
+    destino.style.scrollMarginTop = '88px';
     destino.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   return (
-    <header className="relative bg-gradient-to-r from-[#f0005c] via-[#e6004c] to-[#cc092f] text-white pt-6 pb-10 px-4 sm:px-6 rounded-b-[2.5rem] shadow-md mb-10">
-      <div className="max-w-5xl mx-auto space-y-4">
-        <div className="flex justify-between items-center gap-3 border-b border-white/20 pb-3">
+    <>
+      {/* Barra de navegação permanece visível durante a rolagem. */}
+      <div className="sticky top-0 z-50 bg-gradient-to-r from-[#f0005c] via-[#e6004c] to-[#cc092f] px-4 py-3 text-white shadow-md sm:px-6">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <h1 className="text-xl font-bold tracking-wide">
             ByteBank <span className="font-light text-xs">finance</span>
           </h1>
@@ -132,14 +136,19 @@ export const Header: React.FC<HeaderProps> = ({ saldoTotal, onLogout }) => {
             </button>
           </div>
         </div>
+      </div>
 
+      {/* Saldo permanece na área de destaque e não ocupa a tela ao rolar. */}
+      <header className="mb-10 rounded-b-[2.5rem] bg-gradient-to-r from-[#f0005c] via-[#e6004c] to-[#cc092f] px-4 pb-10 pt-5 text-white shadow-md sm:px-6">
+        <div className="mx-auto max-w-5xl">
         <div className="pt-2">
           <p className="text-xs uppercase tracking-wider text-white/80 font-medium">Meu saldo disponível</p>
           <p className="text-3xl sm:text-4xl font-extrabold mt-1">
             R$ {saldoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
-      </div>
-    </header>
+        </div>
+      </header>
+    </>
   );
 };
