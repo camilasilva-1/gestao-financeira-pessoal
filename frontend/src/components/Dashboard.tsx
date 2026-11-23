@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import type { Transacao } from '../types';
 
+const moeda = (valor: number) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
 interface DashboardProps {
   transacoes: Transacao[];
 }
@@ -63,7 +65,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transacoes }) => {
         </div>
         <div>
           <h3 className={`text-2xl font-bold ${saldoAtual >= 0 ? 'text-slate-800' : 'text-[#c4003d]'}`}>
-            R$ {saldoAtual.toFixed(2)}
+            {moeda(saldoAtual)}
           </h3>
           <p className="text-xs text-slate-400 mt-1">Disponível em conta</p>
         </div>
@@ -77,7 +79,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transacoes }) => {
         </div>
         <div>
           <h3 className="text-2xl font-bold text-emerald-600">
-            + R$ {totalReceitas.toFixed(2)}
+            + {moeda(totalReceitas)}
           </h3>
           <p className="text-xs text-slate-400 mt-1">Ganhos acumulados</p>
         </div>
@@ -91,7 +93,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ transacoes }) => {
         </div>
         <div>
           <h3 className="text-2xl font-bold text-[#c4003d]">
-            - R$ {totalDespesas.toFixed(2)}
+            - {moeda(totalDespesas)}
           </h3>
           <p className="text-xs text-slate-400 mt-1">Gastos computados</p>
         </div>
