@@ -120,18 +120,6 @@ export const Header: React.FC<HeaderProps> = ({ saldoTotal, onLogout }) => {
                       </button>
                     ))}
                   </div>
-                  <div className="border-t border-slate-100 p-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMenuAberto(false);
-                        onLogout?.();
-                      }}
-                      className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#c4003d]"
-                    >
-                      Sair da conta
-                    </button>
-                  </div>
                 </nav>
               )}
             </div>
