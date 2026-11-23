@@ -257,7 +257,7 @@ export const Transacoes: React.FC<TransacoesProps> = ({
     <div className="space-y-6">
       {/* Formulário de Nova Transação */}
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-        <h2 className="text-lg font-bold text-slate-800">Nova Transação</h2>
+        <h2 id="nova-transacao" className="scroll-mt-6 text-lg font-bold text-slate-800">Nova Transação</h2>
         <form onSubmit={handleNovaTransacao} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
@@ -461,7 +461,7 @@ export const Transacoes: React.FC<TransacoesProps> = ({
                     </td>
                     <td className="py-3 text-slate-500 text-xs">{t.data}</td>
                     <td className={`py-3 text-right font-bold ${t.tipo === 'RECEITA' ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {t.tipo === 'RECEITA' ? '+' : '-'} R$ {t.valor.toFixed(2)}
+                      {t.tipo === 'RECEITA' ? '+' : '-'} R$ {t.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     <td className="py-3 text-center space-x-2">
                       <button
