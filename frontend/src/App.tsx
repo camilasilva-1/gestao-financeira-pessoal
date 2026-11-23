@@ -15,6 +15,11 @@ import { EvolucaoPatrimonio } from './components/EvolucaoPatrimonio';
 import { listarTransacoes } from './Services/api';
 
 
+// Formata os valores presentes nas mensagens do backend sem mudar os cálculos.
+const moedaNaMensagem = (texto: string) => texto.replace(/R\\$\\s*(\\d+(?:\\.\\d{1,2})?)/g, (_trecho, valor: string) =>
+  Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+);
+
 interface RecomendacaoFinanceira {
   tipo: string;
   mensagem: string;
@@ -53,6 +58,9 @@ function RecomendacoesFinanceiras({ transacoes }: { transacoes: Transacao[] }) {
     return () => { ativo = false; };
   }, [transacoes]);
 
+  const valoresRecomendados = recomendacao?.mensagem.match(/R\\$\\s*\\d+(?:\\.\\d{1,2})?/g) ?? [];
+  const recomendacaoTemValores = valoresRecomendados.length >= 2;
+
   return (
     <section id="recomendacoes" className="scroll-mt-6 rounded-2xl border border-rose-200 bg-rose-50/70 p-6 shadow-sm space-y-3">
       <h2 className="text-lg font-bold text-[#c4003d]">Recomendações Financeiras</h2>
@@ -62,13 +70,32 @@ function RecomendacoesFinanceiras({ transacoes }: { transacoes: Transacao[] }) {
         <p className="text-sm text-slate-500">Carregando recomendações...</p>
       ) : (
         <>
-          <p className="text-sm text-slate-700">{recomendacao.mensagem}</p>
+          {recomendacaoTemValores ? (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-rose-100 bg-white p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Investimento mensal sugerido</p>
+                <p className="mt-2 text-2xl font-bold text-[#b20b42]">{moedaNaMensagem(valoresRecomendados[0])}</p>
+                <p className="mt-1 text-xs text-slate-500">20% das receitas do mês</p>
+              </div>
+              <div className="rounded-xl border border-rose-100 bg-white p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Reserva de emergência ideal</p>
+                <p className="mt-2 text-2xl font-bold text-[#b20b42]">{moedaNaMensagem(valoresRecomendados[1])}</p>
+                <p className="mt-1 text-xs text-slate-500">Equivalente a seis meses de despesas</p>
+              </div>
+            </div>
+          ) : (
+            <p className="rounded-xl bg-white p-4 text-sm text-slate-700">{moedaNaMensagem(recomendacao.mensagem)}</p>
+          )}
           {metas.length > 0 && (
-            <div className="border-t border-rose-200 pt-3 space-y-2">
+            <div className="space-y-3 border-t border-rose-200 pt-4">
               <h3 className="text-sm font-semibold text-slate-800">Metas sugeridas</h3>
-              {metas.map((meta, indice) => (
-                <p key={indice} className="text-sm text-slate-600">• {meta.mensagem}</p>
-              ))}
+              <ul className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                {metas.map((meta, indice) => (
+                  <li key={indice} className="rounded-xl border border-rose-100 bg-white p-4 text-sm leading-relaxed text-slate-700">
+                    {moedaNaMensagem(meta.mensagem)}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </>
