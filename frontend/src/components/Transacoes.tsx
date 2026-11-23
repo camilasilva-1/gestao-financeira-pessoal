@@ -350,7 +350,7 @@ export const Transacoes: React.FC<TransacoesProps> = ({
       {/* Histórico com Barra de Filtros */}
       <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-2">
         <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] gap-3 border-b pb-3">
-          <h2 className="text-lg font-bold text-slate-800 lg:pt-1 lg:whitespace-nowrap">
+          <h2 id="historico-transacoes" className="scroll-mt-6 text-lg font-bold text-slate-800 lg:pt-1 lg:whitespace-nowrap">
             Histórico de Transações
           </h2>
 
